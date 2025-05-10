@@ -45,12 +45,7 @@
           },
           {
             "group": "Endpoint Examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
+            "openapi": "https://ee0e-79-133-180-66.ngrok-free.app/api-docs/openapi.json"
           }
         ]
       }
