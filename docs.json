@@ -38,13 +38,21 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "API Documentation",
+            "group": "General",
             "pages": [
-              "api-reference/introduction"
+              "api-reference/introduction",
+              "api-reference/conventions",
+              "api-reference/rate-limits"
             ]
           },
           {
-            "group": "Endpoint Examples",
+            "group": "Integration",
+            "pages": [
+              "api-reference/ingegration/installation"
+            ]
+          },
+          {
+            "group": "API",
             "openapi": "https://ee0e-79-133-180-66.ngrok-free.app/api-docs/openapi.json"
           }
         ]
