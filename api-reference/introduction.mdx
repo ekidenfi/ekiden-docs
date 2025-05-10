@@ -8,9 +8,10 @@ description: 'Example section for showcasing API endpoints'
   this section by removing the api-reference folder.
 </Note>
 
-## Welcome
+The Ekiden API provides a unified high-throughput REST interface that connects both to the off-chain central limit order book (CLOB), where matching and execution take place, and to the on-chain settlement layer on Aptos.
+While most interactions happen off-chain, traders also perform on-chain actions via Aptos nodes using the Rust SDK, all through a single integrated API. 
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+All trading actions require digital signature authentication. Orders are matched off-chain for speed but are cryptographically verified and settled on-chain using Merkle proofs.
 
 <Card
   title="Plant Store Endpoints"
