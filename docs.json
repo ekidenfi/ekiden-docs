@@ -21,7 +21,7 @@
               "development"
             ]
           },
-      },
+     
       {
         "tab": "API Reference",
         "groups": [
@@ -90,4 +90,3 @@
       "linkedin": "https://linkedin.com/company/mintlify"
     }
   }
-}
