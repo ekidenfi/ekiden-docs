@@ -38,7 +38,8 @@
             "pages": [
               "api-reference/integration/installation",
               "api-reference/integration/initialization",
-              "api-reference/integration/deposit-and-withdraw"
+              "api-reference/integration/deposit-and-withdraw",
+              "api-reference/integration/adjust-the-leverage"
             ]
           },
           {

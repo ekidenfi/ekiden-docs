@@ -1,0 +1,99 @@
+---
+title: Adjusting Leverage (Isolated Per-Market)
+description: Adjust isolated leverage settings for a specific market on Ekiden.
+---
+
+# Adjusting Leverage (Isolated Per-Market)
+
+## Overview
+
+Ekiden supports isolated leverage settings per market. This allows users to control risk independently for each trading pair. Adjusting leverage changes how much margin is allocated to your open position in a given market. Increasing leverage frees up margin but increases liquidation risk, while lowering leverage adds margin and decreases risk.
+
+## Endpoint
+
+`POST /api/v1/leverage`
+
+Adjust the leverage multiplier for a specific market. This endpoint applies only to the specified market and cancels any open orders associated with it.
+
+### Headers
+
+```
+Authorization: Bearer {API_KEY}
+Content-Type: application/json
+```
+
+## Request Parameters
+
+| Parameter   | Type    | Description                    | Required |
+|-------------|---------|--------------------------------|----------|
+| market      | string  | Market symbol (e.g. BTC-PERP)  | Yes      |
+| leverage    | integer | New leverage (e.g. 10 for 10x) | Yes      |
+| subAccount  | string  | Optional subaccount identifier | No       |
+
+## Example Request
+
+```json
+{
+  "market": "BTC-PERP",
+  "leverage": 10
+}
+```
+
+## Example cURL
+
+```bash
+curl -X POST https://api.ekiden.io/v1/leverage \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "market": "BTC-PERP",
+        "leverage": 10
+      }'
+```
+
+## Response
+
+```json
+{
+  "success": true,
+  "market": "BTC-PERP",
+  "newLeverage": 10,
+  "oldLeverage": 5,
+  "message": "Leverage updated successfully. All open orders were cancelled."
+}
+```
+
+## Error Example
+
+```json
+{
+  "success": false,
+  "error": "Leverage 25x exceeds the maximum allowed for BTC-PERP (20x)."
+}
+```
+
+## SDK Examples
+
+### TypeScript
+
+```ts
+await client.adjustLeverage("BTC-PERP", 10);
+```
+
+### Python
+
+```python
+client.adjust_leverage(market="BTC-PERP", leverage=10)
+```
+
+## Notes
+
+- Leverage is isolated per market  
+- Min = 1x, Max = varies by market  
+- Open orders are cancelled when leverage is changed  
+- Changing leverage affects margin ratio and liquidation price  
+- Cannot increase leverage if margin requirements would be violated  
+
+---
+
+For current leverage settings or account info, use `GET /api/v1/account` or the relevant SDK method.
