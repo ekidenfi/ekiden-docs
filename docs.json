@@ -42,7 +42,7 @@
           },
           {
             "group": "API",
-            "openapi": "https://ee0e-79-133-180-66.ngrok-free.app/api-docs/openapi.json"
+            "openapi": "https://raw.githubusercontent.com/ekidenfi/docs/main/openapi.json"
           }
         ]
       }
