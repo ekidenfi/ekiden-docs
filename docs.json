@@ -46,7 +46,7 @@
           },
           {
             "group": "API",
-            "openapi": "https://raw.githubusercontent.com/ekidenfi/ekiden-docs/main/openapi.json"
+            "openapi": "api-reference/openapi.json"
           }
         ]
       }
