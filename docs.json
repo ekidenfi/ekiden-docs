@@ -36,7 +36,8 @@
           {
             "group": "Integration",
             "pages": [
-              "api-reference/integration/installation"
+              "api-reference/integration/installation",
+              "api-reference/integration/initialization"
             ]
           },
           {
