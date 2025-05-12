@@ -1,0 +1,112 @@
+---
+title: Client Initialization
+description: Ekiden SDK initialization in TypeScript, Python, and Rust.
+---
+
+# Initialization
+
+## Overview
+
+This page explains how to initialize the Ekiden SDK in TypeScript, Python, and Rust. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading).
+
+## Supported Environments
+
+Ekiden supports the following environments:
+
+| Environment | Network Key | Base REST URL           | WebSocket URL              |
+|-------------|--------------|--------------------------|-----------------------------|
+| Mainnet     | mainnet      | https://api.ekiden.fi    | wss://ws.ekiden.fi          |
+| Testnet     | testnet      | https://testnet.ekiden.fi | wss://testnet-ws.ekiden.fi  |
+
+Use the network parameter during client initialization to select your target environment.
+
+## Initialization Parameters
+
+| Parameter       | Description                                 | Required                      | Default                |
+|-----------------|---------------------------------------------|-------------------------------|------------------------|
+| network         | Target network (mainnet or testnet)         | No                            | mainnet               |
+| api_key         | Your Ekiden API key                         | Required for private endpoints| —                    |
+| api_secret      | Your Ekiden API secret                      | Required for private endpoints| —                    |
+| private_key     | (Alternative) Private key for signature-based auth | Required if not using API key | —              |
+| subaccount_id   | Optional subaccount ID                      | No                            | 0                     |
+| use_websocket   | Whether to initialize WebSocket connections | No                            | true                  |
+| base_url        | Override default REST URL                   | No                            | Auto-detected from network |
+| ws_url          | Override default WebSocket URL              | No                            | Auto-detected from network |
+
+## TypeScript Example
+
+```ts
+import { EkidenClient, Networks } from '@ekiden/sdk';
+
+const client = new EkidenClient({
+  network: Networks.TESTNET,
+  apiKey: process.env.EKIDEN_API_KEY,
+  apiSecret: process.env.EKIDEN_API_SECRET,
+  subaccountId: 0,
+  useWebsocket: true
+});
+
+await client.connect();
+const markets = await client.getMarkets();
+console.log(markets);
+```
+
+## Python Example
+
+```python
+from ekiden_sdk import EkidenClient
+import os
+
+client = EkidenClient(
+    network="testnet",
+    api_key=os.getenv("EKIDEN_API_KEY"),
+    api_secret=os.getenv("EKIDEN_API_SECRET"),
+    subaccount_id=0,
+    use_websocket=True
+)
+
+client.connect()
+markets = client.get_markets()
+print(markets)
+```
+
+## Rust Example
+
+```rust
+use ekiden_sdk::{ClientBuilder, Network};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = ClientBuilder::new(Network::Testnet)
+        .with_api_key(std::env::var("EKIDEN_API_KEY")?)
+        .with_api_secret(std::env::var("EKIDEN_API_SECRET")?)
+        .with_subaccount(0)
+        .enable_websocket(true)
+        .build()?;
+
+    let markets = client.get_markets().await?;
+    println!("{:?}", markets);
+
+    Ok(())
+}
+```
+
+## Authentication Tips
+
+- Never hardcode your secrets in code.
+- Use environment variables or secure vaults.
+- Validate your connection with a public call like get_markets().
+
+## Troubleshooting
+
+- 401 Unauthorized: Check your keys and secret.
+- Timeouts: Check your network connection or proxy settings.
+- WebSocket not connecting: Verify ws_url and ensure the port is open.
+
+## Next Steps
+
+Once initialized, explore other sections of the SDK documentation to:
+
+- Place trades
+- Subscribe to real-time updates
+- Query account balances and positions

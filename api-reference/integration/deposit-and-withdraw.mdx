@@ -1,0 +1,157 @@
+---
+title: Deposit & Withdraw
+description: How to deposit and withdraw collateral from Ekiden's margin bank.
+---
+
+# Deposit & Withdraw Tokens from Margin Bank
+
+## Overview
+
+Ekiden uses a smart contract-based margin bank to custody collateral for trading. Users can deposit multiple supported tokens to the margin bank and withdraw available (free) collateral at any time. All deposits and withdrawals are on-chain but occur on the same network as the Ekiden protocol—no cross-chain bridging is required.
+
+## Supported Tokens
+
+Ekiden supports the following tokens as margin collateral:
+
+{TOKEN_1} (e.g. USDC)  
+{TOKEN_2} (e.g. WETH)  
+{TOKEN_3} (e.g. WBTC)  
+
+Check the /tokens endpoint or documentation for the most current list.
+
+## Depositing Tokens
+
+### Steps
+
+- Ensure Wallet Connection to the correct network  
+- Approve Token if required via ERC-20 approval transaction  
+- Call Deposit Endpoint or SDK Method  
+
+### REST API Example
+
+```http
+POST /api/v1/margin/deposit
+Content-Type: application/json
+Authorization: Bearer {API_TOKEN}
+
+{
+  "token": "USDC",
+  "amount": "1000.00"
+}
+```
+
+### Response
+
+```json
+{
+  "ok": true,
+  "message": "Deposit successful",
+  "data": {
+    "token": "USDC",
+    "amount": "1000.00",
+    "newBalance": "1500.00",
+    "transactionHash": "0x..."
+  }
+}
+```
+
+## Withdrawing Tokens
+
+### Steps
+
+- Check Available Free Collateral  
+- Cancel Open Orders if Needed  
+- Call Withdraw Endpoint or SDK Method  
+
+### REST API Example
+
+```http
+POST /api/v1/margin/withdraw
+Content-Type: application/json
+Authorization: Bearer {API_TOKEN}
+
+{
+  "token": "USDC",
+  "amount": "500.00"
+}
+```
+
+To withdraw all available balance:
+
+```json
+{
+  "token": "USDC"
+}
+```
+
+### Response
+
+```json
+{
+  "ok": true,
+  "message": "Withdrawal initiated",
+  "data": {
+    "token": "USDC",
+    "amount": "500.00",
+    "newBalance": "1000.00",
+    "transactionHash": "0x..."
+  }
+}
+```
+
+## Querying Balances
+
+```http
+GET /api/v1/margin/balances
+Authorization: Bearer {API_TOKEN}
+```
+
+### Response:
+
+```json
+{
+  "balances": [
+    { "token": "USDC", "balance": "1000.00" },
+    { "token": "WETH", "balance": "2.5" }
+  ]
+}
+```
+
+## SDK Methods (Examples)
+
+### TypeScript
+
+```ts
+await client.depositToMarginBank("USDC", "1000.00");
+await client.withdrawFromMarginBank("USDC", "500.00");
+```
+
+### Python
+
+```python
+client.deposit(token="USDC", amount="1000.00")
+client.withdraw(token="USDC", amount="500.00")
+```
+
+### Rust
+
+```rust
+client.deposit("USDC", "1000.00").await?;
+client.withdraw("USDC", "500.00").await?;
+```
+
+## Notes
+
+- Only available (free) collateral can be withdrawn  
+- Withdrawing collateral used for open orders will cancel those orders  
+- Deposits require ERC-20 approval if not done before  
+- Withdrawals may take 1–2 blocks to finalize on-chain  
+
+## Troubleshooting
+
+| Issue                      | Suggested Action                             |
+|---------------------------|----------------------------------------------|
+| Deposit stuck             | Check token approval and gas fees            |
+| Can't withdraw full balance | Cancel open orders or close positions      |
+| Withdraw pending too long | Wait for batch or contact support            |
+| Wrong network/token       | Verify you're using the correct supported token |
