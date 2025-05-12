@@ -51,17 +51,17 @@
       "anchors": [
         {
           "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
+          "href": "https://docs.ekiden.fi",
           "icon": "book-open-cover"
         },
         {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
+          "anchor": "Discord",
+          "href": "https://discord.gg/37682NeRb3",
           "icon": "slack"
         },
         {
           "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
+          "href": "https://medium.com/ekidenfi",
           "icon": "newspaper"
         }
       ]
