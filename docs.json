@@ -50,7 +50,7 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
+          "anchor": "Docs",
           "href": "https://docs.ekiden.fi",
           "icon": "book-open-cover"
         },
