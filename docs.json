@@ -39,7 +39,9 @@
               "api-reference/integration/installation",
               "api-reference/integration/initialization",
               "api-reference/integration/deposit-and-withdraw",
-              "api-reference/integration/adjust-the-leverage"
+              "api-reference/integration/adjust-the-leverage",
+              "api-reference/integration/orders",
+              "api-reference/integration/onboarding-auth"
             ]
           },
           {
