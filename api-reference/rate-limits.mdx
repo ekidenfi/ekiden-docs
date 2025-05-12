@@ -1,101 +1,91 @@
-Rate Limits
+---
+title: Rate Limits
+description: Ekiden’s API rate limits for REST and WebSocket usage.
+---
+
+# Rate Limits
+
 Ekiden’s API enforces rate limits to ensure fair usage and maintain system reliability. These limits vary depending on the endpoint type, user authentication, and request method (REST or WebSocket). This page outlines our rate-limiting conventions and provides placeholders where specific values will be configured.
 
-Overview
-Rate limits apply per IP address and per API key.
+---
 
+## Overview
 
-Different limits may apply to public vs authenticated endpoints.
+- Rate limits apply per **IP address** and per **API key**
+- Different limits may apply to **public** vs **authenticated** endpoints
+- **REST** and **WebSocket** APIs have distinct rate limits
 
+---
 
-REST and WebSocket APIs have distinct rate limits.
+## REST API Rate Limits
 
+### 🔒 Global Limits
 
+| Access Type        | Limit                                  |
+|--------------------|-----------------------------------------|
+| Public (unauthenticated) | `{PUBLIC_RATE_LIMIT}` requests/min/IP |
+| Authenticated           | `{AUTHENTICATED_RATE_LIMIT}` requests/min/API key |
 
-REST API Rate Limits
-Global Limits
-Public (unauthenticated): {PUBLIC_RATE_LIMIT} requests per minute per IP
+---
 
+### 🎯 Endpoint-Specific Limits
 
-Authenticated: {AUTHENTICATED_RATE_LIMIT} requests per minute per API key
+| Endpoint                     | Limit                   | Scope       |
+|------------------------------|--------------------------|-------------|
+| `GET /v1/markets`            | `{MARKETS_LIMIT}`        | Per IP      |
+| `GET /v1/orderbook`          | `{ORDERBOOK_LIMIT}`      | Per IP      |
+| `POST /v1/orders`            | `{PLACE_ORDER_LIMIT}`    | Per API key |
+| `DELETE /v1/orders/{id}`     | `{CANCEL_ORDER_LIMIT}`   | Per API key |
+| `GET /v1/user/trades`        | `{USER_TRADES_LIMIT}`    | Per API key |
 
+---
 
-Endpoint-Specific Limits
-Endpoint
-Limit
-Scope
-GET /v1/markets
-{MARKETS_LIMIT}
-Per IP
-GET /v1/orderbook
-{ORDERBOOK_LIMIT}
-Per IP
-POST /v1/orders
-{PLACE_ORDER_LIMIT}
-Per API key
-DELETE /v1/orders/{id}
-{CANCEL_ORDER_LIMIT}
-Per API key
-GET /v1/user/trades
-{USER_TRADES_LIMIT}
-Per API key
+## WebSocket API Rate Limits
 
+| Limit Type                          | Value                   |
+|-------------------------------------|--------------------------|
+| Max concurrent connections per IP   | `{MAX_WS_CONNECTIONS}`   |
+| Max subscriptions per connection    | `{MAX_WS_SUBSCRIPTIONS}` |
+| Max messages per minute (per IP)    | `{MAX_WS_MESSAGES}`      |
+| Max in-flight messages per connection | `{MAX_WS_INFLIGHT}`    |
 
-WebSocket API Rate Limits
-Max concurrent connections per IP: {MAX_WS_CONNECTIONS}
+---
 
+## Rate Limit Errors
 
-Max subscriptions per connection: {MAX_WS_SUBSCRIPTIONS}
-
-
-Max messages per minute (per IP): {MAX_WS_MESSAGES}
-
-
-Max in-flight messages per connection: {MAX_WS_INFLIGHT}
-
-
-
-Rate Limit Errors
 If you exceed the allowed rate:
-HTTP Status Code: 429 Too Many Requests
 
+- **HTTP Status Code**: `429 Too Many Requests`
+- **Response Header**: `Retry-After: {SECONDS}`
 
-Response Header: Retry-After: {SECONDS}
+### Error Response Body
 
-
-Error Body:
-
-
+```json
 {
   "error_code": 1015,
   "error_message": "Rate limit exceeded. Please wait {SECONDS} seconds."
 }
+```
 
+---
 
-Best Practices
-Use WebSocket for real-time data to reduce REST load.
+## Best Practices
 
+- ✅ Use **WebSocket** for real-time data to reduce REST load
+- 🔁 Implement **exponential backoff** and respect the `Retry-After` header
+- 📦 **Batch** requests where supported
+- 📩 Contact Ekiden support for **HFT-tier adjustments**
 
-Implement exponential backoff and retry after Retry-After value.
+---
 
+## Other Operational Limits
 
-Batch requests where supported.
+| Type                   | Limit                 |
+|------------------------|------------------------|
+| Open orders per market | `{MAX_OPEN_ORDERS}`    |
+| Max orders per minute  | `{ORDER_RATE_LIMIT}`   |
+| Max cancels per minute | `{CANCEL_RATE_LIMIT}`  |
 
+---
 
-Contact Ekiden support for high-frequency trading rate adjustments.
-
-
-
-Other Operational Limits
-Type
-Limit
-Open orders per market
-{MAX_OPEN_ORDERS}
-Max orders per minute
-{ORDER_RATE_LIMIT}
-Max cancels per minute
-{CANCEL_RATE_LIMIT}
-
-
-For full API integration details, refer to the endpoint reference section.
-
+For full integration details, refer to the [API Reference](/api-reference/introduction).
