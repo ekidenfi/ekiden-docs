@@ -1,4 +1,262 @@
 ---
-title: "Installation"
-description: "Description of your new file."
+title: SDK Installation
+description: Installation and setup guide for the Ekiden SDK (TypeScript, Python, Rust)
 ---
+
+# Ekiden SDK Installation Guide
+
+This guide will help you install and set up the Ekiden SDK for TypeScript, Python, or Rust. It covers all the steps from prerequisites to making your first API call, with clear placeholders for you to insert your own values (like API keys). Follow the sections below to get started with Ekiden’s SDK in your preferred programming language.
+
+---
+
+## Prerequisites
+
+Before installing the Ekiden SDK, make sure you have the following in place:
+
+- **Account Access**: An Ekiden account or API access credentials (API key and secret) if required for authenticated requests.
+- **TypeScript/Node.js**: Node.js installed (recommend v14+). You should also have a package manager like npm (comes with Node) or Yarn available.
+- **Python**: Python 3.8+ installed. It’s recommended to use a virtual environment (e.g. `venv` or `conda`) to isolate the Ekiden SDK package and its dependencies.
+- **Rust**: Rust toolchain installed (Rustup with the latest stable version). Ensure you can compile Rust packages with `cargo`.
+
+Ensure your development environment meets these requirements before proceeding to installation.
+
+---
+
+## Installation
+
+### TypeScript (Node.js)
+
+Install the Ekiden TypeScript SDK package via npm (or yarn):
+
+```bash
+# Using npm
+npm install @ekiden/sdk
+
+# Using yarn (alternative)
+yarn add @ekiden/sdk
+```
+
+Import in your TypeScript/JavaScript code:
+
+```ts
+// Example: Importing Ekiden SDK in TypeScript
+import { EkidenClient } from '@ekiden/sdk';
+```
+
+---
+
+### Python
+
+Install the Ekiden Python SDK from PyPI using pip:
+
+```bash
+pip install ekiden-sdk
+```
+
+Import in Python code:
+
+```python
+# Example: Importing Ekiden SDK in Python
+from ekiden_sdk import EkidenClient
+```
+
+---
+
+### Rust
+
+Add to `Cargo.toml` under `[dependencies]`:
+
+```toml
+ekiden-sdk = "0.1.0"
+```
+
+Run `cargo build` or `cargo check`, then in your code:
+
+```rust
+// Example: Importing Ekiden SDK in Rust
+use ekiden_sdk::Client;
+```
+
+---
+
+## Configuration
+
+After installing the SDK, you may need to configure settings before connecting to the API.
+
+- **API Endpoints**: The SDK defaults to mainnet. To use testnet (e.g. `https://api.testnet.ekiden.com`), check the SDK documentation for how to override the base URL.
+- **Network Connectivity**: Ensure your system allows access to Ekiden endpoints.
+- **Proxy/Firewall (optional)**: Use `HTTP_PROXY`/`HTTPS_PROXY` environment variables as needed.
+- **Time Synchronization**: Keep system time accurate for authenticated requests.
+
+---
+
+## Authentication
+
+To access private endpoints, the Ekiden SDK requires API key-based authentication.
+
+### Obtaining API Keys
+
+Log in to the Ekiden dashboard and navigate to the API Keys section. Create a new key pair (public/secret). Save them securely.
+
+### Providing API Keys
+
+**Via Environment Variables:**
+
+```bash
+export EKIDEN_API_KEY="YOUR_API_KEY"
+export EKIDEN_API_SECRET="YOUR_API_SECRET"
+```
+
+**In Code:**
+
+TypeScript:
+
+```ts
+const client = new EkidenClient({
+  apiKey: "YOUR_API_KEY",
+  apiSecret: "YOUR_API_SECRET"
+});
+```
+
+Python:
+
+```python
+client = EkidenClient(
+  api_key="YOUR_API_KEY",
+  api_secret="YOUR_API_SECRET"
+)
+```
+
+Rust:
+
+```rust
+let client = Client::new(ApiConfig {
+  api_key: "YOUR_API_KEY".to_string(),
+  api_secret: "YOUR_API_SECRET".to_string(),
+});
+```
+
+---
+
+## Making Your First Request
+
+### TypeScript – Fetch Market Data Example
+
+```ts
+import { EkidenClient } from '@ekiden/sdk';
+
+const client = new EkidenClient({
+  apiKey: process.env.EKIDEN_API_KEY,
+  apiSecret: process.env.EKIDEN_API_SECRET
+});
+
+async function checkMarkets() {
+  try {
+    const markets = await client.getMarkets();
+    console.log("Available markets:", markets);
+  } catch (error) {
+    console.error("Error fetching markets:", error);
+  }
+}
+
+checkMarkets();
+```
+
+```ts
+// Example: Get account balance (private endpoint)
+async function checkBalance() {
+  try {
+    const balance = await client.getBalance(); // replace with actual method name
+    console.log("Account balance:", balance);
+  } catch (error) {
+    console.error("Error fetching balance:", error);
+  }
+}
+
+checkBalance();
+```
+
+---
+
+### Python – Fetch Server Time Example
+
+```python
+from ekiden_sdk import EkidenClient
+
+client = EkidenClient(api_key="YOUR_API_KEY", api_secret="YOUR_API_SECRET")
+
+try:
+    server_time = client.get_server_time()
+    print("Ekiden server time:", server_time)
+except Exception as e:
+    print("Error fetching server time:", e)
+```
+
+```python
+# Example: Get account details (private endpoint)
+try:
+    account = client.get_account()
+    print("Account details:", account)
+except Exception as e:
+    print("Error fetching account details:", e)
+```
+
+---
+
+### Rust – Fetch Market Info Example
+
+```rust
+use ekiden_sdk::Client;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = Client::new(/* config here */);
+    let markets = client.get_markets()?; // or async variant
+    println!("Available markets: {:?}", markets);
+    Ok(())
+}
+```
+
+---
+
+## Troubleshooting
+
+### Installation Failures
+
+- Check your internet connection
+- Ensure you're using the correct package name
+- Verify version compatibility (Node, Python, or Rust)
+
+### Package Not Found
+
+- Confirm the package name in Ekiden documentation (e.g., `@ekiden/sdk`, `ekiden-sdk`)
+
+### Runtime or Compilation Errors
+
+- Update SDK or dependencies
+- Confirm system meets runtime requirements
+
+### Authentication Issues
+
+- Confirm correct key/secret
+- Use correct environment (mainnet/testnet)
+- Confirm environment variables are set properly
+
+### Time Sync
+
+- Sync your system clock using NTP if authentication fails due to time errors
+
+### Network Errors
+
+- Ping API endpoints or test via browser
+- Check for firewall or IP whitelisting
+- Use proxy if needed
+
+### SDK Bugs or Questions
+
+- Check GitHub issues on Ekiden SDK repo
+- Refer to official documentation
+- Ask for help in Ekiden Discord or forums
+
+---
+
+Once you’ve completed a test call and verified the response, your SDK setup is complete. You're ready to integrate Ekiden into your application.
