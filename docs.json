@@ -75,4 +75,20 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto
+        "href": "mailto:team@ekiden.fi"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://dashboard.mintlify.com"
+    }
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/ekidenfi",
+      "github": "https://github.com/ekidenfi",
+      "linkedin": "https://linkedin.com/company/ekidenfi"
+    }
+  }
+}
