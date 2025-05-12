@@ -22,30 +22,3 @@ description: "Welcome to the Ekiden API documentation"
 Ekiden is a next-generation decentralized exchange (DEX) designed for institutional-grade performance and reliability. It features a hybrid architecture combining an off-chain, high-speed matching engine with on-chain smart contract settlement. This allows Ekiden to deliver trade execution comparable to top-tier centralized exchanges (CEXs), while maintaining full self-custody and on-chain verification of trades.
 
 By executing orders off-chain and settling them on-chain, Ekiden achieves ultra-low latency without requiring trust in a centralized custodian. The result is a platform that merges the speed of CEXs with the transparency and security of DeFi.
-
-### **API Overview**
-
-The Ekiden API provides a unified, high-throughput REST interface that connects both to the off-chain central limit order book (CLOB), where matching and execution take place, and to the on-chain settlement layer on Aptos. While most interactions happen off-chain, traders also perform on-chain actions via Aptos nodes using the Rust SDK — all through a single integrated API. 
-
-All trading actions require digital signature authentication. Orders are matched off-chain for speed but are cryptographically verified and settled on-chain using Merkle proofs.
-
-### **Connectivity & Integration**
-
-Ekiden’s API is built for low-latency, high-throughput trading infrastructure:
-
-- **REST** endpoints handle order execution, cancellation, market data, and account management.
-- **WebSocket** streams provide real-time updates, including trade events, order book changes, and fills.
-
-SDKs are available in multiple languages to streamline integration. Each SDK includes usage examples, setup instructions, and real-world integration patterns:
-
-- `ekiden-sdk-typescript`: A full-featured SDK for Node.js and browser environments.
-- `ekiden-sdk-python`: Ideal for trading bots, analytics, and algorithmic strategies.
-- `ekiden-sdk-rust`: Designed for high-performance, low-latency applications.
-
-### **Institutional Support**
-
-For advanced needs such as colocated execution, higher rate limits, or custom infrastructure, Ekiden offers private connectivity and priority support. For access and assistance, just reach out to our team directly on Discord.
-
-### **Next Steps**
-
-The following sections provide comprehensive API specifications, endpoint documentation, and integration examples to help you onboard quickly and confidently.
