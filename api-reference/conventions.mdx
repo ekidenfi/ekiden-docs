@@ -1,6 +1,234 @@
 ---
-title: "Conventions"
-description: "Description of your new file."
+title: API Conventions
+description: Standards and practices for using Ekiden's REST and WebSocket APIs.
 ---
 
-Let's test\!
+# Ekiden API Conventions
+
+This document outlines Ekiden's API design conventions and standards. These ensure consistency, developer-friendliness, and compatibility across all REST and WebSocket interfaces.
+
+---
+
+## 1. Base URLs and Environments
+
+Ekiden provides separate base URLs for each environment:
+
+- **Mainnet**: [`https://api.ekiden.exchange`](https://api.ekiden.exchange)  
+- **Testnet**: [`https://testnet-api.ekiden.exchange`](https://testnet-api.ekiden.exchange)
+
+> All API calls must use **HTTPS**.
+
+---
+
+## 2. Versioning
+
+We use URI-based versioning:
+
+- **Format**: `/v1/`  
+- **Example**: `GET /v1/orders`
+
+Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
+
+---
+
+## 3. RESTful Design
+
+| Method  | Description                              |
+|---------|------------------------------------------|
+| `GET`   | Fetch resources (e.g., market data)      |
+| `POST`  | Create resources (e.g., place an order)  |
+| `DELETE`| Cancel or remove resources               |
+| `PATCH` | Update partial resources                 |
+
+- Resources are nouns, pluralized when appropriate  
+  - Example: `/v1/orders`, `/v1/markets`
+
+---
+
+## 4. WebSocket Protocol
+
+**Endpoint**:
+
+```txt
+wss://ws.ekiden.exchange/v1/stream
+```
+
+### Subscribe to a public channel
+
+```json
+{
+  "type": "subscribe",
+  "channel": "orderbook",
+  "market": "ETH-USD"
+}
+```
+
+### Subscribe to private (authenticated) channels
+
+```json
+{
+  "type": "subscribe",
+  "channel": "orders",
+  "apiKey": "your_api_key",
+  "signature": "your_signature",
+  "timestamp": "2025-05-10T12:34:56Z"
+}
+```
+
+---
+
+## 5. Authentication (REST)
+
+Private endpoints require:
+
+- `EKIDEN-API-KEY`
+- `EKIDEN-TIMESTAMP` (ISO 8601 UTC)
+- `EKIDEN-SIGNATURE` (HMAC SHA256 of `timestamp + method + path + body`)
+
+### Example headers
+
+```http
+EKIDEN-API-KEY: your_key
+EKIDEN-TIMESTAMP: 2025-05-10T12:34:56Z
+EKIDEN-SIGNATURE: base64(hmac_sha256(...))
+```
+
+---
+
+## 6. Numerical Precision
+
+- All token quantities and prices are **strings**
+- Up to 18 decimal places
+- Use big number or decimal libraries — avoid floats
+
+```json
+"2.000000000000000000"
+```
+
+---
+
+## 7. Timestamps
+
+- Format: ISO 8601 with `Z` (UTC)
+
+```json
+"2025-05-10T12:34:56Z"
+```
+
+---
+
+## 8. Error Handling
+
+### Error response format
+
+```json
+{
+  "error_code": 2001,
+  "error_message": "Invalid signature"
+}
+```
+
+### Error codes
+
+| Code | Meaning               |
+|------|------------------------|
+| 2000 | Invalid request        |
+| 2001 | Authentication failed  |
+| 2002 | Signature expired      |
+| 2003 | Rate limit exceeded    |
+| 2004 | Resource not found     |
+
+> HTTP status codes (`400`, `401`, `429`, etc.) are used appropriately.
+
+---
+
+## 9. Rate Limits
+
+- **Public endpoints**: 60 requests/minute  
+- **Private endpoints**: 30 requests/minute per API key
+
+### Example response on limit exceeded
+
+```json
+{
+  "error_code": 2003,
+  "error_message": "Rate limit exceeded"
+}
+```
+
+---
+
+## 10. Pagination
+
+Cursor-based pagination:
+
+- Query params: `limit`, `cursor`
+
+```http
+GET /v1/trades?limit=100&cursor=abc123
+```
+
+### Response
+
+```json
+{
+  "data": [...],
+  "next_cursor": "abc123"
+}
+```
+
+---
+
+## 11. Response Structure
+
+All responses are JSON objects.
+
+### Success
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+### Error
+
+```json
+{
+  "error_code": 2001,
+  "error_message": "Invalid signature"
+}
+```
+
+---
+
+## 12. Field Naming
+
+- All JSON keys use `snake_case`
+- All numeric values are strings
+- Timestamps are always strings in ISO 8601
+
+---
+
+## 13. WebSocket Heartbeats
+
+To keep the connection alive:
+
+### Client sends
+
+```json
+{ "type": "ping" }
+```
+
+### Server responds
+
+```json
+{ "type": "pong" }
+```
+
+> Idle connections close after 60 seconds without activity.
+
+---
+
+For detailed endpoint specifications and integration examples, continue to the API reference.
