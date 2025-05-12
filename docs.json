@@ -5,7 +5,12 @@
   "colors": {
     "primary": "#e2ff04",
     "light": "#07C983",
-    "dark": "#121212"
+    "dark": "#e2ff04"
+  },
+  "background": {
+    "color": {
+      "dark": "#121212"
+    }
   },
   "favicon": "/favicon.png",
   "navigation": {
