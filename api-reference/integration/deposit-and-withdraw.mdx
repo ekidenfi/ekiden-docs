@@ -1,5 +1,6 @@
 ---
-# Deposit & Withdraw Tokens from Margin Bank
+# Deposit & Withdraw
+All deposits and withdrawals will be handled via the SDK, which will be available shortly
 ---
 
 ## Overview
@@ -10,9 +11,7 @@ Ekiden uses a smart contract-based margin bank to custody collateral for trading
 
 Ekiden supports the following tokens as margin collateral:
 
-{TOKEN_1} (e.g. USDC)  
-{TOKEN_2} (e.g. WETH)  
-{TOKEN_3} (e.g. WBTC)  
+USDC, USDC, USDe  
 
 Check the /tokens endpoint or documentation for the most current list.
 
@@ -24,95 +23,6 @@ Check the /tokens endpoint or documentation for the most current list.
 - Approve Token if required via ERC-20 approval transaction  
 - Call Deposit Endpoint or SDK Method  
 
-### REST API Example
-
-```http
-POST /api/v1/margin/deposit
-Content-Type: application/json
-Authorization: Bearer {API_TOKEN}
-
-{
-  "token": "USDC",
-  "amount": "1000.00"
-}
-```
-
-### Response
-
-```json
-{
-  "ok": true,
-  "message": "Deposit successful",
-  "data": {
-    "token": "USDC",
-    "amount": "1000.00",
-    "newBalance": "1500.00",
-    "transactionHash": "0x..."
-  }
-}
-```
-
-## Withdrawing Tokens
-
-### Steps
-
-- Check Available Free Collateral  
-- Cancel Open Orders if Needed  
-- Call Withdraw Endpoint or SDK Method  
-
-### REST API Example
-
-```http
-POST /api/v1/margin/withdraw
-Content-Type: application/json
-Authorization: Bearer {API_TOKEN}
-
-{
-  "token": "USDC",
-  "amount": "500.00"
-}
-```
-
-To withdraw all available balance:
-
-```json
-{
-  "token": "USDC"
-}
-```
-
-### Response
-
-```json
-{
-  "ok": true,
-  "message": "Withdrawal initiated",
-  "data": {
-    "token": "USDC",
-    "amount": "500.00",
-    "newBalance": "1000.00",
-    "transactionHash": "0x..."
-  }
-}
-```
-
-## Querying Balances
-
-```http
-GET /api/v1/margin/balances
-Authorization: Bearer {API_TOKEN}
-```
-
-### Response:
-
-```json
-{
-  "balances": [
-    { "token": "USDC", "balance": "1000.00" },
-    { "token": "WETH", "balance": "2.5" }
-  ]
-}
-```
 
 ## SDK Methods (Examples)
 
@@ -130,25 +40,13 @@ client.deposit(token="USDC", amount="1000.00")
 client.withdraw(token="USDC", amount="500.00")
 ```
 
-### Rust
 
-```rust
-client.deposit("USDC", "1000.00").await?;
-client.withdraw("USDC", "500.00").await?;
 ```
 
 ## Notes
 
-- Only available (free) collateral can be withdrawn  
-- Withdrawing collateral used for open orders will cancel those orders  
-- Deposits require ERC-20 approval if not done before  
-- Withdrawals may take 1–2 blocks to finalize on-chain  
+
 
 ## Troubleshooting
 
-| Issue                      | Suggested Action                             |
-|---------------------------|----------------------------------------------|
-| Deposit stuck             | Check token approval and gas fees            |
-| Can't withdraw full balance | Cancel open orders or close positions      |
-| Withdraw pending too long | Wait for batch or contact support            |
-| Wrong network/token       | Verify you're using the correct supported token |
+Coming soon, once the SDK is shipped
