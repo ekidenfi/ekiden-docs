@@ -1,0 +1,54 @@
+# Architecture
+
+Ekiden's architecture provides speed, transparency, and resilience through a hybrid design that balances off-chain performance with on-chain trust. It operates across three key layers:
+
+- Client Layer
+- Infrastructure Layer
+- Smart Contract Layer
+
+---
+
+## Client Layer
+
+The Client Layer is the entry point for all user interactions. Users engage with the platform through:
+
+- **Non-Custodial Aptos Wallet** – Users maintain full control of their assets.
+- **Ekiden CLOB dApp** – Interface to submit orders and view the order book.
+- **Ekiden API** – Programmatic trading access for algorithmic strategies.
+- **Submit Orders** – Market and limit order support.
+- **Deposit/Withdraw** – Vault-based funds management.
+
+---
+
+## Infrastructure Layer
+
+Handles all off-chain operations for high-speed trading.
+
+- **Preprocessing Engine** – Validates and processes orders.
+- **Matching Engine** – Matches orders in real-time.
+- **Liquidation Engine** – Ensures solvency through liquidation.
+- **Orderbook Root Hash** – Anchored on-chain for transparency.
+- **Inclusion Proofs** – Merkle proofs provide auditability.
+
+---
+
+## Smart Contract Layer
+
+Runs on Aptos to ensure decentralized settlement and state integrity.
+
+- **Orderbook Verifier** – Validates trades using Merkle proofs.
+- **Clearinghouse** – Manages collateral and finalizes trades.
+- **Position Registry** – Tracks open positions, supports withdrawals.
+- **Vaults** – Modular and secure fund storage.
+- **State Updates** – Settlements and balances are updated on-chain.
+
+---
+
+## Hybrid Design
+
+Ekiden’s architecture combines:
+
+- **Off-chain speed** – Fast matching, low latency, and scalable infrastructure.
+- **On-chain integrity** – Transparent and trustless anchoring on Aptos.
+
+This hybrid model delivers the performance of centralized exchanges with the security and control of DeFi platforms.
