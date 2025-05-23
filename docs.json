@@ -22,7 +22,8 @@
             "group": "Get Started",
             "pages": [
               "index",
-              "architecture"
+              "architecture",
+              "Roadmap"
             ]
           }
         ]
