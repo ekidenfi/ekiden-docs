@@ -1,131 +1,57 @@
 ---
-title: "Ekiden Trading"
-description: "API Integration Guide"
+title: "Introduction"
 ---
 
-<img
-  className="block dark:hidden"
-  src="/image.avif"
-  alt="Hero Light"
-  title={true}
-/>
+Ekiden is a decentralized, orderbook-based hybrid exchange built on the Aptos blockchain. It combines an off-chain Central Limit Orderbook (CLOB) with deferred on-chain settlement to deliver high performance, transparency, and capital efficiency for both spot and perpetual futures markets.
 
-<img
-  className="hidden dark:block"
-  src="/image.avif"
-  alt="Hero Dark"
-  title={true}
-/>
+Built on a rollup-like architecture with Merkle-based proofs, Ekiden is designed to meet the demands of high-frequency traders and institutional DeFi participants.
 
-### **Introduction**
+## Key Features
 
-Ekiden is a next-generation decentralized exchange (DEX) designed for institutional-grade performance and reliability. It features a hybrid architecture combining an off-chain, high-speed matching engine with on-chain smart contract settlement. This allows Ekiden to deliver trade execution comparable to top-tier centralized exchanges (CEXs), while maintaining full self-custody and on-chain verification of trades.
+### Perpetual Futures Exchange
 
-By executing orders off-chain and settling them on-chain, Ekiden achieves ultra-low latency without requiring trust in a centralized custodian. The result is a platform that merges the speed of CEXs with the transparency and security of DeFi.
+- **Central Limit Orderbook (CLOB)**: Off-chain matching with on-chain Merkle commitments for auditable, transparent price discovery.
+- **Deferred On-Chain Settlement**: Batched updates posted to Aptos, balancing throughput and verifiability.
+- **Position Management**: Positions tracked using original order data and Merkle inclusion proofs.
+- **Price Discovery**: Powered by CLOB; spot integration planned.
 
-### **Our Vision**
+### Spot Exchange
 
-**One orderbook. Infinite scalability. Built for the future.**
+- **High-Performance Execution**: Low-latency trading with deep liquidity via Aptos' parallelized design.
+- **Unified Platform**: Seamlessly switch between spot and perpetual markets.
+- **Aptos Advantage**: Near-instant settlement and low fees.
 
-Ekiden redefines on-chain trading with lightning-fast performance and decentralized security. Through a hybrid design that posts compressed Merkle proofs on-chain and maintains full data off-chain, Ekiden operates as a scalable rollup - delivering deep liquidity, rapid execution, and trustless settlement. Whether you’re trading spot assets or managing perpetuals, or developing algorithmic trading strategies, Ekiden offers a unified institutional-grade platform. 
+### Vaults
 
-### **Key Features of Ekiden**
+- **Secure Fund Management**: Permissionless deposits and withdrawals.
+- **Risk Isolation**: Vaults handle specific functions such as positions and liquidations.
+- **Cold Wallet Support**: Optional for added security.
+- **Separation of Concerns**: Focused, single-purpose vault design.
 
-#### **Perpetual Futures Exchange**
+### Scalability Through Rollup-Like Design
 
-Trade perpetuals with precision and scale:
+- **Merkleized Orderbooks**: Orders compressed into Merkle proofs stored on-chain.
+- **Off-Chain Data Availability**: Full data hosted on nodes or external layers.
+- **Batch Processing**: Efficient, low-cost settlements.
 
-- **Central Limit Orderbook (CLOB):** Off-chain order matching with on-chain Merkle proof commitments for transparent, auditable price discovery.
-- **Deferred On-Chain Settlement:** Batched commitments of orderbook state changes posted to Aptos, optimizing throughput while ensuring verifiability.
-- **Position Management:** Positions tracked via original order data against inclusion proofs in the orderbook and registry.
-- **API Access:** Seamless integration for developing and executing algorithmic trading strategies at scale.
-- **Price Discovery:** Driven by CLOB, with spot market integration planned.
+### Lightning-Fast Performance
 
-#### **Spot Exchange**
+- **Execution Latency**: 5–15ms, competitive with leading centralized exchanges.
+- **Taker Fee**: 0.02% (baseline PoC).
+- **Maker Fee**: 0%, incentivizing liquidity provision.
 
-Effortless spot trading, built for scale:
+### Intuitive UX
 
-- **High-Performance Execution:** Low-latency trades with deep liquidity, powered by Aptos’ parallelized architecture.
-- **Unified Platform:** Seamlessly switch between spot and perpetuals in one interface.
-- **Aptos Advantage:** Near-instant settlement with minimal fees.
+- **Rapid Onboarding**: Seconds to begin trading.
+- **Streamlined Wallet Interaction**: One-click trade execution.
+- **Customizable Tools**: Designed for retail and institutional users.
 
-#### **Vaults: Secure & Modular Asset Management**
+### Self-Custody
 
-Ekiden’s Vaults are tailored for specific roles:
+- **User Control**: No centralized intermediaries. Users retain full asset custody.
 
-- **Deposits & Withdrawals:** Secure fund management with permissionless exits for user control.
-- **Position Management & Liquidations:** Isolated Vaults handle positions and risk with narrowly scoped APIs.
-- **Cold Wallet Integration:** Optional support for enhanced security.
-- **Separation of Concerns:** Each Vault focuses on a single function, ensuring efficiency and clarity.
+### Powered by Aptos
 
-#### **Scalability Through Rollup-Like Design**
-
-Ekiden’s core innovation is its hybrid scalability:
-
-- **Merkleized Orderbooks:** Orders, deposits, and withdrawals compressed into Merkle proofs and stored on-chain.
-- **Data Availability:** Full data hosted off-chain on nodes or external layers, accessible for verification.
-- **Batch Processing:** Opening/closing orders and settlements batched for efficiency, reducing blockchain load.
-
-#### **Lightning-Fast Performance**
-
-- **Execution Speed:** Latency as low as 5-15 milliseconds, rivaling top CEXs.
-- **Taker Fee:** Competitive at 0.02% (PoC baseline).
-- **Maker Fee:** Zero, encouraging liquidity provision.
-
-#### **Intuitive UX**
-
-Power meets simplicity:
-
-- Rapid onboarding and trading (seconds targeted for full release).
-- One-click trading with streamlined wallet interactions.
-- Customizable tools for retail and institutional users.
-
-#### **Self-Custody**
-
-Your keys, your assets. Ekiden ensures full control with no centralized intermediaries - trade with confidence.
-
-### **Ekiden’s Technical Edge**
-
-#### **Architecture Overview**
-
-Ekiden’s hybrid rollup design balances speed and transparency:
-
-- **Off-Chain CLOB:** High-speed order matching with latency of 5-15 ms.
-- **On-Chain Commitments:** Merkle proofs of orderbook and position registry inclusion posted to Aptos.
-- **Deferred Settlement:** Batched state updates reduce blockchain congestion while maintaining verifiability.
-- **Data Layers:** Full orderbook data available via nodes or external availability solutions.
-
-#### **Powered by Aptos**
-
-Ekiden harnesses Aptos’ advanced blockchain:
-
-- **Hyper-Parallelization:** Handles institutional-grade volume with ease.
-- **Low Latency:** Executes trades in 5-15 ms, matching CEX benchmarks.
-- **Secure Settlement:** Robust, trustless on-chain finality.
-
-### **Why Ekiden?**
-
-#### **The Problem**
-
-On-chain exchanges struggle with scalability, speed, and computational limits. Traditional designs ported to blockchain suffer from slow execution, shallow liquidity, and inefficient resource use - leaving traders underserved.
-
-#### **Our Solution**
-
-Ekiden rewrites the rules:
-
-- **Hybrid Rollup:** Off-chain efficiency with on-chain trust.
-- **Institutional Scalability:** Merkle proofs and Aptos unlock limitless growth.
-- **Precision Trading:** Deep liquidity and rapid execution for all.
-
-### **Our Core Commitment: Empowered Trading**
-
-At its heart, Ekiden is built to put power back in your hands. Every trade, deposit, and withdrawal happens on your terms - transparent, secure, and free from middlemen.
-
-#### **What This Means for You:**
-
-- **Control:** Connect your Aptos wallet and trade with full custody of your assets—no third-party gatekeepers.
-- **Clarity:** Every order and settlement is verifiable on-chain, thanks to Merkle proofs and Aptos’ open ledger.
-- **Flexibility:** From spot markets to perpetuals, manage your strategy your way, with tools designed for all traders.
-- **Fair Access:** No privileged insiders—just a level playing field powered by smart contracts.
-
-With Ekiden, you’re not just trading - you’re shaping a system that answers to you.
+- **Hyper-Parallelization**: High throughput for institutional workloads.
+- **Low Latency**: Sub-20ms execution speed.
+- **Secure Finality**: Trustless, on-chain settlement.
