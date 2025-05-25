@@ -36,8 +36,7 @@
             "pages": [
               "api-reference/introduction",
               "api-reference/conventions",
-              "api-reference/rate-limits",
-              "api-reference/SDKs"
+              "api-reference/rate-limits"
             ]
           },
           {
