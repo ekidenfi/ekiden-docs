@@ -17,48 +17,6 @@ description: Fee schedule for perpetuals on Ekiden.
 Ekiden is built for serious traders. Our fee structure is designed to reward both volume and liquidity. If you’re trading size or consistently making markets, you’ll benefit from lower costs — and in many cases, get paid to provide liquidity. Fees are calculated using a standard maker-taker model, with rates determined by your 30-day notional volume. Maker rebates kick in at higher tiers, and market share incentives offer additional rewards for dominating individual perp markets. All fee logic is transparent, predictable, and optimized for performance.
 
 ## Fee Tiers
-
-<table>
-  <thead>
-    <tr>
-      <th align="left">30-Day Volume</th>
-      <th align="right">Maker Fee</th>
-      <th align="right">Taker Fee</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>$0+</td><td align="right">0.0200%</td><td align="right">0.0500%</td></tr>
-    <tr><td>$2.5M+</td><td align="right">0.0150%</td><td align="right">0.0450%</td></tr>
-    <tr><td>$5M+</td><td align="right">0.0125%</td><td align="right">0.0400%</td></tr>
-    <tr><td>$10M+</td><td align="right">0.0100%</td><td align="right">0.0350%</td></tr>
-    <tr><td>$20M+</td><td align="right">0.0075%</td><td align="right">0.0300%</td></tr>
-    <tr><td>$30M+</td><td align="right">0.0050%</td><td align="right">0.0250%</td></tr>
-    <tr><td>$50M+</td><td align="right">0.0030%</td><td align="right">0.0200%</td></tr>
-    <tr><td>$75M+</td><td align="right">0.0015%</td><td align="right">0.0150%</td></tr>
-    <tr><td>$100M+</td><td align="right">0.0000%</td><td align="right">0.0125%</td></tr>
-    <tr><td>$250M+</td><td align="right">-0.0015%</td><td align="right">0.0100%</td></tr>
-    <tr><td>$500M+</td><td align="right">-0.0030%</td><td align="right">0.0100%</td></tr>
-    <tr><td>$1B+</td><td align="right">-0.0050%</td><td align="right">0.0100%</td></tr>
-  </tbody>
-</table>
-
-## Market Share Rebates
-
-<table>
-  <thead>
-    <tr>
-      <th align="left">Maker Share (per market)</th>
-      <th align="right">Extra Maker Rebate</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>≥ 0.5%</td><td align="right">-0.001%</td></tr>
-    <tr><td>≥ 1.0%</td><td align="right">-0.002%</td></tr>
-    <tr><td>≥ 3.0%</td><td align="right">-0.003%</td></tr>
-  </tbody>
-</table>
-
-
 | 30-Day Volume | Maker Fee | Taker Fee |
 | ------------- | --------- | --------- |
 | \$0\+         | 0.0200%   | 0.0500%   |
