@@ -1,11 +1,11 @@
 ---
 title: "Perp Fees"
-description: "Ekiden uses a maker-taker model with volume-based tiers. The more you trade, the less you pay."
+description: "Ekiden uses a maker-taker model with volume-based tiers. The more you trade, the better your rates."
 ---
 
-## Fee Tiers
+# Fee Tiers
 
-Fees are based on your **rolling 30-day trading volume** (USD notional). Maker orders (add liquidity) have lower fees — and at high volumes, you even get rebates. Taker orders (remove liquidity) pay slightly more.
+Fees are based on your **rolling 30-day notional volume**. Maker fees drop to zero  and eventually negative as volume increases. Taker fees are flat or reduced at higher tiers.
 
 | 30-Day Volume | Maker Fee | Taker Fee |
 | ------------- | --------- | --------- |
@@ -22,13 +22,13 @@ Fees are based on your **rolling 30-day trading volume** (USD notional). Maker o
 | \$500M\+      | -0.0030%  | 0.0100%   |
 | \$1B\+        | -0.0050%  | 0.0100%   |
 
-- Volume updates in real time.
-- Tiers apply instantly once hit.
-- Negative maker fees = rebate paid to you.
+- Volume is calculated across all perpetuals.
+- Tiers update in real time and apply immediately.
+- Negative maker fees = rebate paid on execution.
 
-## Maker Share Rebates
+## Market Share Rebates
 
-If you’re a top liquidity provider in a specific perp market, you can earn **extra rebates** on top of your fee tier.
+If your maker volume accounts for a meaningful share of a specific market, you’ll earn additional rebates on top of your tier.
 
 | Maker Share (per market) | Extra Maker Rebate |
 | ------------------------ | ------------------ |
@@ -36,6 +36,8 @@ If you’re a top liquidity provider in a specific perp market, you can earn **e
 | ≥ 1.0%                   | -0.002%            |
 | ≥ 3.0%                   | -0.003%            |
 
-These stack on top of your volume tier. Applied automatically. No opt-in needed.
+- Evaluated per contract.
+- Stacks with volume-based rebates.
+- Applied automatically.
 
-Ekiden’s fee system is built to reward both activity and liquidity. Lower fees the more you trade. Rebates the more you contribute.
+Ekiden fees are designed to scale with performance. High-volume and high-share makers get rewarded. No fluff, no delays  just better execution economics.
