@@ -1,30 +1,26 @@
 ---
 title: "Perp Fees"
-description: "Fee schedule for perpetuals on Ekiden."
+description: "Ekiden uses a maker-taker model with volume-based tiers. The more you trade, the less you pay."
 ---
-
-# Perp Fees
-
-Ekiden uses a maker-taker model with volume-based tiers. The more you trade, the less you pay.
 
 ## Fee Tiers
 
 Fees are based on your **rolling 30-day trading volume** (USD notional). Maker orders (add liquidity) have lower fees — and at high volumes, you even get rebates. Taker orders (remove liquidity) pay slightly more.
 
-| 30-Day Volume       | Maker Fee  | Taker Fee  |
-|---------------------|------------|------------|
-| $0+                 | 0.0200%    | 0.0500%    |
-| $2.5M+              | 0.0150%    | 0.0450%    |
-| $5M+                | 0.0125%    | 0.0400%    |
-| $10M+               | 0.0100%    | 0.0350%    |
-| $20M+               | 0.0075%    | 0.0300%    |
-| $30M+               | 0.0050%    | 0.0250%    |
-| $50M+               | 0.0030%    | 0.0200%    |
-| $75M+               | 0.0015%    | 0.0150%    |
-| $100M+              | 0.0000%    | 0.0125%    |
-| $250M+              | -0.0015%   | 0.0100%    |
-| $500M+              | -0.0030%   | 0.0100%    |
-| $1B+                | -0.0050%   | 0.0100%    |
+| 30-Day Volume | Maker Fee | Taker Fee |
+| ------------- | --------- | --------- |
+| \$0\+         | 0.0200%   | 0.0500%   |
+| \$2.5M\+      | 0.0150%   | 0.0450%   |
+| \$5M\+        | 0.0125%   | 0.0400%   |
+| \$10M\+       | 0.0100%   | 0.0350%   |
+| \$20M\+       | 0.0075%   | 0.0300%   |
+| \$30M\+       | 0.0050%   | 0.0250%   |
+| \$50M\+       | 0.0030%   | 0.0200%   |
+| \$75M\+       | 0.0015%   | 0.0150%   |
+| \$100M\+      | 0.0000%   | 0.0125%   |
+| \$250M\+      | -0.0015%  | 0.0100%   |
+| \$500M\+      | -0.0030%  | 0.0100%   |
+| \$1B\+        | -0.0050%  | 0.0100%   |
 
 - Volume updates in real time.
 - Tiers apply instantly once hit.
@@ -35,13 +31,11 @@ Fees are based on your **rolling 30-day trading volume** (USD notional). Maker o
 If you’re a top liquidity provider in a specific perp market, you can earn **extra rebates** on top of your fee tier.
 
 | Maker Share (per market) | Extra Maker Rebate |
-|--------------------------|--------------------|
+| ------------------------ | ------------------ |
 | ≥ 0.5%                   | -0.001%            |
 | ≥ 1.0%                   | -0.002%            |
 | ≥ 3.0%                   | -0.003%            |
 
 These stack on top of your volume tier. Applied automatically. No opt-in needed.
-
----
 
 Ekiden’s fee system is built to reward both activity and liquidity. Lower fees the more you trade. Rebates the more you contribute.
