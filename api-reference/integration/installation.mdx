@@ -13,8 +13,6 @@ Install and configure the Ekiden SDK for TypeScript. This section walks through 
 
 ### **Installation**
 
-Install the Ekiden TypeScript SDK using your preferred package manager:
-
 ```bash
 # pnpm
 pnpm add @ekiden/ts-sdk
@@ -55,16 +53,3 @@ console.log("Markets:", markets);
 - **SDK WebSocket**: wss://api.production.ekiden.fi/ws
 - **GraphQL HTTP**: https://hasura.production.ekiden.fi/v1/graphql
 - **GraphQL WS**: wss://hasura.production.ekiden.fi/v1/graphql
-
-## Authentication
-
-To use authenticated endpoints, sign a message with your Aptos-compatible wallet and pass it to `authorize()` along with your public key. A valid token will be returned and must be set with `setToken()`.
-
-```ts
-const { token } = await ekiden.authorize({
-  signature: '0x...',
-  public_key: '0x...',
-});
-
-ekiden.setToken(token);
-```
