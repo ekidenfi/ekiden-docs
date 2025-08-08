@@ -1,38 +1,42 @@
 ---
-title: Ekiden SDK Installation Guide
-description: Install and configure the Ekiden SDK for TypeScript. Learn how to authenticate and make your first API call.
+title: "Ekiden SDK Installation Guide"
 ---
 
-This guide will help you install and set up the Ekiden SDK for TypeScript. It covers all the steps from prerequisites to making your first API call, with clear placeholders for you to insert your own values. Python and Rust SDKs will be added later.
+Install and configure the Ekiden SDK for TypeScript. This section walks through prerequisites, installation, and your first API call. Python and Rust SDKs will be added later.
 
-## Prerequisites
+### **Prerequisites**
 
-Before installing the Ekiden SDK, make sure you have the following in place:
+- **Ekiden account** with production credentials.
+- **Node.js** v14 or higher.
+- **Package Manager**: npm, yarn, pnpm, or bun.
+- **System clock synchronized** (e.g., via NTP) – authentication will fail if your clock is off.
 
-- **Account Access**: An Ekiden account or testnet credentials
-- **Node.js**: Version 14 or higher
-- **Package Manager**: npm, yarn, pnpm, or bun
-- **System Clock**: Must be synchronized (e.g., using NTP)
-
-## Installation
+### **Installation**
 
 Install the Ekiden TypeScript SDK using your preferred package manager:
 
 ```bash
+# pnpm
 pnpm add @ekiden/ts-sdk
+
+# npm
 npm install @ekiden/ts-sdk
+
+# yarn
 yarn add @ekiden/ts-sdk
+
+# bun
 bun add @ekiden/ts-sdk
-````
+```
 
 ## Quick Start
 
 Import and initialize the client, authorize via wallet signature, and make a test call:
 
 ```ts
-import { EkidenClient, TESTNET } from '@ekiden/ts-sdk';
+import { EkidenClient, MAINNET } from '@ekiden/ts-sdk';
 
-const ekiden = new EkidenClient(TESTNET);
+const ekiden = new EkidenClient(MAINNET);
 
 const { token } = await ekiden.authorize({
   signature: '0x...',
@@ -47,10 +51,10 @@ console.log("Markets:", markets);
 
 ## Configuration
 
-* **Endpoints**: Defaults to mainnet. Use `TESTNET` when initializing the client for testing.
-* **Proxies**: Set `HTTP_PROXY` / `HTTPS_PROXY` if your environment requires it.
-* **Rate Limits**: For high-volume access, contact the Ekiden team for rate limit upgrades.
-* **Time Sync**: Ensure your system clock is synced or authentication may fail.
+- **REST (Gateway)**: https://api.production.ekiden.fi/api/v1
+- **SDK WebSocket**: wss://api.production.ekiden.fi/ws
+- **GraphQL HTTP**: https://hasura.production.ekiden.fi/v1/graphql
+- **GraphQL WS**: wss://hasura.production.ekiden.fi/v1/graphql
 
 ## Authentication
 
@@ -64,24 +68,3 @@ const { token } = await ekiden.authorize({
 
 ekiden.setToken(token);
 ```
-
-## Example: Fetch Market Data
-
-```ts
-const markets = await ekiden.getMarkets();
-console.log("Available markets:", markets);
-```
-
-## Troubleshooting
-
-* **Install errors**: Check Node.js version, network connection, and package manager
-* **Invalid signature**: Ensure the signature and public key are valid and not expired
-* **Clock drift**: Sync your local machine’s time using NTP
-* **API failures**: Retry authorization and recheck the endpoint environment (`TESTNET`, `MAINNET`)
-* **Other issues**: Open an issue on GitHub or reach out via Discord
-
-## Learn More
-
-➡️ [Ekiden TypeScript SDK on GitHub](https://github.com/ekidenfi/ekiden-ts-sdk)
-
-For questions or integration help, join the Ekiden Discord or raise an issue in the GitHub repository.
