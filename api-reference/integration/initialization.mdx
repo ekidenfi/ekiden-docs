@@ -1,6 +1,6 @@
-## Overview
-
-This page explains how to initialize the Ekiden SDK in TypeScript, Python, and Rust. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading).
+---
+description: "This page explains how to initialize the Ekiden SDK in TypeScript, Python, and Rust. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading)."
+---
 
 ## Supported Environments
 
@@ -41,7 +41,7 @@ const markets = await client.getMarkets();
 console.log(markets);
 ```
 
-### Python 
+### Python
 
 ```python
 from ekiden_sdk import EkidenClient
@@ -54,7 +54,7 @@ client = EkidenClient(
 client.connect()
 ```
 
-### Rust 
+### Rust
 
 ```rust
 use ekiden_sdk::{ClientBuilder, Network};
