@@ -8,3 +8,17 @@ title: "Orders"
 - **Get User Orders**: GET /api/v1/user/orders
 - **Place Order**: POST /api/v1/user/intent (order_create payload)
 - **Cancel Order**: POST /api/v1/user/intent (order_cancel payload)
+
+**SDK Examples** 
+
+```bash
+await client.placeOrder({
+  market_addr: "...",
+  side: "buy",
+  size: 100,
+  price: 25000,
+  type: "limit"
+});
+
+await client.cancelOrder({ sid: "order-id" });
+```
