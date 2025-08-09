@@ -31,41 +31,72 @@
         ]
       },
       {
-        "tab": "API Reference",
-        "groups": [
-          {
-            "group": "General",
-            "pages": [
-              "api-reference/introduction",
-              "api-reference/conventions",
-              "api-reference/rate-limits"
-            ]
-          },
-          {
-            "group": "Integration",
-            "pages": [
-              "api-reference/integration/installation",
-              "api-reference/integration/quick-start",
-              "api-reference/integration/initialization",
-              "api-reference/integration/configuration",
-              "api-reference/integration/deposit-and-withdraw",
-              "api-reference/integration/Adjust-the-leverage",
-              "api-reference/integration/orders",
-              "api-reference/integration/closing-position",
-              "api-reference/integration/market-data",
-              "api-reference/integration/account-data",
-              "api-reference/integration/pnl-margin-fr",
-              "api-reference/integration/onboarding-auth",
-              "api-reference/integration/troubleshooting"
-            ]
-          },
-          {
-            "group": "API",
-            "openapi": "api-reference/openapi.json"
-          }
-        ]
-      }
-    ],
+       {
+  "tab": "API Reference",
+  "groups": [
+    {
+      "group": "Overview",
+      "pages": [
+        "api-reference/introduction",
+        "api-reference/conventions",
+        "api-reference/rate-limits"
+      ]
+    },
+    {
+      "group": "Getting Started",
+      "pages": [
+        "api-reference/integration/installation",
+        "api-reference/integration/quick-start"
+      ]
+    },
+    {
+      "group": "Setup",
+      "pages": [
+        "api-reference/integration/configuration",
+        "api-reference/integration/initialization",
+        "api-reference/integration/onboarding-auth"
+      ]
+    },
+    {
+      "group": "Fund Your Account",
+      "pages": [
+        "api-reference/integration/deposit-and-withdraw"
+      ]
+    },
+    {
+      "group": "Market Data",
+      "pages": [
+        "api-reference/integration/market-data"
+      ]
+    },
+    {
+      "group": "Trade",
+      "pages": [
+        "api-reference/integration/orders",
+        "api-reference/integration/closing-position",
+        "api-reference/integration/Adjust-the-leverage"
+      ]
+    },
+    {
+      "group": "Account & Portfolio",
+      "pages": [
+        "api-reference/integration/account-data",
+        "api-reference/integration/pnl-margin-fr"
+      ]
+    },
+    {
+      "group": "Troubleshooting",
+      "pages": [
+        "api-reference/integration/troubleshooting"
+      ]
+    },
+    {
+      "group": "API",
+      "openapi": "api-reference/openapi.json"
+    }
+  ]
+}
+
     "global": {
       "anchors": [
         {
