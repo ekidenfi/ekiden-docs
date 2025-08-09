@@ -1,6 +1,93 @@
 ---
-# Deposit & Withdraw
-All deposits and withdrawals will be handled via the SDK, which will be available shortly
+0: "A"
+1: "l"
+2: "l"
+3: " "
+4: "d"
+5: "e"
+6: "p"
+7: "o"
+8: "s"
+9: "i"
+10: "t"
+11: "s"
+12: " "
+13: "a"
+14: "n"
+15: "d"
+16: " "
+17: "w"
+18: "i"
+19: "t"
+20: "h"
+21: "d"
+22: "r"
+23: "a"
+24: "w"
+25: "a"
+26: "l"
+27: "s"
+28: " "
+29: "w"
+30: "i"
+31: "l"
+32: "l"
+33: " "
+34: "b"
+35: "e"
+36: " "
+37: "h"
+38: "a"
+39: "n"
+40: "d"
+41: "l"
+42: "e"
+43: "d"
+44: " "
+45: "v"
+46: "i"
+47: "a"
+48: " "
+49: "t"
+50: "h"
+51: "e"
+52: " "
+53: "S"
+54: "D"
+55: "K"
+56: ","
+57: " "
+58: "w"
+59: "h"
+60: "i"
+61: "c"
+62: "h"
+63: " "
+64: "w"
+65: "i"
+66: "l"
+67: "l"
+68: " "
+69: "b"
+70: "e"
+71: " "
+72: "a"
+73: "v"
+74: "a"
+75: "i"
+76: "l"
+77: "a"
+78: "b"
+79: "l"
+80: "e"
+81: " "
+82: "s"
+83: "h"
+84: "o"
+85: "r"
+86: "t"
+87: "l"
+88: "y"
 ---
 
 ## Overview
@@ -11,7 +98,7 @@ Ekiden uses a smart contract-based margin bank to custody collateral for trading
 
 Ekiden supports the following tokens as margin collateral:
 
-USDC, USDC, USDe  
+USDC, USDC, USDe
 
 Check the /tokens endpoint or documentation for the most current list.
 
@@ -19,33 +106,34 @@ Check the /tokens endpoint or documentation for the most current list.
 
 ### Steps
 
-- Ensure Wallet Connection to the correct network  
-- Approve Token if required via ERC-20 approval transaction  
-- Call Deposit Endpoint or SDK Method  
+- Ensure Wallet Connection to the correct network
+- Approve Token if required via ERC-20 approval transaction
+- Call Deposit Endpoint or SDK Method
 
+### REST
 
-## SDK Methods (Examples)
+**Get Deposits **
 
-### TypeScript
+```ts
+GET /api/v1/deposits
+```
+
+**Get Withdrawals **
+
+```python
+GET /api/v1/deposits
+```
+
+### SDK Examples 
+
+**Deposit** 
 
 ```ts
 await client.depositToMarginBank("USDC", "1000.00");
-await client.withdrawFromMarginBank("USDC", "500.00");
 ```
 
-### Python
+**Withdraw**
 
 ```python
-client.deposit(token="USDC", amount="1000.00")
-client.withdraw(token="USDC", amount="500.00")
+await client.withdrawFromMarginBank("USDC", "500.00");
 ```
-
-
-
-### Notes
-
----
-
-### Troubleshooting
-
-Coming soon, once the SDK is shipped
