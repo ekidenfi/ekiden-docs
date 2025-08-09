@@ -45,6 +45,7 @@
             "group": "Integration",
             "pages": [
               "api-reference/integration/installation",
+              "api-reference/integration/quick-start",
               "api-reference/integration/initialization",
               "api-reference/integration/deposit-and-withdraw",
               "api-reference/integration/Adjust-the-leverage",
