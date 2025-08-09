@@ -47,6 +47,7 @@
               "api-reference/integration/installation",
               "api-reference/integration/quick-start",
               "api-reference/integration/initialization",
+              "api-reference/integration/configuration",
               "api-reference/integration/deposit-and-withdraw",
               "api-reference/integration/Adjust-the-leverage",
               "api-reference/integration/orders",
