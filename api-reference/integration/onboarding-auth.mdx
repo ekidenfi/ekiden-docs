@@ -1,5 +1,11 @@
 ---
-title: 'Onboarding Signature & API Auth'
-description: 'Onboarding Signature & API Auth'
+title: "Onboarding Signature & API Auth"
 ---
 
+Sign the fixed message AUTHORIZE with your Ed25519 key and send it to:
+
+```bash
+POST /api/v1/authorize
+```
+
+Response will return JWT token.
