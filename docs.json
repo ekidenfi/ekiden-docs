@@ -51,6 +51,7 @@
               "api-reference/integration/orders",
               "api-reference/integration/closing-position",
               "api-reference/integration/market-data",
+              "api-reference/integration/account-data",
               "api-reference/integration/onboarding-auth"
             ]
           },
