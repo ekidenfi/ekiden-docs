@@ -53,7 +53,8 @@
               "api-reference/integration/market-data",
               "api-reference/integration/account-data",
               "api-reference/integration/pnl-margin-fr",
-              "api-reference/integration/onboarding-auth"
+              "api-reference/integration/onboarding-auth",
+              "api-reference/integration/troubleshooting"
             ]
           },
           {
