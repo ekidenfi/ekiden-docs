@@ -1,5 +1,5 @@
 ---
-title: Adjusting Leverage (Isolated Per-Market)
+title: "Adjusting Leverage (Isolated Per-Market)"
 ---
 
 ## Overview
@@ -21,11 +21,11 @@ Content-Type: application/json
 
 ## Request Parameters
 
-| Parameter   | Type    | Description                    | Required |
-|-------------|---------|--------------------------------|----------|
-| market      | string  | Market symbol (e.g. BTC-PERP)  | Yes      |
-| leverage    | integer | New leverage (e.g. 10 for 10x) | Yes      |
-| subAccount  | string  | Optional subaccount identifier | No       |
+| Parameter  | Type    | Description                    | Required |
+| ---------- | ------- | ------------------------------ | -------- |
+| market     | string  | Market symbol (e.g. BTC-PERP)  | Yes      |
+| leverage   | integer | New leverage (e.g. 10 for 10x) | Yes      |
+| subAccount | string  | Optional subaccount identifier | No       |
 
 ## Example Request
 
@@ -69,28 +69,27 @@ curl -X POST https://api.ekiden.io/v1/leverage \
 }
 ```
 
-## SDK Examples
-
-### TypeScript
+### SDK 
 
 ```ts
 await client.adjustLeverage("BTC-PERP", 10);
 ```
 
-### Python
+### REST
 
 ```python
-client.adjust_leverage(market="BTC-PERP", leverage=10)
+GET /api/v1/user/leverage
+POST /api/v1/user/intent (payload type: leverage_assign)
 ```
 
 ## Notes
 
-- Leverage is isolated per market  
-- Min = 1x, Max = varies by market  
-- Open orders are cancelled when leverage is changed  
-- Changing leverage affects margin ratio and liquidation price  
-- Cannot increase leverage if margin requirements would be violated  
-
----
+- Leverage is isolated per market
+- Min = 1x, Max = varies by market
+- Open orders are cancelled when leverage is changed
+- Changing leverage affects margin ratio and liquidation price
+- Cannot increase leverage if margin requirements would be violated
 
 For current leverage settings or account info, use `GET /api/v1/account` or the relevant SDK method.
+
+---
