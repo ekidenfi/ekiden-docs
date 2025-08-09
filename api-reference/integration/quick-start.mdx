@@ -1,5 +1,21 @@
 ---
-title: 'New file'
-description: 'Description of your new file.'
+title: "Quick Start"
 ---
 
+Import and initialize the client, authorize via wallet signature, and make a test call:
+
+```ts
+import { EkidenClient, MAINNET } from '@ekiden/ts-sdk';
+
+const ekiden = new EkidenClient(MAINNET);
+
+const { token } = await ekiden.authorize({
+  signature: '0x...',
+  public_key: '0x...',
+});
+
+ekiden.setToken(token);
+
+const markets = await ekiden.getMarkets();
+console.log("Markets:", markets);
+```
