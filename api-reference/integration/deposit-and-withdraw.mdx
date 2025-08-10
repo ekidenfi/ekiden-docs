@@ -130,11 +130,23 @@ GET /api/v1/deposits
 **Deposit**
 
 ```ts
-await client.depositToMarginBank("USDC", "1000.00");
+// Deposit to vault
+const depositPayload = ekiden.vault.deposit({
+  vaultAddress: "0x...",
+  userAddress: "0x...",
+  token: "0x...",
+  amount: 1000n,
+});
 ```
 
 **Withdraw**
 
 ```python
-await client.withdrawFromMarginBank("USDC", "500.00");
+// Withdraw from vault
+const withdrawPayload = ekiden.vault.withdraw({
+  vaultAddress: "0x...",
+  userAddress: "0x...",
+  token: "0x...",
+  amount: 500n,
+});
 ```
