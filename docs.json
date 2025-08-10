@@ -77,6 +77,14 @@
                         ]
                     },
                     {
+                        "group": "Trade",
+                        "pages": [
+                            "api-reference/integration/orders",
+                            "api-reference/integration/closing-position",
+                            "api-reference/integration/Adjust-the-leverage"
+                        ]
+                    },
+                    {
                         "group": "Account & Portfolio",
                         "pages": [
                             "api-reference/integration/account-data",
