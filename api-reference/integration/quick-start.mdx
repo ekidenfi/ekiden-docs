@@ -5,17 +5,19 @@ title: "Quick Start"
 Import and initialize the client, authorize via wallet signature and make a test call:
 
 ```ts
-import { EkidenClient, MAINNET } from '@ekiden/ts-sdk';
+import { EkidenClient, TESTNET } from "@ekiden/ts-sdk";
 
-const ekiden = new EkidenClient(MAINNET);
+const ekiden = new EkidenClient(TESTNET);
 
+// Authorize (get JWT)
 const { token } = await ekiden.authorize({
-  signature: '0x...',
-  public_key: '0x...',
+  signature: "0x...",
+  public_key: "0x..."
 });
-
 ekiden.setToken(token);
 
+// Fetch markets
 const markets = await ekiden.getMarkets();
-console.log("Markets:", markets);
+
+console.log("markets”, markets)
 ```
