@@ -77,11 +77,10 @@
                         ]
                     },
                     {
-                        "group": "Trade",
+                        "group": "Market Make",
                         "pages": [
-                            "api-reference/integration/orders",
-                            "api-reference/integration/closing-position",
-                            "api-reference/integration/Adjust-the-leverage"
+                            "api-reference/integration/market-maker-integration"
+                            
                         ]
                     },
                     {
