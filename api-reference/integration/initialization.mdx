@@ -7,10 +7,10 @@ title: "Client Initialization"
 
 Ekiden supports the following environments:
 
-| Environment | Network Key | REST URL                                | WebSocket URL                     |
-| ----------- | ----------- | --------------------------------------- | --------------------------------- |
-| Mainnet     | mainnet     | https://api.production.ekiden.fi/api/v1 | wss://api.production.ekiden.fi/ws |
-| Testnet     | testnet     | https://api.staging.ekiden.fi/api/v1    | wss://api.staging.ekiden.fi/ws    |
+| Environment | Network Key | REST URL                             | WebSocket URL                  |
+| ----------- | ----------- | ------------------------------------ | ------------------------------ |
+| Mainnet     | mainnet     | https://api.ekiden.fi/api/v1         | wss://api.ekiden.fi/ws         |
+| Testnet     | testnet     | https://api.staging.ekiden.fi/api/v1 | wss://api.staging.ekiden.fi/ws |
 
 Use the network parameter during client initialization to select your target environment.
 
@@ -29,17 +29,22 @@ Use the network parameter during client initialization to select your target env
 ### TypeScript
 
 ```ts
-import { EkidenClient, Networks } from '@ekiden/sdk';
 
-const client = new EkidenClient({
-  network: Networks.MAINNET,
-  subaccountId: 0,
-  useWebsocket: true
+import { EkidenClient, TESTNET } from "@ekiden/ts-sdk";
+
+const ekiden = new EkidenClient(TESTNET);
+
+// Authorize (get JWT)
+const { token } = await ekiden.authorize({
+  signature: "0x...",
+  public_key: "0x..."
 });
+ekiden.setToken(token);
 
-await client.connect();
-const markets = await client.getMarkets();
-console.log(markets);
+// Fetch markets
+const markets = await ekiden.getMarkets();
+
+console.log("markets”, markets)
 ```
 
 ### Python
