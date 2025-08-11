@@ -93,13 +93,14 @@ title: "Deposit & Withdraw Funds"
 
 ## Overview
 
-Ekiden uses a smart contract-based margin bank to custody collateral for trading. Users can deposit multiple supported tokens to the margin bank and withdraw available (free) collateral at any time. All deposits and withdrawals are on-chain but occur on the same network as the Ekiden protocol—no cross-chain bridging is required.
+Ekiden uses a smart contract-based margin bank to custody collateral for trading. Users can deposit USDC to the margin bank and withdraw available (free) collateral at any time. All deposits and withdrawals are on-chain but occur on Aptos. 
 
 ## Supported Tokens
 
 Ekiden supports the following tokens as margin collateral:
 
-USDC, USDC, USDe
+- USDC.
+- More coming soon. 
 
 Check the /tokens endpoint or documentation for the most current list.
 
@@ -108,7 +109,6 @@ Check the /tokens endpoint or documentation for the most current list.
 ### Steps
 
 - Ensure Wallet Connection to the correct network
-- Approve Token if required via ERC-20 approval transaction
 - Call Deposit Endpoint or SDK Method
 
 ### REST
