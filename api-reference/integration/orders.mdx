@@ -20,5 +20,15 @@ await client.placeOrder({
   type: "limit"
 });
 
-await client.cancelOrder({ sid: "order-id" });
+--> 
+
+const order = await ekiden.createOrder({
+  market_addr: "0x...",
+  side: "buy",
+  size: 100,
+  price: 123.45,
+  type: "limit",
+  nonce: 1,
+  signature: "0x..."
+});
 ```
