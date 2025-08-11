@@ -12,13 +12,13 @@ title: "Orders"
 **SDK Examples**
 
 ```typescript
-const order = await ekiden.createOrder({
-  market_addr: "0x...",
+await client.placeOrder({
+  market_addr: "...",
   side: "buy",
   size: 100,
-  price: 123.45,
-  type: "limit",
-  nonce: 1,
-  signature: "0x..."
+  price: 25000,
+  type: "limit"
 });
+
+await client.cancelOrder({ sid: "order-id" });
 ```
