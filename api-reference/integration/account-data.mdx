@@ -11,11 +11,6 @@ title: "Account Data "
 ### SDK
 
 ```typescript
-export const PositionQuery = gql`  query Position($where: position_bool_exp, $limit: Int, $offset: Int, $order_by: [position_order_by!]) {    position(where: $where, limit: $limit, offset: $offset, order_by: $order_by) {      created_at      epoch      funding_index      id      margin      market_addr      price      sid      size      updated_at      user_addr    }  }`;
-
-
-export const FillQuery = gql`  query Fill($where: fill_bool_exp, $limit: Int, $offset: Int, $order_by: [fill_order_by!]) {    fill(where: $where, limit: $limit, offset: $offset, order_by: $order_by) {      created_at      fee      id      maker_addr      maker_order_sid      market_addr      price      seq      sid      side      size      taker_addr      taker_order_sid      updated_at      value    }  }`;
-
-
-export const useFills = (options: QueryHookOptions<{ fill: FillList }, Variables<Fill>> = {}) =>  useQuery<{ fill: FillList }, Variables<Fill>>(FillQuery, options);
+const positions = await client.getPositions();
+const fills = await client.getFills();
 ```
