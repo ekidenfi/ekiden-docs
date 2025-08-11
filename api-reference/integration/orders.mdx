@@ -12,16 +12,6 @@ title: "Orders"
 **SDK Examples**
 
 ```typescript
-await client.placeOrder({
-  market_addr: "...",
-  side: "buy",
-  size: 100,
-  price: 25000,
-  type: "limit"
-});
-
---> 
-
 const order = await ekiden.createOrder({
   market_addr: "0x...",
   side: "buy",
