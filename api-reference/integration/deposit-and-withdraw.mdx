@@ -121,7 +121,7 @@ GET /api/v1/deposits
 
 **Get Withdrawals**
 
-```python
+```typescript
 GET /api/v1/deposits
 ```
 
@@ -130,23 +130,11 @@ GET /api/v1/deposits
 **Deposit**
 
 ```typescript
-// Deposit to vault
-const depositPayload = ekiden.vault.deposit({
-  vaultAddress: "0x...",
-  userAddress: "0x...",
-  token: "0x...",
-  amount: 1000n,
-});
+await client.depositToMarginBank("USDC", "1000.00");
 ```
 
 **Withdraw**
 
 ```typescript
-// Withdraw from vault
-const withdrawPayload = ekiden.vault.withdraw({
-  vaultAddress: "0x...",
-  userAddress: "0x...",
-  token: "0x...",
-  amount: 500n,
-});
+await client.withdrawFromMarginBank("USDC", "500.00");
 ```
