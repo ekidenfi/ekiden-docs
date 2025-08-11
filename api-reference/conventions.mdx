@@ -1,7 +1,3 @@
----
-# Ekiden API Conventions
----
-
 This document outlines Ekiden's API design conventions and standards. These ensure consistency, developer-friendliness, and compatibility across all REST and WebSocket interfaces.
 
 ---
@@ -10,8 +6,8 @@ This document outlines Ekiden's API design conventions and standards. These ensu
 
 Ekiden provides separate base URLs for each environment:
 
-- **Mainnet**: [`https://api.ekiden.fi`](https://api.ekiden.fi)  
-- **Testnet**: [`https://testnet-api.ekiden.fi`](https://testnet-api.ekiden.fi)
+- **Mainnet**: `https://api.ekiden.fi/api`
+- **Testnet**: [`https://testnet-api.ekiden.fi/api`](https://testnet-api.ekiden.fi/api)
 
 > All API calls must use **HTTPS**.
 
@@ -21,7 +17,7 @@ Ekiden provides separate base URLs for each environment:
 
 We use URI-based versioning:
 
-- **Format**: `/v1/`  
+- **Format**: `/v1/`
 - **Example**: `GET /v1/orders`
 
 Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
@@ -30,14 +26,14 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 
 ## 3. RESTful Design
 
-| Method  | Description                              |
-|---------|------------------------------------------|
-| `GET`   | Fetch resources (e.g., market data)      |
-| `POST`  | Create resources (e.g., place an order)  |
-| `DELETE`| Cancel or remove resources               |
-| `PATCH` | Update partial resources                 |
+| Method   | Description                             |
+| -------- | --------------------------------------- |
+| `GET`    | Fetch resources (e.g., market data)     |
+| `POST`   | Create resources (e.g., place an order) |
+| `DELETE` | Cancel or remove resources              |
+| `PATCH`  | Update partial resources                |
 
-- Resources are nouns, pluralized when appropriate  
+- Resources are nouns, pluralized when appropriate
   - Example: `/v1/orders`, `/v1/markets`
 
 ---
@@ -46,9 +42,8 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 
 **Endpoint**:
 
-```txt
-wss://ws.ekiden.exchange/v1/stream
-```
+Mainnet: wss[<u>://api.ekiden.fi/</u>](https://api.ekiden.fi/api)<u>ws</u>\
+Testnet: wss://api.staging.ekiden.fi/ws
 
 ### Subscribe to a public channel
 
@@ -128,12 +123,12 @@ EKIDEN-SIGNATURE: base64(hmac_sha256(...))
 ### Error codes
 
 | Code | Meaning               |
-|------|------------------------|
-| 2000 | Invalid request        |
-| 2001 | Authentication failed  |
-| 2002 | Signature expired      |
-| 2003 | Rate limit exceeded    |
-| 2004 | Resource not found     |
+| ---- | --------------------- |
+| 2000 | Invalid request       |
+| 2001 | Authentication failed |
+| 2002 | Signature expired     |
+| 2003 | Rate limit exceeded   |
+| 2004 | Resource not found    |
 
 > HTTP status codes (`400`, `401`, `429`, etc.) are used appropriately.
 
@@ -141,7 +136,7 @@ EKIDEN-SIGNATURE: base64(hmac_sha256(...))
 
 ## 9. Rate Limits
 
-- **Public endpoints**: 60 requests/minute  
+- **Public endpoints**: 60 requests/minute
 - **Private endpoints**: 30 requests/minute per API key
 
 ### Example response on limit exceeded
