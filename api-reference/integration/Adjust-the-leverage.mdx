@@ -8,7 +8,7 @@ Ekiden supports isolated leverage settings per market. This allows users to cont
 
 ## Endpoint
 
-`POST /api/v1/leverage`
+`POST /api/v1/user/intent`
 
 Adjust the leverage multiplier for a specific market. This endpoint applies only to the specified market and cancels any open orders associated with it.
 
@@ -31,21 +31,43 @@ Content-Type: application/json
 
 ```json
 {
-  "market": "BTC-PERP",
-  "leverage": 10
+    "payload": {
+        "type": "leverage_assign",
+        "market_addr": "",
+        "leverage": 8
+    },
+    "nonce": 1755001718461,
+    "signature": ""
 }
 ```
 
-## Example cURL
+## Example
 
-```bash
-curl -X POST https://api.ekiden.io/v1/leverage \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-        "market": "BTC-PERP",
-        "leverage": 10
-      }'
+```ts
+    const nonce = Date.now();
+
+    const payload = {
+      type: "leverage_assign",
+      market_addr: marketStore.activeMarket.addr,
+      leverage,
+    } satisfies ActionPayload;
+
+    const hex = buildOrderPayload({
+      payload,
+      nonce,
+    });
+
+    const signature = accountStore.subAccount.sign(hex).toString();
+
+    const params = {
+      payload,
+      nonce,
+      signature,
+    } satisfies SendIntentParams;
+
+    let response: SendIntentResponse;
+
+    response = await ekiden.sendIntent(params);
 ```
 
 ## Response
@@ -69,19 +91,6 @@ curl -X POST https://api.ekiden.io/v1/leverage \
 }
 ```
 
-### SDK
-
-```ts
-await client.adjustLeverage("BTC-PERP", 10);
-```
-
-### REST
-
-```python
-GET /api/v1/user/leverage
-POST /api/v1/user/intent (payload type: leverage_assign)
-```
-
 ## Notes
 
 - Leverage is isolated per market
@@ -89,7 +98,5 @@ POST /api/v1/user/intent (payload type: leverage_assign)
 - Open orders are cancelled when leverage is changed
 - Changing leverage affects margin ratio and liquidation price
 - Cannot increase leverage if margin requirements would be violated
-
-For current leverage settings or account info, use `GET /api/v1/account` or the relevant SDK method.
 
 ---
