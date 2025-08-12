@@ -9,8 +9,7 @@ Ekiden supports the following environments:
 
 | Environment | Network Key | REST URL                             | WebSocket URL                  |
 | ----------- | ----------- | ------------------------------------ | ------------------------------ |
-| Mainnet     | mainnet     | https://api.ekiden.fi/api/v1         | wss://api.ekiden.fi/ws         |
-| Testnet     | testnet     | https://api.staging.ekiden.fi/api/v1 | wss://api.staging.ekiden.fi/ws |
+| Testnet     | testnet     | https://api.ekiden.fi/api/v1         | wss://api.ekiden.fi/ws         |
 
 Use the network parameter during client initialization to select your target environment.
 
@@ -29,35 +28,27 @@ Use the network parameter during client initialization to select your target env
 ### TypeScript
 
 ```ts
+import { Ed25519Account, Ed25519PrivateKey } from "@aptos-labs/ts-sdk";
 
 import { EkidenClient, TESTNET } from "@ekiden/ts-sdk";
 
 const ekiden = new EkidenClient(TESTNET);
 
+const privateKey = new Ed25519PrivateKey(ENV.PRIVATE_KEY);
+const account = new Ed25519Account({ privateKey });
+
+const publicKey = account.publicKey.toString();
+
+const messageBytes = new TextEncoder().encode("AUTHORIZE");
+const signature = account.sign(messageBytes).toString();
+
+
 // Authorize (get JWT)
 const { token } = await ekiden.authorize({
-  signature: "0x...",
-  public_key: "0x..."
+  signature: signature,
+  public_key: publicKey
 });
-ekiden.setToken(token);
 
-// Fetch markets
-const markets = await ekiden.getMarkets();
-
-console.log("markets”, markets)
-```
-
-### Python
-
-```python
-from ekiden_sdk import EkidenClient
-
-client = EkidenClient(
-    network="mainnet",
-    subaccount_id=0,
-    use_websocket=True
-)
-client.connect()
 ```
 
 ### Rust
