@@ -1,0 +1,47 @@
+---
+title: "Rate Limits"
+---
+
+Ekiden enforces uniform rate limits across all API endpoints to ensure fair usage and system stability. Rate limiting prevents any single client from overloading the platform, so all users experience a consistent, high-performance trading API.
+
+> **Note:** All rate limits are subject to change as we balance demand and reliability. Ekiden may adjust these limits over time to maintain optimal performance.
+
+## Rate Limit Policy
+
+Ekiden’s REST API rate limits apply **globally** – there is a single limit on requests across all endpoints.
+
+- **Global request limit:** **100 requests per 10 seconds** (aggregate across all REST endpoints). Brief bursts above this are tolerated, but sustained requests beyond this threshold will be rejected.
+- **Enforcement scope:**
+  - **Public (unauthenticated) endpoints:** Tracked per **IP address**.
+  - **Private (authenticated) endpoints:** Tracked per **API key** _and_ per **IP address**.
+- **Behavior on exceedance:**
+  - Response: **HTTP 429 – Too Many Requests**
+  - Error code: `2003`
+  - Message: `"Rate limit exceeded"`
+- **Rate limit headers:**
+  - `Retry-After`- number of seconds to wait before retrying (typically **60 seconds**).\
+    Clients **must** pause requests until the indicated time has passed.
+
+## Best Practices
+
+- **Throttle requests:** Ensure you do not exceed 100 requests in any rolling 10-second window.
+- **Use WebSockets for real-time data:** Ideal for high-frequency updates instead of frequent REST polling.
+- **Handle 429 responses gracefully:**
+  - Respect the `Retry-After` header.
+  - Wait the specified time before retrying.
+- **`Check for error code 2003:`** Helps your application identify rate limit issues.
+- **Need higher limits?**\
+  Contact the Ekiden team (e.g., via Discord) for options like colocated infrastructure and custom limits.
+
+## Example: 429 Rate Limit Exceeded
+
+```http
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+Retry-After: 60
+
+{
+  "error_code": 2003,
+  "error_message": "Rate limit exceeded"
+}
+```
