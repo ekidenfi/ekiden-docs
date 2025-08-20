@@ -10,8 +10,8 @@ This document outlines Ekiden's API design conventions and standards. These ensu
 
 Ekiden provides separate base URLs for each environment:
 
-- **Mainnet**: `(Coming Soon) `
-- **Testnet**: http://app.ekiden.fi/api/v1
+- **Mainnet**: `(Coming Soon)`
+- **Testnet Beta**: [https://app.ekiden.fi/api/v1](http://app.ekiden.fi/api/v1)
 
 > All API calls must use **HTTPS**.
 
@@ -38,7 +38,7 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 | `PATCH`  | Update partial resources                |
 
 - Resources are nouns, pluralized when appropriate
-  - Example: `/v1/orders`, `/v1/markets`
+  - Example: `/v1/orders`, `/v1/fills`
 
 ---
 
@@ -46,16 +46,15 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 
 **Endpoint**:
 
-Mainnet: wss[<u>://api.ekiden.fi/</u>](https://api.ekiden.fi/api)<u>ws</u>\
-Testnet: wss://api.staging.ekiden.fi/ws
+- **Mainnet**: `(Coming Soon)`
+- **Testnet Beta wss://api.ekiden.fi/ws**
 
 ### Subscribe to a public channel
 
 ```json
 {
   "type": "subscribe",
-  "channel": "orderbook",
-  "market": "WETH-USD"
+  "channel": "orderbook/{address market}",
 }
 ```
 
