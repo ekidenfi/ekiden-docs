@@ -13,11 +13,6 @@
         }
     },
     "favicon": "/favicon.png",
-    "servers": [
-        {
-            "url": "https://api.ekiden.fi"
-        }
-    ],
     "navigation": {
         "tabs": [
             {
