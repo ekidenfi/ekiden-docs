@@ -61,7 +61,7 @@
         }
       }
     },
-    "/api/v1/candles": {
+    "/api/v1/market/candles": {
       "get": {
         "tags": [
           "Market"
@@ -158,7 +158,7 @@
         }
       }
     },
-    "/api/v1/candles/stats/{market_addr}": {
+    "/api/v1/market/candles/stats/{market_addr}": {
       "get": {
         "tags": [
           "Market"
@@ -198,7 +198,352 @@
         }
       }
     },
-    "/api/v1/deposits": {
+    "/api/v1/market/fills": {
+      "get": {
+        "tags": [
+          "Market"
+        ],
+        "summary": "Get recent fills",
+        "description": "Retrieves a list of recent fills (executed trades) in the specified market.",
+        "operationId": "list_fills",
+        "parameters": [
+          {
+            "name": "market_addr",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved list of fills",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FillResponse"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/market/funding_rate": {
+      "get": {
+        "tags": [
+          "Market"
+        ],
+        "summary": "Get funding rate",
+        "description": "Retrieves the current funding rate calculated using configurable parameters. Funding rate indicates the cost of holding perpetual positions.",
+        "operationId": "get_funding_rates",
+        "parameters": [
+          {
+            "name": "market_addr",
+            "in": "query",
+            "description": "Market address to get funding rate for",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "0x1234567890abcdef..."
+          },
+          {
+            "name": "symbol",
+            "in": "query",
+            "description": "Symbol to get funding rate for (alternative to market_addr)",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "BTC-USD"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved funding rate(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FundingRateResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Market not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/market/funding_rate/epoch": {
+      "get": {
+        "tags": [
+          "Market"
+        ],
+        "summary": "Get current funding epoch",
+        "description": "Returns the current funding epoch timestamp with configurable interval.",
+        "operationId": "get_funding_epoch",
+        "parameters": [
+          {
+            "name": "funding_interval_seconds",
+            "in": "query",
+            "description": "Funding interval in seconds",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current funding epoch",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/market/funding_rate/{market_addr}": {
+      "get": {
+        "tags": [
+          "Market"
+        ],
+        "summary": "Get funding rate by market address",
+        "description": "Retrieves the current funding rate for a specific market with configurable parameters.",
+        "operationId": "get_funding_rate_by_market",
+        "parameters": [
+          {
+            "name": "market_addr",
+            "in": "path",
+            "description": "Market address",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved funding rate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundingRateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Market not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/market/market_info": {
+      "get": {
+        "tags": [
+          "Market"
+        ],
+        "summary": "Get market information",
+        "description": "Retrieves market information. Can filter by market address or symbol, or get all markets with pagination.",
+        "operationId": "get_market_info",
+        "parameters": [
+          {
+            "name": "market_addr",
+            "in": "query",
+            "description": "Market address to filter by",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
+          },
+          {
+            "name": "symbol",
+            "in": "query",
+            "description": "Market symbol to filter by",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "ETH-USD"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved market information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MarketResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid parameters"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/market/orders": {
+      "get": {
+        "tags": [
+          "Market"
+        ],
+        "summary": "Get orders",
+        "description": "Retrieves a list of all orders in the specified market. Orders can be filtered by side (buy/sell).",
+        "operationId": "list_orders",
+        "parameters": [
+          {
+            "name": "market_addr",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
+          },
+          {
+            "name": "side",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "buy"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved list of orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponse"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/transaction/deposits": {
       "get": {
         "tags": [
           "Transaction"
@@ -320,78 +665,19 @@
         }
       }
     },
-    "/api/v1/fills": {
+    "/api/v1/transaction/withdrawals": {
       "get": {
         "tags": [
-          "Market"
+          "Transaction"
         ],
-        "summary": "Get recent fills",
-        "description": "Retrieves a list of recent fills (executed trades) in the specified market.",
-        "operationId": "list_fills",
+        "summary": "Get withdrawals",
+        "description": "Retrieves a list of withdrawals based on filter criteria. Can filter by user address, vault address, asset address, and version range.",
+        "operationId": "list_withdrawals",
         "parameters": [
           {
-            "name": "market_addr",
+            "name": "user_addr",
             "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "minimum": 0
-            }
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "minimum": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved list of fills",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FillResponse"
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/v1/funding_rate": {
-      "get": {
-        "tags": [
-          "Market"
-        ],
-        "summary": "Get funding rate",
-        "description": "Retrieves the current funding rate calculated using configurable parameters. Funding rate indicates the cost of holding perpetual positions.",
-        "operationId": "get_funding_rates",
-        "parameters": [
-          {
-            "name": "market_addr",
-            "in": "query",
-            "description": "Market address to get funding rate for",
+            "description": "User address to filter withdrawals by",
             "required": false,
             "schema": {
               "type": [
@@ -402,9 +688,9 @@
             "example": "0x1234567890abcdef..."
           },
           {
-            "name": "symbol",
+            "name": "vault_addr",
             "in": "query",
-            "description": "Symbol to get funding rate for (alternative to market_addr)",
+            "description": "Vault address to filter withdrawals by",
             "required": false,
             "schema": {
               "type": [
@@ -412,143 +698,50 @@
                 "null"
               ]
             },
-            "example": "BTC-USD"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved funding rate(s)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/FundingRateResponse"
-                  }
-                }
-              }
-            }
+            "example": "0xabcdef1234567890..."
           },
-          "404": {
-            "description": "Market not found"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/v1/funding_rate/epoch": {
-      "get": {
-        "tags": [
-          "Market"
-        ],
-        "summary": "Get current funding epoch",
-        "description": "Returns the current funding epoch timestamp with configurable interval.",
-        "operationId": "get_funding_epoch",
-        "parameters": [
           {
-            "name": "funding_interval_seconds",
+            "name": "asset_addr",
             "in": "query",
-            "description": "Funding interval in seconds",
+            "description": "Asset address to filter withdrawals by",
             "required": false,
             "schema": {
-              "type": "integer",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "example": "0x9876543210fedcba..."
+          },
+          {
+            "name": "start_version",
+            "in": "query",
+            "description": "Start version for filtering (inclusive)",
+            "required": false,
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
               "format": "int64",
               "minimum": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current funding epoch",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
+            },
+            "example": 1000
           },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/v1/funding_rate/{market_addr}": {
-      "get": {
-        "tags": [
-          "Market"
-        ],
-        "summary": "Get funding rate by market address",
-        "description": "Retrieves the current funding rate for a specific market with configurable parameters.",
-        "operationId": "get_funding_rate_by_market",
-        "parameters": [
           {
-            "name": "market_addr",
-            "in": "path",
-            "description": "Market address",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved funding rate",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FundingRateResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Market not found"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/v1/market_info": {
-      "get": {
-        "tags": [
-          "Market"
-        ],
-        "summary": "Get market information",
-        "description": "Retrieves market information. Can filter by market address or symbol, or get all markets with pagination.",
-        "operationId": "get_market_info",
-        "parameters": [
-          {
-            "name": "market_addr",
+            "name": "end_version",
             "in": "query",
-            "description": "Market address to filter by",
+            "description": "End version for filtering (inclusive)",
             "required": false,
             "schema": {
               "type": [
-                "string",
+                "integer",
                 "null"
-              ]
+              ],
+              "format": "int64",
+              "minimum": 0
             },
-            "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
-          },
-          {
-            "name": "symbol",
-            "in": "query",
-            "description": "Market symbol to filter by",
-            "required": false,
-            "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "example": "ETH-USD"
+            "example": 2000
           },
           {
             "name": "page",
@@ -573,13 +766,13 @@
         ],
         "responses": {
           "200": {
-            "description": "Successfully retrieved market information",
+            "description": "Successfully retrieved list of withdrawals",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/MarketResponse"
+                    "$ref": "#/components/schemas/WithdrawResponse"
                   }
                 }
               }
@@ -587,77 +780,6 @@
           },
           "400": {
             "description": "Bad request - Invalid parameters"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/api/v1/orders": {
-      "get": {
-        "tags": [
-          "Market"
-        ],
-        "summary": "Get orders",
-        "description": "Retrieves a list of all orders in the specified market. Orders can be filtered by side (buy/sell).",
-        "operationId": "list_orders",
-        "parameters": [
-          {
-            "name": "market_addr",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
-          },
-          {
-            "name": "side",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "example": "buy"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "minimum": 0
-            }
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "minimum": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved list of orders",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/OrderResponse"
-                  }
-                }
-              }
-            }
           },
           "500": {
             "description": "Internal server error"
@@ -1151,128 +1273,6 @@
             "bearer_auth": []
           }
         ]
-      }
-    },
-    "/api/v1/withdrawals": {
-      "get": {
-        "tags": [
-          "Transaction"
-        ],
-        "summary": "Get withdrawals",
-        "description": "Retrieves a list of withdrawals based on filter criteria. Can filter by user address, vault address, asset address, and version range.",
-        "operationId": "list_withdrawals",
-        "parameters": [
-          {
-            "name": "user_addr",
-            "in": "query",
-            "description": "User address to filter withdrawals by",
-            "required": false,
-            "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "example": "0x1234567890abcdef..."
-          },
-          {
-            "name": "vault_addr",
-            "in": "query",
-            "description": "Vault address to filter withdrawals by",
-            "required": false,
-            "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "example": "0xabcdef1234567890..."
-          },
-          {
-            "name": "asset_addr",
-            "in": "query",
-            "description": "Asset address to filter withdrawals by",
-            "required": false,
-            "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "example": "0x9876543210fedcba..."
-          },
-          {
-            "name": "start_version",
-            "in": "query",
-            "description": "Start version for filtering (inclusive)",
-            "required": false,
-            "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "format": "int64",
-              "minimum": 0
-            },
-            "example": 1000
-          },
-          {
-            "name": "end_version",
-            "in": "query",
-            "description": "End version for filtering (inclusive)",
-            "required": false,
-            "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
-              "format": "int64",
-              "minimum": 0
-            },
-            "example": 2000
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 1,
-              "minimum": 0
-            }
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20,
-              "minimum": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved list of withdrawals",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WithdrawResponse"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - Invalid parameters"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
       }
     }
   },
