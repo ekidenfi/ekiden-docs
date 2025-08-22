@@ -102,7 +102,9 @@
                     },
                     {
                         "group": "Websocket Streams",
-                        "asyncapi": "asyncapi.yaml"
+                        "asyncapi": {
+                            "source": "asyncapi.yaml",
+                        }
                     }
                 ]
             }
