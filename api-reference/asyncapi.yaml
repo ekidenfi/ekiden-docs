@@ -1,50 +1,252 @@
-asyncapi: 3.0.0
+asyncapi: '2.6.0'
 info:
-  title: Ekiden WebSocket API
-  version: 0.1.0
+  title: Ekiden CLOB WebSocket
+  version: '1.0.0'
   description: |
-    Realtime market data: orderbooks, trades, mark price, funding rate.
+    WebSocket API for streaming orderbook and trades.
+    - Logical channels are encoded as strings:
+      - `orderbook/{market_addr}`
+      - `trades/{market_addr}`
+    - Client sends Requests (method-tagged) and receives Responses (type-tagged).
+    - On subscribe, the server may immediately send a catch-up snapshot/trades.
+
+defaultContentType: application/json
+
 servers:
-  public:
-    host: localhost:3000
+  production:
+    url: wss://api.ekiden.example/ws
+    protocol: wss
+    description: Production WebSocket endpoint
+    variables:
+      host:
+        default: api.ekiden.example
+  local:
+    url: ws://localhost:8080/ws
     protocol: ws
+    description: Local development WebSocket
+
 channels:
-  orderbook:
-    address: orderbook/{market_addr}
-    messages:
-      snapshot:
-        $ref: '#/components/messages/OrderbookSnapshot'
-      delta:
-        $ref: '#/components/messages/OrderbookDelta'
-    parameters:
-      market_addr:
-        description: The address of the market
+  /ws:
+    description: Single WebSocket endpoint; logical channels are in message payloads.
+    bindings:
+      ws:
+        type: object
+        # No special bindings required; kept for future extension.
+    # From the client's perspective:
+    publish:
+      summary: Client -> Server requests
+      message:
+        oneOf:
+          - $ref: '#/components/messages/RequestSubscribe'
+          - $ref: '#/components/messages/RequestUnsubscribe'
+          - $ref: '#/components/messages/RequestPing'
+    subscribe:
+      summary: Server -> Client responses/events
+      message:
+        oneOf:
+          - $ref: '#/components/messages/ResponseSubscribed'
+          - $ref: '#/components/messages/ResponseUnsubscribed'
+          - $ref: '#/components/messages/ResponsePong'
+          - $ref: '#/components/messages/ResponseError'
+          - $ref: '#/components/messages/ResponseEvent'
+
 components:
   messages:
-    OrderbookSnapshot:
-      name: snapshot
-      title: Orderbook Snapshot
-      summary: Complete snapshot of the orderbook state
+    RequestSubscribe:
+      name: request.subscribe
+      title: Subscribe
+      summary: Subscribe to a logical channel (e.g., orderbook/{market_addr}, trades/{market_addr})
       payload:
-        $ref: '#/components/schemas/OrderbookSnapshot'
-    OrderbookDelta:
-      name: delta
-      title: Orderbook Delta
-      summary: Delta update to the orderbook
+        $ref: '#/components/schemas/RequestSubscribe'
+      examples:
+        - name: subscribe-orderbook
+          payload:
+            method: subscribe
+            channel: orderbook/0xd53ff7f89bda24515a35cb92c77108ae1cf43a4e9b710cdd7ae9021e4a0c08f2
+    RequestUnsubscribe:
+      name: request.unsubscribe
+      title: Unsubscribe
       payload:
-        $ref: '#/components/schemas/OrderbookDelta'
+        $ref: '#/components/schemas/RequestUnsubscribe'
+      examples:
+        - name: unsubscribe-trades
+          payload:
+            method: unsubscribe
+            channel: trades/0xd53ff7f89bda24515a35cb92c77108ae1cf43a4e9b710cdd7ae9021e4a0c08f2
+    RequestPing:
+      name: request.ping
+      title: Ping
+      payload:
+        $ref: '#/components/schemas/RequestPing'
+      examples:
+        - name: ping
+          payload:
+            method: ping
+
+    ResponseSubscribed:
+      name: response.subscribed
+      title: Subscribed Ack
+      payload:
+        $ref: '#/components/schemas/ResponseSubscribed'
+      examples:
+        - name: ack
+          payload:
+            type: subscribed
+            channel: orderbook/0xd53ff7f89bda24515a35cb92c77108ae1cf43a4e9b710cdd7ae9021e4a0c08f2
+    ResponseUnsubscribed:
+      name: response.unsubscribed
+      title: Unsubscribed Ack
+      payload:
+        $ref: '#/components/schemas/ResponseUnsubscribed'
+      examples:
+        - name: ack
+          payload:
+            type: unsubscribed
+            channel: trades/0xd53ff7f89bda24515a35cb92c77108ae1cf43a4e9b710cdd7ae9021e4a0c08f2
+    ResponsePong:
+      name: response.pong
+      title: Pong
+      payload:
+        $ref: '#/components/schemas/ResponsePong'
+      examples:
+        - name: pong
+          payload:
+            type: pong
+    ResponseError:
+      name: response.error
+      title: Error
+      payload:
+        $ref: '#/components/schemas/ResponseError'
+      examples:
+        - name: invalid-request
+          payload:
+            type: error
+            message: 'INVALID_REQUEST: expected subscribe/unsubscribe/ping'
+    ResponseEvent:
+      name: response.event
+      title: Event
+      summary: Server event with `channel` and typed `data`
+      payload:
+        $ref: '#/components/schemas/ResponseEvent'
+      examples:
+        - name: orderbook-snapshot
+          payload:
+            type: event
+            channel: orderbook/0xd53ff7f89bda24515a35cb92c77108ae1cf43a4e9b710cdd7ae9021e4a0c08f2
+            data:
+              type: orderbook_snapshot
+              asks: [[350000000000, 120000000], [351000000000, 80000000]]
+              bids: [[349000000000, 150000000], [348500000000, 50000000]]
+              market_addr: 0xd53ff7f89bda24515a35cb92c77108ae1cf43a4e9b710cdd7ae9021e4a0c08f2
+              seq: 6786901234
+              timestamp: 1724300000
+        - name: trades-aggregated
+          payload:
+            type: event
+            channel: trades/0xd53ff7f89bda24515a35cb92c77108ae1cf43a4e9b710cdd7ae9021e4a0c08f2
+            data:
+              type: trades
+              market_addr: 0xd53ff7f89bda24515a35cb92c77108ae1cf43a4e9b710cdd7ae9021e4a0c08f2
+              trades:
+                - price: 349000000000
+                  size: 50000000
+                  side: buy
+                  seq: 6786901201
+                  timestamp: 1724300000
+                - price: 349000000000
+                  size: 70000000
+                  side: buy
+                  seq: 6786901205
+                  timestamp: 1724300002
+
   schemas:
+    # ===== Client -> Server =====
+    RequestSubscribe:
+      type: object
+      required: [method, channel]
+      properties:
+        method:
+            type: string
+            enum: [subscribe]
+        channel:
+          type: string
+          description: Logical channel (e.g., orderbook/{market_addr}, trades/{market_addr})
+    RequestUnsubscribe:
+      type: object
+      required: [method, channel]
+      properties:
+        method:
+          type: string
+          enum: [unsubscribe]
+        channel:
+          type: string
+    RequestPing:
+      type: object
+      required: [method]
+      properties:
+        method:
+          type: string
+          enum: [ping]
+    Request:
+      oneOf:
+        - $ref: '#/components/schemas/RequestSubscribe'
+        - $ref: '#/components/schemas/RequestUnsubscribe'
+        - $ref: '#/components/schemas/RequestPing'
+      discriminator:
+        propertyName: method
+        mapping:
+          subscribe: '#/components/schemas/RequestSubscribe'
+          unsubscribe: '#/components/schemas/RequestUnsubscribe'
+          ping: '#/components/schemas/RequestPing'
+
+    # ===== Server -> Client =====
+    ResponseSubscribed:
+      type: object
+      required: [type, channel]
+      properties:
+        type:
+          type: string
+          enum: [subscribed]
+        channel:
+          type: string
+    ResponseUnsubscribed:
+      type: object
+      required: [type, channel]
+      properties:
+        type:
+          type: string
+          enum: [unsubscribed]
+        channel:
+          type: string
+    ResponsePong:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [pong]
+    ResponseError:
+      type: object
+      required: [type, message]
+      properties:
+        type:
+          type: string
+          enum: [error]
+        message:
+          type: string
+
+    # ===== Event payloads =====
     OrderbookLevel:
+      description: Tuple-struct serialized as a 2-element array: [price, size]
       type: array
-      description: Orderbook level represented as [price, size]
-      prefixItems:
-        - type: integer  # price
-        - type: integer  # size
       minItems: 2
       maxItems: 2
-    OrderbookSnapshot:
+      items:
+        type: integer
+        format: uint64
+    OrderbookDepth:
       type: object
-      description: Complete snapshot of the orderbook
+      required: [asks, bids]
       properties:
         asks:
           type: array
@@ -54,25 +256,134 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OrderbookLevel'
+    OrderbookSnapshot:
+      description: >
+        Flattened depth + metadata. Serialized with asks/bids at top-level
+        due to #[serde(flatten)] in Rust.
+      type: object
+      required: [asks, bids, market_addr, seq, timestamp]
+      allOf:
+        - $ref: '#/components/schemas/OrderbookDepth'
+      properties:
         market_addr:
           type: string
         seq:
           type: integer
-        matched_at:
+          format: uint64
+        timestamp:
           type: integer
+          format: uint64
     OrderbookDelta:
+      description: Flattened delta depth + metadata (same shape as snapshot).
       type: object
-      description: Delta update to the orderbook
+      required: [asks, bids, market_addr, seq, timestamp]
+      allOf:
+        - $ref: '#/components/schemas/OrderbookDepth'
       properties:
-        asks:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderbookLevel'
-        bids:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderbookLevel'
+        market_addr:
+          type: string
         seq:
           type: integer
-        matched_at:
+          format: uint64
+        timestamp:
           type: integer
+          format: uint64
+
+    AggregatedTrade:
+      type: object
+      required: [price, size, side, seq, timestamp]
+      properties:
+        price:
+          type: integer
+          format: uint64
+        size:
+          type: integer
+          format: uint64
+        side:
+          type: string
+          description: buy/sell (as produced by your back end)
+        seq:
+          type: integer
+          format: uint64
+        timestamp:
+          type: integer
+          format: uint64
+    AggregatedTrades:
+      type: object
+      required: [trades, market_addr]
+      properties:
+        trades:
+          type: array
+          items:
+            $ref: '#/components/schemas/AggregatedTrade'
+        market_addr:
+          type: string
+
+    # Discriminated union mirroring #[serde(tag = "type", rename_all = "snake_case")]
+    EventOrderbookSnapshot:
+      type: object
+      required: [type, asks, bids, market_addr, seq, timestamp]
+      properties:
+        type:
+          type: string
+          enum: [orderbook_snapshot]
+      allOf:
+        - $ref: '#/components/schemas/OrderbookSnapshot'
+    EventOrderbookDelta:
+      type: object
+      required: [type, asks, bids, market_addr, seq, timestamp]
+      properties:
+        type:
+          type: string
+          enum: [orderbook_delta]
+      allOf:
+        - $ref: '#/components/schemas/OrderbookDelta'
+    EventTrades:
+      type: object
+      required: [type, trades, market_addr]
+      properties:
+        type:
+          type: string
+          enum: [trades]
+      allOf:
+        - $ref: '#/components/schemas/AggregatedTrades'
+    Event:
+      oneOf:
+        - $ref: '#/components/schemas/EventOrderbookSnapshot'
+        - $ref: '#/components/schemas/EventOrderbookDelta'
+        - $ref: '#/components/schemas/EventTrades'
+      discriminator:
+        propertyName: type
+        mapping:
+          orderbook_snapshot: '#/components/schemas/EventOrderbookSnapshot'
+          orderbook_delta: '#/components/schemas/EventOrderbookDelta'
+          trades: '#/components/schemas/EventTrades'
+
+    ResponseEvent:
+      type: object
+      required: [type, channel, data]
+      properties:
+        type:
+          type: string
+          enum: [event]
+        channel:
+          type: string
+          description: Logical channel that this event belongs to
+        data:
+          $ref: '#/components/schemas/Event'
+
+    Response:
+      oneOf:
+        - $ref: '#/components/schemas/ResponseSubscribed'
+        - $ref: '#/components/schemas/ResponseUnsubscribed'
+        - $ref: '#/components/schemas/ResponsePong'
+        - $ref: '#/components/schemas/ResponseError'
+        - $ref: '#/components/schemas/ResponseEvent'
+      discriminator:
+        propertyName: type
+        mapping:
+          subscribed: '#/components/schemas/ResponseSubscribed'
+          unsubscribed: '#/components/schemas/ResponseUnsubscribed'
+          pong: '#/components/schemas/ResponsePong'
+          error: '#/components/schemas/ResponseError'
+          event: '#/components/schemas/ResponseEvent'
