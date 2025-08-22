@@ -101,11 +101,8 @@
                         "openapi": "api-reference/openapi.json"
                     },
                     {
-                        "group": "Websocket Streams",
-                        "asyncapi": {
-                            "source": "asyncapi.yaml",
-                            "directory": "api-reference"
-                        }
+                        "group": "Websocket API",
+                        "asyncapi": "api-reference/asyncapi.yaml"
                     }
                 ]
             }
