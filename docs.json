@@ -102,7 +102,7 @@
                     },
                     {
                         "group": "Websocket API",
-                        "asyncapi": "api-reference/asyncapi.yaml"
+                        "asyncapi": "asyncapi.yaml"
                     }
                 ]
             }
