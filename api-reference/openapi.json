@@ -12,14 +12,6 @@
     {
       "url": "https://api.ekiden.fi/",
       "description": "Production"
-    },
-    {
-      "url": "https://api.staging.ekiden.fi/",
-      "description": "Staging"
-    },
-    {
-      "url": "http://localhost:3010/",
-      "description": "Local"
     }
   ],
   "paths": {
