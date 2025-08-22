@@ -97,8 +97,12 @@
                         ]
                     },
                     {
-                        "group": "API",
+                        "group": "RESTful API",
                         "openapi": "api-reference/openapi.json"
+                    },
+                    {
+                        "group": "Websocket Streams",
+                        "asyncapi": "api-reference/asyncapi.yaml"
                     }
                 ]
             }

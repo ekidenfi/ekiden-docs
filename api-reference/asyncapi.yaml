@@ -1,0 +1,78 @@
+asyncapi: 3.0.0
+info:
+  title: Ekiden WebSocket API
+  version: 0.1.0
+  description: |
+    Realtime market data: orderbooks, trades, mark price, funding rate.
+servers:
+  public:
+    host: localhost:3000
+    protocol: ws
+channels:
+  orderbook:
+    address: orderbook/{market_addr}
+    messages:
+      snapshot:
+        $ref: '#/components/messages/OrderbookSnapshot'
+      delta:
+        $ref: '#/components/messages/OrderbookDelta'
+    parameters:
+      market_addr:
+        description: The address of the market
+components:
+  messages:
+    OrderbookSnapshot:
+      name: snapshot
+      title: Orderbook Snapshot
+      summary: Complete snapshot of the orderbook state
+      payload:
+        $ref: '#/components/schemas/OrderbookSnapshot'
+    OrderbookDelta:
+      name: delta
+      title: Orderbook Delta
+      summary: Delta update to the orderbook
+      payload:
+        $ref: '#/components/schemas/OrderbookDelta'
+  schemas:
+    OrderbookLevel:
+      type: array
+      description: Orderbook level represented as [price, size]
+      prefixItems:
+        - type: integer  # price
+        - type: integer  # size
+      minItems: 2
+      maxItems: 2
+    OrderbookSnapshot:
+      type: object
+      description: Complete snapshot of the orderbook
+      properties:
+        asks:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderbookLevel'
+        bids:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderbookLevel'
+        market_addr:
+          type: string
+        seq:
+          type: integer
+        matched_at:
+          type: integer
+    OrderbookDelta:
+      type: object
+      description: Delta update to the orderbook
+      properties:
+        asks:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderbookLevel'
+        bids:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderbookLevel'
+        seq:
+          type: integer
+        matched_at:
+          type: integer
