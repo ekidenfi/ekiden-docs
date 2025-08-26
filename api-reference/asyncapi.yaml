@@ -19,28 +19,28 @@ servers:
     protocol: wss
     description: Production WebSocket endpoint
 
-channels:
-  control:
-    title: Control channel
-    description: |
-      Send control requests (subscribe/unsubscribe/ping) on the root address `/`.
-      Server replies with acknowledgements and errors on the same connection.
-    address: /
-    messages:
-      SubscribeRequest:
-        $ref: '#/components/messages/SubscribeRequest'
-      UnsubscribeRequest:
-        $ref: '#/components/messages/UnsubscribeRequest'
-      PingRequest:
-        $ref: '#/components/messages/PingRequest'
-      Subscribed:
-        $ref: '#/components/messages/Subscribed'
-      Unsubscribed:
-        $ref: '#/components/messages/Unsubscribed'
-      Pong:
-        $ref: '#/components/messages/Pong'
-      Error:
-        $ref: '#/components/messages/Error'
+# channels:
+#   control:
+#     title: Control channel
+#     description: |
+#       Send control requests (subscribe/unsubscribe/ping) on the root address `/`.
+#       Server replies with acknowledgements and errors on the same connection.
+#     address: /
+#     messages:
+#       SubscribeRequest:
+#         $ref: '#/components/messages/SubscribeRequest'
+#       UnsubscribeRequest:
+#         $ref: '#/components/messages/UnsubscribeRequest'
+#       PingRequest:
+#         $ref: '#/components/messages/PingRequest'
+#       Subscribed:
+#         $ref: '#/components/messages/Subscribed'
+#       Unsubscribed:
+#         $ref: '#/components/messages/Unsubscribed'
+#       Pong:
+#         $ref: '#/components/messages/Pong'
+#       Error:
+#         $ref: '#/components/messages/Error'
 
 #   orderbookChannel:
 #     title: Orderbook channel
