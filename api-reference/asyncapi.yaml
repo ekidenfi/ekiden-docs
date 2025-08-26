@@ -51,8 +51,6 @@ channels:
     parameters:
       market_addr:
         description: On-chain market address (hex or bech32-style string used by your app)
-        schema:
-          type: string
     messages:
       OrderbookSnapshotEvent:
         $ref: '#/components/messages/OrderbookSnapshotEvent'
@@ -68,8 +66,6 @@ channels:
     parameters:
       market_addr:
         description: On-chain market address (hex or bech32-style string used by your app)
-        schema:
-          type: string
     messages:
       TradesEvent:
         $ref: '#/components/messages/TradesEvent'
@@ -264,7 +260,7 @@ components:
       examples:
         - payload:
             type: error
-            message: INVALID_REQUEST: missing channel
+            message: "INVALID_REQUEST: missing channel"
 
     # Server -> Client events
     OrderbookSnapshotEvent:
