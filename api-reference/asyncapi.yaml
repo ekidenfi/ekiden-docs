@@ -2,16 +2,16 @@ asyncapi: 3.0.0
 info:
   title: Ekiden WebSocket API
   version: 1.0.0
-  description: |
-    Real-time feeds for orderbooks and aggregated trades.
+  # description: |
+  #   Real-time feeds for orderbooks and aggregated trades.
 
-    ### Flow
-    1. Connect to `wss://api.ekiden.fi/ws`.
-    2. Send a **Subscribe** request on the root channel `/` with a channel name:
-       - `orderbook/{market_addr}`
-       - `trades/{market_addr}`
-    3. Receive **Subscribed**, then streaming events on the channel you subscribed to.
-    4. Use **Unsubscribe** or **Ping** when needed.
+  #   ### Flow
+  #   1. Connect to `wss://api.ekiden.fi/ws`.
+  #   2. Send a **Subscribe** request on the root channel `/` with a channel name:
+  #      - `orderbook/{market_addr}`
+  #      - `trades/{market_addr}`
+  #   3. Receive **Subscribed**, then streaming events on the channel you subscribed to.
+  #   4. Use **Unsubscribe** or **Ping** when needed.
 
 servers:
   production:
