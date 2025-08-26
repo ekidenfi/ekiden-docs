@@ -42,414 +42,414 @@ channels:
       Error:
         $ref: '#/components/messages/Error'
 
-  orderbookChannel:
-    title: Orderbook channel
-    description: |
-      Server emits orderbook snapshots and deltas for a specific market.
-      Subscribe using `{"method":"subscribe","channel":"orderbook/{market_addr}"}`.
-    address: orderbook/{market_addr}
-    parameters:
-      market_addr:
-        description: On-chain market address (hex or bech32-style string used by your app)
-    messages:
-      OrderbookSnapshotEvent:
-        $ref: '#/components/messages/OrderbookSnapshotEvent'
-      OrderbookDeltaEvent:
-        $ref: '#/components/messages/OrderbookDeltaEvent'
+#   orderbookChannel:
+#     title: Orderbook channel
+#     description: |
+#       Server emits orderbook snapshots and deltas for a specific market.
+#       Subscribe using `{"method":"subscribe","channel":"orderbook/{market_addr}"}`.
+#     address: orderbook/{market_addr}
+#     parameters:
+#       market_addr:
+#         description: On-chain market address (hex or bech32-style string used by your app)
+#     messages:
+#       OrderbookSnapshotEvent:
+#         $ref: '#/components/messages/OrderbookSnapshotEvent'
+#       OrderbookDeltaEvent:
+#         $ref: '#/components/messages/OrderbookDeltaEvent'
 
-  tradesChannel:
-    title: Trades channel
-    description: |
-      Server emits aggregated recent trades for a specific market.
-      Subscribe using `{"method":"subscribe","channel":"trades/{market_addr}"}`.
-    address: trades/{market_addr}
-    parameters:
-      market_addr:
-        description: On-chain market address (hex or bech32-style string used by your app)
-    messages:
-      TradesEvent:
-        $ref: '#/components/messages/TradesEvent'
+#   tradesChannel:
+#     title: Trades channel
+#     description: |
+#       Server emits aggregated recent trades for a specific market.
+#       Subscribe using `{"method":"subscribe","channel":"trades/{market_addr}"}`.
+#     address: trades/{market_addr}
+#     parameters:
+#       market_addr:
+#         description: On-chain market address (hex or bech32-style string used by your app)
+#     messages:
+#       TradesEvent:
+#         $ref: '#/components/messages/TradesEvent'
 
-operations:
-  # Client -> Server on control channel
-  sendSubscribe:
-    action: receive
-    channel:
-      $ref: '#/channels/control'
-    messages:
-      - $ref: '#/channels/control/messages/SubscribeRequest'
+# operations:
+#   # Client -> Server on control channel
+#   sendSubscribe:
+#     action: receive
+#     channel:
+#       $ref: '#/channels/control'
+#     messages:
+#       - $ref: '#/channels/control/messages/SubscribeRequest'
 
-  sendUnsubscribe:
-    action: receive
-    channel:
-      $ref: '#/channels/control'
-    messages:
-      - $ref: '#/channels/control/messages/UnsubscribeRequest'
+#   sendUnsubscribe:
+#     action: receive
+#     channel:
+#       $ref: '#/channels/control'
+#     messages:
+#       - $ref: '#/channels/control/messages/UnsubscribeRequest'
 
-  sendPing:
-    action: receive
-    channel:
-      $ref: '#/channels/control'
-    messages:
-      - $ref: '#/channels/control/messages/PingRequest'
+#   sendPing:
+#     action: receive
+#     channel:
+#       $ref: '#/channels/control'
+#     messages:
+#       - $ref: '#/channels/control/messages/PingRequest'
 
-  # Server -> Client acks on control channel
-  receiveSubscribed:
-    action: send
-    channel:
-      $ref: '#/channels/control'
-    messages:
-      - $ref: '#/channels/control/messages/Subscribed'
+#   # Server -> Client acks on control channel
+#   receiveSubscribed:
+#     action: send
+#     channel:
+#       $ref: '#/channels/control'
+#     messages:
+#       - $ref: '#/channels/control/messages/Subscribed'
 
-  receiveUnsubscribed:
-    action: send
-    channel:
-      $ref: '#/channels/control'
-    messages:
-      - $ref: '#/channels/control/messages/Unsubscribed'
+#   receiveUnsubscribed:
+#     action: send
+#     channel:
+#       $ref: '#/channels/control'
+#     messages:
+#       - $ref: '#/channels/control/messages/Unsubscribed'
 
-  receivePong:
-    action: send
-    channel:
-      $ref: '#/channels/control'
-    messages:
-      - $ref: '#/channels/control/messages/Pong'
+#   receivePong:
+#     action: send
+#     channel:
+#       $ref: '#/channels/control'
+#     messages:
+#       - $ref: '#/channels/control/messages/Pong'
 
-  receiveError:
-    action: send
-    channel:
-      $ref: '#/channels/control'
-    messages:
-      - $ref: '#/channels/control/messages/Error'
+#   receiveError:
+#     action: send
+#     channel:
+#       $ref: '#/channels/control'
+#     messages:
+#       - $ref: '#/channels/control/messages/Error'
 
-  # Server -> Client streaming events
-  receiveOrderbookSnapshot:
-    action: send
-    channel:
-      $ref: '#/channels/orderbookChannel'
-    messages:
-      - $ref: '#/channels/orderbookChannel/messages/OrderbookSnapshotEvent'
+#   # Server -> Client streaming events
+#   receiveOrderbookSnapshot:
+#     action: send
+#     channel:
+#       $ref: '#/channels/orderbookChannel'
+#     messages:
+#       - $ref: '#/channels/orderbookChannel/messages/OrderbookSnapshotEvent'
 
-  receiveOrderbookDelta:
-    action: send
-    channel:
-      $ref: '#/channels/orderbookChannel'
-    messages:
-      - $ref: '#/channels/orderbookChannel/messages/OrderbookDeltaEvent'
+#   receiveOrderbookDelta:
+#     action: send
+#     channel:
+#       $ref: '#/channels/orderbookChannel'
+#     messages:
+#       - $ref: '#/channels/orderbookChannel/messages/OrderbookDeltaEvent'
 
-  receiveTrades:
-    action: send
-    channel:
-      $ref: '#/channels/tradesChannel'
-    messages:
-      - $ref: '#/channels/tradesChannel/messages/TradesEvent'
+#   receiveTrades:
+#     action: send
+#     channel:
+#       $ref: '#/channels/tradesChannel'
+#     messages:
+#       - $ref: '#/channels/tradesChannel/messages/TradesEvent'
 
-components:
-  messages:
-    # Client -> Server
-    SubscribeRequest:
-      title: Subscribe
-      description: Subscribe to a channel.
-      payload:
-        type: object
-        properties:
-          method:
-            type: string
-            const: subscribe
-            description: Must be the literal string "subscribe".
-          channel:
-            type: string
-            description: Channel to subscribe to, e.g. `orderbook/{market_addr}` or `trades/{market_addr}`.
-        required: [method, channel]
-      examples:
-        - payload:
-            method: subscribe
-            channel: orderbook/0xabc123...
+# components:
+#   messages:
+#     # Client -> Server
+#     SubscribeRequest:
+#       title: Subscribe
+#       description: Subscribe to a channel.
+#       payload:
+#         type: object
+#         properties:
+#           method:
+#             type: string
+#             const: subscribe
+#             description: Must be the literal string "subscribe".
+#           channel:
+#             type: string
+#             description: Channel to subscribe to, e.g. `orderbook/{market_addr}` or `trades/{market_addr}`.
+#         required: [method, channel]
+#       examples:
+#         - payload:
+#             method: subscribe
+#             channel: orderbook/0xabc123...
 
-    UnsubscribeRequest:
-      title: Unsubscribe
-      description: Unsubscribe from a channel.
-      payload:
-        type: object
-        properties:
-          method:
-            type: string
-            const: unsubscribe
-          channel:
-            type: string
-            description: Channel to unsubscribe from.
-        required: [method, channel]
-      examples:
-        - payload:
-            method: unsubscribe
-            channel: trades/0xabc123...
+#     UnsubscribeRequest:
+#       title: Unsubscribe
+#       description: Unsubscribe from a channel.
+#       payload:
+#         type: object
+#         properties:
+#           method:
+#             type: string
+#             const: unsubscribe
+#           channel:
+#             type: string
+#             description: Channel to unsubscribe from.
+#         required: [method, channel]
+#       examples:
+#         - payload:
+#             method: unsubscribe
+#             channel: trades/0xabc123...
 
-    PingRequest:
-      title: Ping
-      description: Keepalive ping.
-      payload:
-        type: object
-        properties:
-          method:
-            type: string
-            const: ping
-        required: [method]
-      examples:
-        - payload: { method: ping }
+#     PingRequest:
+#       title: Ping
+#       description: Keepalive ping.
+#       payload:
+#         type: object
+#         properties:
+#           method:
+#             type: string
+#             const: ping
+#         required: [method]
+#       examples:
+#         - payload: { method: ping }
 
-    # Server -> Client acks
-    Subscribed:
-      title: Subscribed Ack
-      description: Sent after a successful subscribe.
-      payload:
-        type: object
-        properties:
-          type:
-            type: string
-            const: subscribed
-          channel:
-            type: string
-        required: [type, channel]
-      examples:
-        - payload:
-            type: subscribed
-            channel: orderbook/0xabc123...
+#     # Server -> Client acks
+#     Subscribed:
+#       title: Subscribed Ack
+#       description: Sent after a successful subscribe.
+#       payload:
+#         type: object
+#         properties:
+#           type:
+#             type: string
+#             const: subscribed
+#           channel:
+#             type: string
+#         required: [type, channel]
+#       examples:
+#         - payload:
+#             type: subscribed
+#             channel: orderbook/0xabc123...
 
-    Unsubscribed:
-      title: Unsubscribed Ack
-      description: Sent after a successful unsubscribe.
-      payload:
-        type: object
-        properties:
-          type:
-            type: string
-            const: unsubscribed
-          channel:
-            type: string
-        required: [type, channel]
-      examples:
-        - payload:
-            type: unsubscribed
-            channel: trades/0xabc123...
+#     Unsubscribed:
+#       title: Unsubscribed Ack
+#       description: Sent after a successful unsubscribe.
+#       payload:
+#         type: object
+#         properties:
+#           type:
+#             type: string
+#             const: unsubscribed
+#           channel:
+#             type: string
+#         required: [type, channel]
+#       examples:
+#         - payload:
+#             type: unsubscribed
+#             channel: trades/0xabc123...
 
-    Pong:
-      title: Pong
-      description: Reply to a ping.
-      payload:
-        type: object
-        properties:
-          type:
-            type: string
-            const: pong
-        required: [type]
-      examples:
-        - payload: { type: pong }
+#     Pong:
+#       title: Pong
+#       description: Reply to a ping.
+#       payload:
+#         type: object
+#         properties:
+#           type:
+#             type: string
+#             const: pong
+#         required: [type]
+#       examples:
+#         - payload: { type: pong }
 
-    Error:
-      title: Error
-      description: Error response (e.g., invalid request).
-      payload:
-        type: object
-        properties:
-          type:
-            type: string
-            const: error
-          message:
-            type: string
-        required: [type, message]
-      examples:
-        - payload:
-            type: error
-            message: "INVALID_REQUEST: missing channel"
+#     Error:
+#       title: Error
+#       description: Error response (e.g., invalid request).
+#       payload:
+#         type: object
+#         properties:
+#           type:
+#             type: string
+#             const: error
+#           message:
+#             type: string
+#         required: [type, message]
+#       examples:
+#         - payload:
+#             type: error
+#             message: "INVALID_REQUEST: missing channel"
 
-    # Server -> Client events
-    OrderbookSnapshotEvent:
-      title: Orderbook Snapshot Event
-      description: Full orderbook snapshot for a market.
-      payload:
-        type: object
-        properties:
-          type:
-            type: string
-            const: event
-            description: Envelope type from server
-          channel:
-            type: string
-            description: E.g. `orderbook/{market_addr}`
-          data:
-            type: object
-            properties:
-              type:
-                type: string
-                const: orderbook_snapshot
-              payload:
-                $ref: '#/components/schemas/OrderbookSnapshot'
-            required: [type, payload]
-        required: [type, channel, data]
+#     # Server -> Client events
+#     OrderbookSnapshotEvent:
+#       title: Orderbook Snapshot Event
+#       description: Full orderbook snapshot for a market.
+#       payload:
+#         type: object
+#         properties:
+#           type:
+#             type: string
+#             const: event
+#             description: Envelope type from server
+#           channel:
+#             type: string
+#             description: E.g. `orderbook/{market_addr}`
+#           data:
+#             type: object
+#             properties:
+#               type:
+#                 type: string
+#                 const: orderbook_snapshot
+#               payload:
+#                 $ref: '#/components/schemas/OrderbookSnapshot'
+#             required: [type, payload]
+#         required: [type, channel, data]
 
-    OrderbookDeltaEvent:
-      title: Orderbook Delta Event
-      description: Incremental orderbook update for a market.
-      payload:
-        type: object
-        properties:
-          type:
-            type: string
-            const: event
-          channel:
-            type: string
-          data:
-            type: object
-            properties:
-              type:
-                type: string
-                const: orderbook_delta
-              payload:
-                $ref: '#/components/schemas/OrderbookDelta'
-            required: [type, payload]
-        required: [type, channel, data]
+#     OrderbookDeltaEvent:
+#       title: Orderbook Delta Event
+#       description: Incremental orderbook update for a market.
+#       payload:
+#         type: object
+#         properties:
+#           type:
+#             type: string
+#             const: event
+#           channel:
+#             type: string
+#           data:
+#             type: object
+#             properties:
+#               type:
+#                 type: string
+#                 const: orderbook_delta
+#               payload:
+#                 $ref: '#/components/schemas/OrderbookDelta'
+#             required: [type, payload]
+#         required: [type, channel, data]
 
-    TradesEvent:
-      title: Trades Event
-      description: Aggregated recent trades for a market.
-      payload:
-        type: object
-        properties:
-          type:
-            type: string
-            const: event
-          channel:
-            type: string
-          data:
-            type: object
-            properties:
-              type:
-                type: string
-                const: trades
-              payload:
-                $ref: '#/components/schemas/AggregatedTrades'
-            required: [type, payload]
-        required: [type, channel, data]
+#     TradesEvent:
+#       title: Trades Event
+#       description: Aggregated recent trades for a market.
+#       payload:
+#         type: object
+#         properties:
+#           type:
+#             type: string
+#             const: event
+#           channel:
+#             type: string
+#           data:
+#             type: object
+#             properties:
+#               type:
+#                 type: string
+#                 const: trades
+#               payload:
+#                 $ref: '#/components/schemas/AggregatedTrades'
+#             required: [type, payload]
+#         required: [type, channel, data]
 
-  schemas:
-    # Keep these loose until you share exact structs; examples shown to help Mintlify render.
-    OrderbookSnapshot:
-      type: object
-      description: Snapshot of the full orderbook (bids & asks).
-      properties:
-        market_addr:
-          type: string
-        seq:
-          type: integer
-          format: int64
-          description: Monotonic sequence number (if available).
-        bids:
-          type: array
-          items:
-            $ref: '#/components/schemas/Level'
-        asks:
-          type: array
-          items:
-            $ref: '#/components/schemas/Level'
-        ts:
-          type: integer
-          format: int64
-          description: Server timestamp (ms).
-      additionalProperties: true
-      examples:
-        - market_addr: "0xabc123..."
-          seq: 42
-          bids: [{ price: "1000", qty: "3.5" }]
-          asks: [{ price: "1001", qty: "1.2" }]
-          ts: 1724660000000
+#   schemas:
+#     # Keep these loose until you share exact structs; examples shown to help Mintlify render.
+#     OrderbookSnapshot:
+#       type: object
+#       description: Snapshot of the full orderbook (bids & asks).
+#       properties:
+#         market_addr:
+#           type: string
+#         seq:
+#           type: integer
+#           format: int64
+#           description: Monotonic sequence number (if available).
+#         bids:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/Level'
+#         asks:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/Level'
+#         ts:
+#           type: integer
+#           format: int64
+#           description: Server timestamp (ms).
+#       additionalProperties: true
+#       examples:
+#         - market_addr: "0xabc123..."
+#           seq: 42
+#           bids: [{ price: "1000", qty: "3.5" }]
+#           asks: [{ price: "1001", qty: "1.2" }]
+#           ts: 1724660000000
 
-    OrderbookDelta:
-      type: object
-      description: Incremental updates to levels since the last snapshot/delta.
-      properties:
-        market_addr:
-          type: string
-        seq:
-          type: integer
-          format: int64
-        bids_upserts:
-          type: array
-          items:
-            $ref: '#/components/schemas/Level'
-        asks_upserts:
-          type: array
-          items:
-            $ref: '#/components/schemas/Level'
-        bids_deletes:
-          type: array
-          items:
-            $ref: '#/components/schemas/PriceKey'
-        asks_deletes:
-          type: array
-          items:
-            $ref: '#/components/schemas/PriceKey'
-        ts:
-          type: integer
-          format: int64
-      additionalProperties: true
-      examples:
-        - market_addr: "0xabc123..."
-          seq: 43
-          bids_upserts: [{ price: "999", qty: "0.7" }]
-          asks_deletes: [{ price: "1002" }]
-          ts: 1724660001000
+#     OrderbookDelta:
+#       type: object
+#       description: Incremental updates to levels since the last snapshot/delta.
+#       properties:
+#         market_addr:
+#           type: string
+#         seq:
+#           type: integer
+#           format: int64
+#         bids_upserts:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/Level'
+#         asks_upserts:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/Level'
+#         bids_deletes:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/PriceKey'
+#         asks_deletes:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/PriceKey'
+#         ts:
+#           type: integer
+#           format: int64
+#       additionalProperties: true
+#       examples:
+#         - market_addr: "0xabc123..."
+#           seq: 43
+#           bids_upserts: [{ price: "999", qty: "0.7" }]
+#           asks_deletes: [{ price: "1002" }]
+#           ts: 1724660001000
 
-    AggregatedTrades:
-      type: object
-      description: Aggregated recent fills rendered as trades.
-      properties:
-        market_addr:
-          type: string
-        trades:
-          type: array
-          items:
-            $ref: '#/components/schemas/Trade'
-        ts:
-          type: integer
-          format: int64
-      additionalProperties: true
-      examples:
-        - market_addr: "0xabc123..."
-          trades:
-            - side: buy
-              price: "1000"
-              qty: "0.25"
-              ts: 1724660000500
-            - side: sell
-              price: "1001"
-              qty: "0.10"
-              ts: 1724660000600
-          ts: 1724660000600
+#     AggregatedTrades:
+#       type: object
+#       description: Aggregated recent fills rendered as trades.
+#       properties:
+#         market_addr:
+#           type: string
+#         trades:
+#           type: array
+#           items:
+#             $ref: '#/components/schemas/Trade'
+#         ts:
+#           type: integer
+#           format: int64
+#       additionalProperties: true
+#       examples:
+#         - market_addr: "0xabc123..."
+#           trades:
+#             - side: buy
+#               price: "1000"
+#               qty: "0.25"
+#               ts: 1724660000500
+#             - side: sell
+#               price: "1001"
+#               qty: "0.10"
+#               ts: 1724660000600
+#           ts: 1724660000600
 
-    Level:
-      type: object
-      properties:
-        price: { type: string, description: Fixed-point or stringified integer }
-        qty:   { type: string, description: Fixed-point or stringified integer }
-      required: [price, qty]
+#     Level:
+#       type: object
+#       properties:
+#         price: { type: string, description: Fixed-point or stringified integer }
+#         qty:   { type: string, description: Fixed-point or stringified integer }
+#       required: [price, qty]
 
-    PriceKey:
-      type: object
-      properties:
-        price: { type: string }
-      required: [price]
+#     PriceKey:
+#       type: object
+#       properties:
+#         price: { type: string }
+#       required: [price]
 
-    Trade:
-      type: object
-      properties:
-        side:
-          type: string
-          enum: [buy, sell]
-        price:
-          type: string
-        qty:
-          type: string
-        ts:
-          type: integer
-          format: int64
-      required: [side, price, qty, ts]
+#     Trade:
+#       type: object
+#       properties:
+#         side:
+#           type: string
+#           enum: [buy, sell]
+#         price:
+#           type: string
+#         qty:
+#           type: string
+#         ts:
+#           type: integer
+#           format: int64
+#       required: [side, price, qty, ts]
