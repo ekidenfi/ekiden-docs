@@ -6,7 +6,7 @@ info:
     Realtime market data: orderbooks, trades, mark price, funding rate.
 servers:
   public:
-    host: api.ekiden.fi/api/v1
+    host: api.ekiden.fi/ws
     protocol: wss
 channels:
   orderbook:
