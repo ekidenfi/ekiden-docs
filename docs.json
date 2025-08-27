@@ -102,7 +102,7 @@
                     },
                     {
                         "group": "Websocket API",
-                        "asyncapi": "https://raw.githubusercontent.com/ekidenfi/ekiden-docs/refs/heads/main/api-reference/asyncapi.yaml"
+                        "asyncapi": "api-reference/asyncapi.yaml"
                     }
                 ]
             }
