@@ -153,5 +153,8 @@
             "github": "https://github.com/ekidenfi",
             "linkedin": "https://linkedin.com/company/ekidenfi"
         }
+    },
+    "analytics": {
+        "ga4": "G-N5ZZ958CJ8"
     }
 }
