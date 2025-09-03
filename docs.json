@@ -154,7 +154,9 @@
             "linkedin": "https://linkedin.com/company/ekidenfi"
         }
     },
-    "analytics": {
-        "ga4": "G-N5ZZ958CJ8"
+    "integrations": {
+        "ga4": {
+            "measurementId": "G-N5ZZ958CJ8"
+        }
     }
 }
