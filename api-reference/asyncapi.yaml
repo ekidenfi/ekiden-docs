@@ -18,6 +18,10 @@ servers:
     host: api.ekiden.fi
     protocol: wss
     description: Production WebSocket endpoint
+  staging:
+    host: api.staging.ekiden.fi
+    protocol: wss
+    description: Staging WebSocket endpoint
 
 channels:
   ws:
