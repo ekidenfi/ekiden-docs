@@ -1,0 +1,66 @@
+---
+title: "Orderbook"
+---
+
+Subscribe to real-time orderbook updates for a market.
+
+- Topic: `orderbook/{market_addr}`
+- Stream: Public (`wss://api.ekiden.fi/ws/public`)
+
+## Subscribe
+
+```json
+{ "op": "subscribe", "args": ["orderbook/0x88a70ff..."], "req_id": "101001" }
+```
+
+Ack:
+
+```json
+{ "op": "subscribed", "args": ["orderbook/0x88a70ff..."], "req_id": "101001" }
+```
+
+## Events
+
+Messages arrive with `op: "event"`, `topic: "orderbook/{addr}"`, and `data` being either a snapshot or a delta.
+
+Snapshot example:
+
+```json
+{
+	"op": "event",
+	"topic": "orderbook/0x88a70ff...",
+	"data": {
+		"market_addr": "0x88a70ff...",
+		"seq": 123,
+		"bids": [{ "price": "100.1", "qty": "5" }],
+		"asks": [{ "price": "100.2", "qty": "3" }],
+		"ts": 1681234567890123456
+	}
+}
+```
+
+Delta example:
+
+```json
+{
+	"op": "event",
+	"topic": "orderbook/0x88a70ff...",
+	"data": {
+		"market_addr": "0x88a70ff...",
+		"seq": 124,
+		"bids_upserts": [{ "price": "100.1", "qty": "7" }],
+		"asks_upserts": [],
+		"bids_deletes": [],
+		"asks_deletes": [{ "price": "100.3" }],
+		"ts": 1681234567890123457
+	}
+}
+```
+
+## Building a Local Book
+
+- On subscribe, wait for a snapshot, then apply subsequent deltas by ascending `seq`.
+- Deltas are incremental changes since the last sequence; remove levels found in `*_deletes` and upsert those in `*_upserts`.
+- If you detect a gap in `seq`, resubscribe to receive a fresh snapshot.
+
+See schema details in [AsyncAPI](../websockets/public): `OrderbookSnapshot`, `OrderbookDelta`.

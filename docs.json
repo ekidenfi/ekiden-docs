@@ -98,13 +98,30 @@
                     },
                     {
                         "group": "RESTful API",
-                        "openapi": "api-reference/openapi.json"
+                        "openapi": "/api-reference/openapi.json"
                     },
                     {
                         "group": "Websocket API",
+                        "pages": [
+                            "api-reference/websocket/connect",
+                            {
+                                "group": "Public",
+                                "pages": [
+                                    "api-reference/websocket/orderbook",
+                                    "api-reference/websocket/trade"
+                                ]
+                            },
+                            {
+                                "group": "Private",
+                                "pages": [
+                                    "api-reference/websocket/order",
+                                    "api-reference/websocket/position",
+                                    "api-reference/websocket/fill"
+                                ]
+                            }
+                        ],
                         "asyncapi": {
-                            "source": "https://raw.githubusercontent.com/ekidenfi/ekiden-docs/main/api-reference/asyncapi.yaml",
-                            "directory": "api-reference"
+                            "source": "api-reference/websocket/asyncapi.yaml"
                         }
                     }
                 ]

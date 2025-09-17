@@ -1,0 +1,121 @@
+---
+title: "Connect"
+---
+
+This page explains how to connect to Ekiden WebSocket streams, authenticate for private data, and manage subscriptions. For full schema details, see the AsyncAPI spec.
+
+- Public stream: [AsyncAPI](../websockets/public) → channel `public`
+- Private stream: [AsyncAPI](../websockets/private) → channel `private`
+
+## Endpoints
+
+- Public: `wss://api.ekiden.fi/ws/public`
+- Private: `wss://api.ekiden.fi/ws/private`
+
+<Note>No authentication is required for the public stream. Private stream requires bearer token auth.</Note>
+
+## Quick Start (JavaScript)
+
+```javascript
+const ws = new WebSocket("wss://api.ekiden.fi/ws/public");
+
+ws.onopen = () => {
+    // Subscribe to orderbook and trades for a market
+    ws.send(JSON.stringify({ op: "subscribe", args: [
+        "orderbook/0x88a70ff...",
+        "trade/0x88a70ff..."
+    ], req_id: "100001" }));
+};
+
+ws.onmessage = (ev) => {
+    const msg = JSON.parse(ev.data);
+    // Handle acks
+    if (msg.op === "subscribed") console.log("Subscribed:", msg.args);
+    if (msg.op === "unsubscribed") console.log("Unsubscribed:", msg.args);
+    if (msg.op === "error") console.warn("Error:", msg.message);
+    if (msg.op === "pong") console.log("RTT ns:", msg.server_ts - (msg.client_ts ?? 0));
+
+    // Handle events (market or user, depending on stream)
+    if (msg.op === "event") {
+        console.log("Topic:", msg.topic, "Data:", msg.data);
+    }
+};
+
+// Heartbeat every ~20s
+setInterval(() => {
+    ws.send(JSON.stringify({ op: "ping", ts: Date.now() * 1e6, req_id: "hb" }));
+}, 20_000);
+```
+
+## Private Stream Authentication
+
+1) Obtain a bearer token via the REST Authorize endpoint (JWT or similar).
+2) Connect to `wss://api.ekiden.fi/ws/private`.
+3) Send `AuthRequest` once connected.
+
+```json
+{ "op": "auth", "bearer": "<JWT>", "req_id": "200001" }
+``;
+
+Server response examples:
+
+```json
+{ "op": "auth", "success": true, "user_id": "0x88a70ff...", "req_id": "200001" }
+```
+
+```json
+{ "op": "auth", "success": false, "message": "INVALID_TOKEN", "req_id": "200001" }
+```
+
+After a successful auth you can subscribe to private topics: `order`, `position`, `fill`.
+
+## Subscribe / Unsubscribe
+
+Request:
+
+```json
+{ "op": "subscribe", "args": ["orderbook/0x88a70ff..."], "req_id": "100002" }
+```
+
+Ack:
+
+```json
+{ "op": "subscribed", "args": ["orderbook/0x88a70ff..."], "req_id": "100002" }
+```
+
+Unsubscribe:
+
+```json
+{ "op": "unsubscribe", "args": ["orderbook/0x88a70ff..."], "req_id": "100003" }
+```
+
+Ack:
+
+```json
+{ "op": "unsubscribed", "args": ["orderbook/0x88a70ff..."], "req_id": "100003" }
+```
+
+## Heartbeat (Ping/Pong)
+
+Send ping periodically to maintain the connection and measure RTT.
+
+```json
+{ "op": "ping", "ts": 1681234567890123114, "req_id": "100004" }
+```
+
+Pong response:
+
+```json
+{ "op": "pong", "server_ts": 1681234567890123456, "client_ts": 1681234567890123114, "req_id": "100004" }
+```
+
+<Warning>Send a ping about every 20 seconds. Excessive connects/disconnects or idle sockets without heartbeats may be rate limited or closed.</Warning>
+
+## Rate Limits & Best Practices
+
+- Avoid repeatedly opening/closing sockets. Reuse a connection per environment.
+- Batch subscriptions in a single request where possible (multiple topics in `args`).
+- Backoff and retry on `error` responses; watch for policy messages like rate limits.
+- Do not assume ordering across different topics; sequence/order applies within a topic only.
+
+For message shapes and fields, refer to [AsyncAPI](./asyncapi.yaml) messages: `SubscribeRequest`, `UnsubscribeRequest`, `Pong`, `Error`, and `Event`.

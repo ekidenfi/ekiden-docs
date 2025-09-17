@@ -1,0 +1,436 @@
+asyncapi: 3.0.0
+info:
+  title: Ekiden WebSocket API
+  version: 1.0.0
+  description: |
+    Real-time feeds for orderbooks and aggregated trades.
+
+    ### Flow
+    1. Connect to `wss://api.ekiden.fi/ws`.
+    2. Send a **Subscribe** request on the root channel `/` with a channel name:
+     - `orderbook/{market_addr}`
+     - `trade/{market_addr}`
+    3. Receive **Subscribed**, then streaming events on the channel you subscribed to.
+    4. Use **Unsubscribe** or **Ping** when needed.
+
+servers:
+  production:
+    host: api.ekiden.fi
+    protocol: wss
+    description: WebSocket endpoint
+
+channels:
+  public:
+    title: Public
+    description: |
+      The public channel is used for subscribing to market data.
+    address: /ws/public
+    messages:
+      SubscribeRequest: { $ref: '#/components/messages/SubscribeRequest' }
+      UnsubscribeRequest: { $ref: '#/components/messages/UnsubscribeRequest' }
+      PingRequest: { $ref: '#/components/messages/PingRequest' }
+      Subscribed: { $ref: '#/components/messages/Subscribed' }
+      Unsubscribed: { $ref: '#/components/messages/Unsubscribed' }
+      Pong: { $ref: '#/components/messages/Pong' }
+      Error: { $ref: '#/components/messages/Error' }
+      Event: { $ref: '#/components/messages/Event' }
+  private:
+    title: Private
+    description: |
+      The private channel is used for subscribing to user-specific data.
+    address: /ws/private
+    messages:
+      AuthRequest: { $ref: '#/components/messages/AuthRequest' }
+      AuthResponse: { $ref: '#/components/messages/AuthResponse' }
+      SubscribeRequest: { $ref: '#/components/messages/SubscribeRequest' }
+      UnsubscribeRequest: { $ref: '#/components/messages/UnsubscribeRequest' }
+      PingRequest: { $ref: '#/components/messages/PingRequest' }
+      Subscribed: { $ref: '#/components/messages/Subscribed' }
+      Unsubscribed: { $ref: '#/components/messages/Unsubscribed' }
+      Pong: { $ref: '#/components/messages/Pong' }
+      Error: { $ref: '#/components/messages/Error' }
+      Event: { $ref: '#/components/messages/Event' }
+
+operations:
+  # Client -> Server
+  sendSubscribe:   { action: receive, channel: { $ref: '#/channels/public' }, messages: [ { $ref: '#/channels/public/messages/SubscribeRequest' } ] }
+  sendUnsubscribe: { action: receive, channel: { $ref: '#/channels/public' }, messages: [ { $ref: '#/channels/public/messages/UnsubscribeRequest' } ] }
+  sendPing:        { action: receive, channel: { $ref: '#/channels/public' }, messages: [ { $ref: '#/channels/public/messages/PingRequest' } ] }
+
+  # Server -> Client
+  receiveSubscribed:   { action: send, channel: { $ref: '#/channels/public' }, messages: [ { $ref: '#/channels/public/messages/Subscribed' } ] }
+  receiveUnsubscribed: { action: send, channel: { $ref: '#/channels/public' }, messages: [ { $ref: '#/channels/public/messages/Unsubscribed' } ] }
+  receivePong:         { action: send, channel: { $ref: '#/channels/public' }, messages: [ { $ref: '#/channels/public/messages/Pong' } ] }
+  receiveError:        { action: send, channel: { $ref: '#/channels/public' }, messages: [ { $ref: '#/channels/public/messages/Error' } ] }
+  receiveEvent:        { action: send, channel: { $ref: '#/channels/public' }, messages: [ { $ref: '#/channels/public/messages/Event' } ] }
+
+  # Client -> Server (private channel)
+  sendAuthPrivate:        { action: receive, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/AuthRequest' } ] }
+  sendSubscribePrivate:   { action: receive, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/SubscribeRequest' } ] }
+  sendUnsubscribePrivate: { action: receive, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/UnsubscribeRequest' } ] }
+  sendPingPrivate:        { action: receive, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/PingRequest' } ] }
+
+  # Server -> Client (private channel)
+  receiveAuthPrivate:         { action: send, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/AuthResponse' } ] }
+  receiveSubscribedPrivate:   { action: send, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/Subscribed' } ] }
+  receiveUnsubscribedPrivate: { action: send, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/Unsubscribed' } ] }
+  receivePongPrivate:         { action: send, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/Pong' } ] }
+  receiveErrorPrivate:        { action: send, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/Error' } ] }
+  receiveEventPrivate:        { action: send, channel: { $ref: '#/channels/private' }, messages: [ { $ref: '#/channels/private/messages/Event' } ] }
+
+components:
+  messages:
+    # Client -> Server
+    AuthRequest:
+      title: Auth
+      description: Authenticate the connection on the private channel using a bearer token (e.g., JWT). Server responds with `AuthResponse`.
+      examples:
+        - payload:
+            op: auth
+            bearer: "<JWT>"
+            req_id: "200001"
+      payload:
+        type: object
+        additionalProperties: false
+        properties:
+          op: { type: string, const: auth, default: auth, description: Operation name }
+          bearer: { type: string, description: Bearer token issued by the REST authorize endpoint }
+          req_id: { type: string, description: Client generated request ID (optional) }
+        required: [op, bearer]
+
+    SubscribeRequest:
+      title: Subscribe
+      description: Subscribe to a public topics. Server will respond with a `Subscribed` message.
+      examples: 
+        - payload:
+            op: subscribe
+            args: ["orderbook/0x88a70ff..."]
+            req_id: "100001"
+      payload:
+        type: object
+        additionalProperties: false
+        properties:
+          op:
+            type: string
+            default: "subscribe"
+            readOnly: true
+            description: Operation name
+          args:
+            type: array
+            items:
+              type: string
+              default: orderbook/
+              pattern: '^(orderbook|trade)\/[^\/\s]+$'
+              description: orderbook/{market_addr} or trade/{market_addr}
+            minItems: 1
+            uniqueItems: true
+            description: List of topics to subscribe to
+          req_id:
+            type: string
+            description: Client generated request ID (optional)
+        required: [op, args]
+
+    UnsubscribeRequest:
+      title: Unsubscribe
+      description: Unsubscribe from a public topics. Server will respond with an `Unsubscribed` message.
+      examples: 
+        - payload:
+            op: unsubscribe
+            args: ["orderbook/0x88a70ff..."]
+            req_id: "100002"
+      payload:
+        type: object
+        additionalProperties: false
+        properties:
+          op:
+            type: string
+            default: "unsubscribe"
+            readOnly: true
+            description: Operation name
+          args:
+            type: array
+            items:
+              type: string
+              default: orderbook/
+              pattern: '^(orderbook|trade)\/[^\/\s]+$'
+              description: orderbook/{market_addr} or trade/{market_addr}
+            minItems: 1
+            uniqueItems: true
+            description: List of topics to unsubscribe from
+          req_id:
+            type: string
+            description: Client generated request ID (optional)
+        required: [op, args]
+
+    PingRequest:
+      title: Ping
+      description: Ping the server. The server will respond with a `Pong` message. Client can use `ts` to measure RTT.
+      examples: 
+        - payload:
+            op: ping
+            ts: 1681234567890123114
+            req_id: "100003"
+      payload:
+        type: object
+        additionalProperties: false
+        properties:
+          op:
+            type: string
+            default: "ping"
+            readOnly: true
+            description: Operation name
+          ts:
+            type: integer
+            description: Client timestamp in unix nanoseconds (optional)
+          req_id:
+            type: string
+            description: Client generated request ID (optional)
+        required: [op]
+
+    # Server -> Client acks
+    AuthResponse:
+      title: Auth
+      description: Response to an `Auth` request. Indicates whether authentication succeeded.
+      examples:
+        - payload:
+            op: auth
+            success: true
+            user_id: "0x88a70ff..."
+            req_id: "200001"
+        - payload:
+            op: auth
+            success: false
+            message: "INVALID_TOKEN"
+            req_id: "200001"
+      payload:
+        type: object
+        additionalProperties: false
+        properties:
+          op: { type: string, const: auth, default: auth, description: Operation name }
+          success: { type: boolean, description: Authentication result }
+          user_id: { type: string, description: User identifier when authenticated (optional) }
+          message: { type: string, description: Error message when authentication fails (optional) }
+          req_id: { type: string, description: Client generated request ID (optional) }
+        required: [op, success]
+
+    Subscribed:
+      title: Subscribed
+      description: Acknowledgement for a successful `Subscribe` request. Echoes the list of topics.
+      examples:
+        - payload:
+            op: subscribed
+            args: ["orderbook/0x88a70ff..."]
+            req_id: "100001"
+      payload:
+        type: object
+        properties:
+          op: { type: string, const: subscribed, description: Operation name }
+          args:
+            type: array
+            items:
+              type: string
+              pattern: '^(orderbook|trade)\/[^\/\s]+$'
+              description: orderbook/{market_addr} or trade/{market_addr}
+            minItems: 1
+            uniqueItems: true
+            description: List of topics subscribed to
+          req_id: { type: string, description: Client generated request ID (optional) }
+        required: [op, args]
+
+    Unsubscribed:
+      title: Unsubscribed
+      description: Acknowledgement for a successful `Unsubscribe` request. Echoes the list of topics.
+      examples:
+        - payload:
+            op: unsubscribed
+            args:
+              - "orderbook/0x88a70ff..."
+            req_id: "100002"
+      payload:
+        type: object
+        properties:
+          op: { type: string, const: unsubscribed, description: Operation name }
+          args:
+            type: array
+            items:
+              type: string
+              pattern: '^(orderbook|trade)\/[^\/\s]+$'
+              description: orderbook/{market_addr} or trade/{market_addr}
+            minItems: 1
+            uniqueItems: true
+            description: List of topics unsubscribed from
+          req_id: { type: string, description: Client generated request ID (optional) }
+        required: [op, args]
+
+    Pong:
+      title: Pong
+      description: Heartbeat response to a `Ping` request. Includes the server timestamp in nanoseconds and echoes `client_ts` to help client measure RTT.
+      examples:
+        - payload:
+            op: pong
+            req_id: "100003"
+            client_ts: 1681234567890123114
+            server_ts: 1681234567890123456
+      payload:
+        type: object
+        properties:
+          op: { type: string, const: pong, description: Operation name }
+          req_id: { type: string, description: Client generated request ID (optional) }
+          client_ts: { type: integer, description: Client timestamp in unix nanoseconds (optional) }
+          server_ts: { type: integer, description: Server timestamp in unix nanoseconds }
+        required: [op, server_ts]
+
+    Error:
+      title: Error
+      description: Standard error response for invalid requests, authorization failures, or policy violations (e.g., rate limits).
+      examples:
+        - payload:
+            op: error
+            message: "INVALID_TOPIC_FOR_PUBLIC_WS: position"
+            req_id: "100004"
+      payload:
+        type: object
+        properties:
+          op: { type: string, const: error, description: Operation name }
+          message: { type: string, description: Error message }
+          req_id: { type: string, description: Client generated request ID (optional) }
+        required: [op, message]
+
+    # Server -> Client event (single envelope with variants)
+    Event:
+      title: Event
+      description: |
+        Unified event envelope. `data` can be one of public market updates or private user updates.
+        - Public: `OrderbookSnapshot`, `OrderbookDelta`, `AggregatedTrades`
+        - Private: arrays of `OrderResponse`, `FillResponse`, `PositionResponse`
+      examples:
+        - payload:
+            op: event
+            topic: "orderbook/0x88a70ff..."
+            data:
+              market_addr: "0x88a70ff..."
+              seq: 123
+              bids: [ { price: "100.1", qty: "5" } ]
+              asks: [ { price: "100.2", qty: "3" } ]
+              ts: 1681234567890123456
+      payload:
+        type: object
+        properties:
+          op: { type: string, const: event, description: Operation name }
+          topic: { type: string, description: Topic name }
+          data:
+            oneOf:
+              - $ref: '#/components/schemas/OrderbookSnapshot'
+              - $ref: '#/components/schemas/OrderbookDelta'
+              - $ref: '#/components/schemas/AggregatedTrades'
+              - { type: array, title: Vec<OrderResponse>, items: { $ref: '#/components/schemas/OrderResponse' } }
+              - { type: array, title: Vec<FillResponse>, items: { $ref: '#/components/schemas/FillResponse' } }
+              - { type: array, title: Vec<PositionResponse>, items: { $ref: '#/components/schemas/PositionResponse' } }
+        required: [op, topic, data]
+
+  schemas:
+    # Public event schemas
+    OrderbookSnapshot:
+      type: object
+      properties:
+        market_addr: { type: string }
+        seq: { type: integer, format: int64 }
+        bids: { type: array, items: { $ref: '#/components/schemas/Level' } }
+        asks: { type: array, items: { $ref: '#/components/schemas/Level' } }
+        ts: { type: integer, format: int64 }
+      additionalProperties: true
+
+    OrderbookDelta:
+      type: object
+      properties:
+        market_addr: { type: string }
+        seq: { type: integer, format: int64 }
+        bids_upserts: { type: array, items: { $ref: '#/components/schemas/Level' } }
+        asks_upserts: { type: array, items: { $ref: '#/components/schemas/Level' } }
+        bids_deletes: { type: array, items: { $ref: '#/components/schemas/PriceKey' } }
+        asks_deletes: { type: array, items: { $ref: '#/components/schemas/PriceKey' } }
+        ts: { type: integer, format: int64 }
+      additionalProperties: true
+
+    AggregatedTrades:
+      type: object
+      properties:
+        market_addr: { type: string }
+        trades: { type: array, items: { $ref: '#/components/schemas/Trade' } }
+        ts: { type: integer, format: int64 }
+      additionalProperties: true
+
+    Level:
+      type: object
+      properties:
+        price: { type: string }
+        qty:   { type: string }
+      required: [price, qty]
+
+    PriceKey:
+      type: object
+      properties:
+        price: { type: string }
+      required: [price]
+
+    Trade:
+      type: object
+      properties:
+        side: { type: string, enum: [buy, sell] }
+        price: { type: string }
+        qty: { type: string }
+        ts: { type: integer, format: int64 }
+      required: [side, price, qty, ts]
+
+    # Private event schemas
+    OrderResponse:
+      type: object
+      properties:
+        sid: { type: string }
+        side: { type: string }
+        size: { type: integer, format: int64 }
+        price: { type: integer, format: int64 }
+        leverage: { type: integer, format: int64 }
+        type: { type: string }
+        status: { type: string }
+        user_addr: { type: string }
+        market_addr: { type: string }
+        is_cross: { type: boolean }
+        seq: { type: integer, format: int64 }
+        timestamp: { type: integer, format: int64 }
+      additionalProperties: true
+
+    FillResponse:
+      type: object
+      properties:
+        sid: { type: string }
+        side: { type: string }
+        size: { type: integer, format: int64 }
+        price: { type: integer, format: int64 }
+        fee: { type: integer, format: int64 }
+        taker_order_sid: { type: string }
+        taker_addr: { type: string }
+        maker_order_sid: { type: string }
+        maker_addr: { type: string }
+        market_addr: { type: string }
+        seq: { type: integer, format: int64 }
+        maker_leverage: { type: integer, format: int64 }
+        taker_leverage: { type: integer, format: int64 }
+        maker_is_cross: { type: boolean }
+        taker_is_cross: { type: boolean }
+        timestamp: { type: integer, format: int64 }
+      additionalProperties: true
+
+    PositionResponse:
+      type: object
+      properties:
+        sid: { type: string }
+        size: { type: integer, format: int64 }
+        price: { type: integer, format: int64 }
+        margin: { type: integer, format: int64 }
+        funding_index: { type: integer, format: int64 }
+        epoch: { type: integer, format: int64 }
+        is_cross: { type: boolean }
+        seq: { type: integer, format: int64 }
+        timestamp: { type: integer, format: int64 }
+      additionalProperties: true

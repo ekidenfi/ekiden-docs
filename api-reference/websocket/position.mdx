@@ -1,0 +1,52 @@
+---
+title: "Position"
+---
+
+Receive real-time updates on your positions.
+
+- Topic: `position`
+- Stream: Private (`wss://api.ekiden.fi/ws/private`)
+
+## Authenticate
+
+Use authentication flow described in the [Connect](./connect) page.
+
+## Subscribe
+
+```json
+{ "op": "subscribe", "args": ["position"], "req_id": "202001" }
+```
+
+Ack:
+
+```json
+{ "op": "subscribed", "args": ["position"], "req_id": "202001" }
+```
+
+## Events
+
+Messages arrive with `op: "event"`, `topic: "position"`, and `data` is an array of `PositionResponse`.
+
+Example:
+
+```json
+{
+	"op": "event",
+	"topic": "position",
+	"data": [
+		{
+			"sid": "0xpos1",
+			"size": -250,
+			"price": 100100,
+			"margin": 50000,
+			"funding_index": 12345,
+			"epoch": 42,
+			"is_cross": true,
+			"seq": 999,
+			"timestamp": 1681234568001
+		}
+	]
+}
+```
+
+See schema details in [AsyncAPI](../websockets/private): `PositionResponse`.
