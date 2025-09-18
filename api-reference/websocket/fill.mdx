@@ -1,0 +1,59 @@
+---
+title: "Fill"
+---
+
+Receive real-time updates on your fills (trade executions).
+
+- Topic: `fill`
+- Stream: Private (`wss://api.ekiden.fi/ws/private`)
+
+## Authenticate
+
+Use authentication flow described in the [Connect](./connect) page.
+
+## Subscribe
+
+```json
+{ "op": "subscribe", "args": ["fill"], "req_id": "203001" }
+```
+
+Ack:
+
+```json
+{ "op": "subscribed", "args": ["fill"], "req_id": "203001" }
+```
+
+## Events
+
+Messages arrive with `op: "event"`, `topic: "fill"`, and `data` is an array of `FillResponse`.
+
+Example:
+
+```json
+{
+	"op": "event",
+	"topic": "fill",
+	"data": [
+		{
+			"sid": "0xfill1",
+			"side": "buy",
+			"size": 500,
+			"price": 100250,
+			"fee": 10,
+			"taker_order_sid": "0xordT",
+			"taker_addr": "0xuserT...",
+			"maker_order_sid": "0xordM",
+			"maker_addr": "0xuserM...",
+			"market_addr": "0x88a70ff...",
+			"seq": 789,
+			"maker_leverage": 3,
+			"taker_leverage": 5,
+			"maker_is_cross": true,
+			"taker_is_cross": false,
+			"timestamp": 1681234567999
+		}
+	]
+}
+```
+
+See schema details in [AsyncAPI](../websockets/private): `FillResponse`.

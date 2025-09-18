@@ -1,0 +1,43 @@
+---
+title: "Trade"
+---
+
+Subscribe to aggregated trades for a market.
+
+- Topic: `trade/{market_addr}`
+- Stream: Public (`wss://api.ekiden.fi/ws/public`)
+
+## Subscribe
+
+```json
+{ "op": "subscribe", "args": ["trade/0x88a70ff..."], "req_id": "102001" }
+```
+
+Ack:
+
+```json
+{ "op": "subscribed", "args": ["trade/0x88a70ff..."], "req_id": "102001" }
+```
+
+## Events
+
+Messages arrive with `op: "event"`, `topic: "trade/{addr}"`, and `data` containing `trades`.
+
+Example:
+
+```json
+{
+	"op": "event",
+	"topic": "trade/0x88a70ff...",
+	"data": {
+		"market_addr": "0x88a70ff...",
+		"trades": [
+			{ "side": "buy", "price": "100.2", "qty": "1", "ts": 1681234567890123458 },
+			{ "side": "sell", "price": "100.1", "qty": "2", "ts": 1681234567890123459 }
+		],
+		"ts": 1681234567890123460
+	}
+}
+```
+
+See schema details in [AsyncAPI](../websockets/public): `AggregatedTrades`, `Trade`.

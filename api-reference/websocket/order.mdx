@@ -1,0 +1,55 @@
+---
+title: "Order"
+---
+
+Receive real-time updates on your orders.
+
+- Topic: `order`
+- Stream: Private (`wss://api.ekiden.fi/ws/private`)
+
+## Authenticate
+
+Use authentication flow described in the [Connect](./connect) page.
+
+## Subscribe
+
+```json
+{ "op": "subscribe", "args": ["order"], "req_id": "201001" }
+```
+
+Ack:
+
+```json
+{ "op": "subscribed", "args": ["order"], "req_id": "201001" }
+```
+
+## Events
+
+Messages arrive with `op: "event"`, `topic: "order"`, and `data` is an array of `OrderResponse`.
+
+Example:
+
+```json
+{
+	"op": "event",
+	"topic": "order",
+	"data": [
+		{
+			"sid": "0xord1",
+			"side": "buy",
+			"size": 1000,
+			"price": 100200,
+			"leverage": 5,
+			"type": "limit",
+			"status": "placed",
+			"user_addr": "0xuser...",
+			"market_addr": "0x88a70ff...",
+			"is_cross": true,
+			"seq": 456,
+			"timestamp": 1681234567890
+		}
+	]
+}
+```
+
+See schema details in [AsyncAPI](../websockets/private): `OrderResponse`.
