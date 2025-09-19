@@ -7,17 +7,25 @@ This page explains how to connect to Ekiden WebSocket streams, authenticate for 
 - Public stream: [AsyncAPI](../websockets/public) → channel `public`
 - Private stream: [AsyncAPI](../websockets/private) → channel `private`
 
-## Endpoints
+## Environments & Endpoints
 
-- Public: `wss://api.ekiden.fi/ws/public`
-- Private: `wss://api.ekiden.fi/ws/private`
+- Production
+    - REST: `https://api.ekiden.fi/api/v1`
+    - WS Public: `wss://api.ekiden.fi/ws/public`
+    - WS Private: `wss://api.ekiden.fi/ws/private`
+- Staging
+    - REST: `https://api.staging.ekiden.fi/api/v1`
+    - WS Public: `wss://api.staging.ekiden.fi/ws/public`
+    - WS Private: `wss://api.staging.ekiden.fi/ws/private`
+
+Choose your environment before connecting. Public feeds require no auth; private feeds require a bearer token from the matching REST environment.
 
 <Note>No authentication is required for the public stream. Private stream requires bearer token auth.</Note>
 
 ## Quick Start (JavaScript)
 
 ```javascript
-const ws = new WebSocket("wss://api.ekiden.fi/ws/public");
+const ws = new WebSocket("wss://api.ekiden.fi/ws/public"); // use staging URL for testing
 
 ws.onopen = () => {
     // Subscribe to orderbook and trades for a market
@@ -49,8 +57,8 @@ setInterval(() => {
 
 ## Private Stream Authentication
 
-1) Obtain a bearer token via the REST Authorize endpoint (JWT or similar).
-2) Connect to `wss://api.ekiden.fi/ws/private`.
+1) Obtain a bearer token via the REST Authorize endpoint (use the same environment as your WS connection).
+2) Connect to `wss://api.ekiden.fi/ws/private` (or staging equivalent).
 3) Send `AuthRequest` once connected.
 
 ```json
