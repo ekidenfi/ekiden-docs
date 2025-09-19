@@ -6,18 +6,25 @@ info:
     Real-time feeds for orderbooks and aggregated trades.
 
     ### Flow
-    1. Connect to `wss://api.ekiden.fi/ws`.
-    2. Send a **Subscribe** request on the root channel `/` with a channel name:
+    1. Choose environment:
+       - Production: `wss://api.ekiden.fi`
+       - Staging: `wss://api.staging.ekiden.fi`
+    2. Connect to `/ws/public` or `/ws/private` on the chosen host.
+    3. Send a **Subscribe** request on the root channel `/` with a channel name:
      - `orderbook/{market_addr}`
      - `trade/{market_addr}`
-    3. Receive **Subscribed**, then streaming events on the channel you subscribed to.
-    4. Use **Unsubscribe** or **Ping** when needed.
+    4. Receive **Subscribed**, then streaming events on the channel you subscribed to.
+    5. Use **Unsubscribe** or **Ping** when needed.
 
 servers:
   production:
     host: api.ekiden.fi
     protocol: wss
-    description: WebSocket endpoint
+    description: Production WebSocket endpoint
+  staging:
+    host: api.staging.ekiden.fi
+    protocol: wss
+    description: Staging WebSocket endpoint for testing
 
 channels:
   public:
