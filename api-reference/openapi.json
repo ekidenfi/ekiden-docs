@@ -12,6 +12,14 @@
     {
       "url": "https://api.ekiden.fi/",
       "description": "Production"
+    },
+    {
+      "url": "https://api.staging.ekiden.fi/",
+      "description": "Staging"
+    },
+    {
+      "url": "http://localhost:3010/",
+      "description": "Local"
     }
   ],
   "paths": {
@@ -21,7 +29,7 @@
           "Auth"
         ],
         "summary": "Authorize",
-        "description": "Authenticates a user and generates a JWT token for subsequent API calls. The user must provide a valid Ed25519 signature for message `AUTHORIZE` and public key. If the user doesn't exist, a new user account will be created.",
+        "description": "Authenticates a user and generates a JWT token for subsequent API calls. The client must sign the message `AUTHORIZE|{timestamp_ms}|{nonce}` with Ed25519 and include `public_key`, `timestamp_ms` (Unix ms), and `nonce`. Timestamp must be recent and each (public_key, nonce) may be used once to prevent replay.",
         "operationId": "authorize",
         "requestBody": {
           "content": {
@@ -1341,9 +1349,15 @@
         "type": "object",
         "required": [
           "signature",
-          "public_key"
+          "public_key",
+          "timestamp_ms",
+          "nonce"
         ],
         "properties": {
+          "nonce": {
+            "type": "string",
+            "example": "b7d1c2e8f5a94f3db2f8c6a9d1e4"
+          },
           "public_key": {
             "type": "string",
             "example": "0xa9d81da788977638194c857b918f12ff2233c7a86e82b44705761b2d02426f6d"
@@ -1351,6 +1365,11 @@
           "signature": {
             "type": "string",
             "example": "0xf5ec808e52d014f5193eccf680acf84c6256bdddb0159088e7cb18d74b9c590b92eb4381e10307fccc0868612993dfb9a542257aab22d7a3decfda33045fb905"
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "format": "int64",
+            "example": "1731541800000"
           }
         }
       },
@@ -1381,7 +1400,7 @@
             "type": "number",
             "format": "double",
             "description": "Closing price",
-            "example": 48800
+            "example": 48800.0
           },
           "count": {
             "type": "integer",
@@ -1394,19 +1413,19 @@
             "type": "number",
             "format": "double",
             "description": "Highest price in the period",
-            "example": 49200
+            "example": 49200.0
           },
           "low": {
             "type": "number",
             "format": "double",
             "description": "Lowest price in the period",
-            "example": 48100
+            "example": 48100.0
           },
           "open": {
             "type": "number",
             "format": "double",
             "description": "Opening price",
-            "example": 48500
+            "example": 48500.0
           },
           "timestamp": {
             "type": "integer",
@@ -1510,7 +1529,6 @@
           "side",
           "size",
           "price",
-          "value",
           "fee",
           "taker_order_sid",
           "taker_addr",
@@ -1518,6 +1536,10 @@
           "maker_addr",
           "market_addr",
           "seq",
+          "maker_leverage",
+          "taker_leverage",
+          "maker_is_cross",
+          "taker_is_cross",
           "timestamp"
         ],
         "properties": {
@@ -1529,6 +1551,16 @@
           "maker_addr": {
             "type": "string",
             "description": "The address of the maker"
+          },
+          "maker_is_cross": {
+            "type": "boolean",
+            "description": "Maker is cross margin"
+          },
+          "maker_leverage": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Leverage of the maker order",
+            "minimum": 0
           },
           "maker_order_sid": {
             "type": "string",
@@ -1565,6 +1597,16 @@
             "type": "string",
             "description": "The address of the taker"
           },
+          "taker_is_cross": {
+            "type": "boolean",
+            "description": "Taker is cross margin"
+          },
+          "taker_leverage": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Leverage of the taker order",
+            "minimum": 0
+          },
           "taker_order_sid": {
             "type": "string",
             "description": "The order sid of the taker"
@@ -1573,11 +1615,6 @@
             "type": "integer",
             "format": "int64",
             "description": "The timestamp of the execution where this fill was created",
-            "minimum": 0
-          },
-          "value": {
-            "type": "integer",
-            "format": "int64",
             "minimum": 0
           }
         }
@@ -1812,6 +1849,11 @@
           "funding_epoch",
           "root",
           "epoch",
+          "price_feed_id",
+          "isolated_margin_enabled",
+          "max_leverage_isolated",
+          "initial_margin_ratio_isolated",
+          "maintenance_margin_ratio_isolated",
           "created_at",
           "updated_at"
         ],
@@ -1858,10 +1900,25 @@
             "description": "Initial margin ratio",
             "minimum": 0
           },
+          "initial_margin_ratio_isolated": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Initial margin ratio for isolated margin (if enabled)",
+            "minimum": 0
+          },
+          "isolated_margin_enabled": {
+            "type": "boolean"
+          },
           "maintenance_margin_ratio": {
             "type": "integer",
             "format": "int64",
             "description": "Maintenance margin ratio",
+            "minimum": 0
+          },
+          "maintenance_margin_ratio_isolated": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Maintenance margin ratio for isolated margin (if enabled)",
             "minimum": 0
           },
           "mark_price": {
@@ -1874,6 +1931,12 @@
             "type": "integer",
             "format": "int64",
             "description": "Max leverage available on this market",
+            "minimum": 0
+          },
+          "max_leverage_isolated": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Max leverage for isolated margin (if enabled)",
             "minimum": 0
           },
           "min_order_size": {
@@ -1893,6 +1956,10 @@
             "format": "int64",
             "description": "Raw price from the oracle/cex",
             "minimum": 0
+          },
+          "price_feed_id": {
+            "type": "string",
+            "description": "Pyth price feed ID"
           },
           "quote_addr": {
             "type": "string",
@@ -2034,9 +2101,13 @@
           "price",
           "leverage",
           "type",
-          "market_addr"
+          "market_addr",
+          "is_cross"
         ],
         "properties": {
+          "is_cross": {
+            "type": "boolean"
+          },
           "leverage": {
             "type": "integer",
             "format": "int64",
@@ -2116,10 +2187,15 @@
           "status",
           "user_addr",
           "market_addr",
+          "is_cross",
           "seq",
           "timestamp"
         ],
         "properties": {
+          "is_cross": {
+            "type": "boolean",
+            "description": "Is cross or isolated margin"
+          },
           "leverage": {
             "type": "integer",
             "format": "int64",
@@ -2362,6 +2438,7 @@
           "margin",
           "funding_index",
           "epoch",
+          "is_cross",
           "seq",
           "timestamp"
         ],
@@ -2375,6 +2452,9 @@
             "type": "integer",
             "format": "int64",
             "minimum": 0
+          },
+          "is_cross": {
+            "type": "boolean"
           },
           "margin": {
             "type": "integer",

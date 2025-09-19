@@ -29,7 +29,7 @@ This document explains how market makers can authenticate and integrate with the
 
 ## **2.  Authentication Flow**
 
-Authentication is performed via a one-shot **signature challenge**. Clients sign the literal message AUTHORIZE using their **Ed25519** private key and send the resulting signature and associated public key to /api/v1/authorize. On success, the API returns a JWT bearer token to include in subsequent requests.
+Authentication is performed via a one-shot signature with anti‑replay protection. Clients sign the message `AUTHORIZE|{timestamp_ms}|{nonce}` using their Ed25519 private key and send the signature, public key, timestamp_ms, and nonce to `/api/v1/authorize`. On success, the API returns a JWT bearer token.
 
 ### **Endpoint**
 
@@ -37,7 +37,7 @@ Authentication is performed via a one-shot **signature challenge**. Clients sign
 POST /api/v1/authorize
 ```
 
-**Summary:** Verify AUTHORIZE signature and issue a JWT.
+**Summary:** Verify signature over `AUTHORIZE|timestamp_ms|nonce` and issue a JWT.
 
 **Tags:** Auth
 
@@ -50,14 +50,18 @@ POST /api/v1/authorize
 ```json
 {
   "public_key": "<ed25519-public-key>",
-  "signature": "<signature-over-\\"AUTHORIZE\\">"
+  "signature": "<sig-over-AUTHORIZE|timestamp_ms|nonce>",
+  "timestamp_ms": 1736962800000,
+  "nonce": "zHjQm0gkz9a2iV7xJ2y3-w"
 }
 ```
 
 - public_key: Client’s Ed25519 public key (encoding per your SDK; commonly base64 or hex).
-- signature: Signature of the exact byte string AUTHORIZE using the corresponding Ed25519 private key (same encoding style as public_key).
+- signature: Signature over the UTF‑8 string `AUTHORIZE|{timestamp_ms}|{nonce}`.
+- timestamp_ms: Unix time in milliseconds; must be within ±120s of server.
+- nonce: Base64URL string (8–64 chars); must be unique per request.
 
-> The server verifies with signature::verify_msg(b"AUTHORIZE", signature, public_key) and computes a user address from the public key. If the user does not exist, it is created.
+> The server verifies with signature::verify_msg(b"AUTHORIZE|{timestamp_ms}|{nonce}", signature, public_key), enforces the time window and nonce rules, and rejects replays. It also computes a user address from the public key. If the user does not exist, it is created.
 
 ### **Responses**
 
@@ -73,12 +77,14 @@ POST /api/v1/authorize
 
 ### **Example – cURL**
 
-```json
-curl -X POST "http://<host>:3010/api/v1/authorize" \\
-  -H "Content-Type: application/json" \\
+```bash
+curl -X POST "http://<host>:3010/api/v1/authorize" \
+  -H "Content-Type: application/json" \
   -d '{
     "public_key": "<YOUR_ED25519_PUBKEY>",
-    "signature": "<SIG_OVER_AUTHORIZE>"
+    "signature": "<SIG_OVER_AUTHORIZE|timestamp_ms|nonce>",
+    "timestamp_ms": <NOW_MS>,
+    "nonce": "<BASE64URL_NONCE>"
   }'
 ```
 
@@ -190,9 +196,9 @@ Errors are logged with tracing and the service emits structured JSON logs in non
 
 ## **9. FAQ**
 
-**Q: What exact encodings are expected for public_key and signature?**
+**Q: What encodings are expected for public_key, signature, and nonce?**
 
-A: The server treats them as strings and passes to the Ed25519 verifier. Use the same encoding your SDK produces (commonly base64 or hex). Confirm with your Ekiden contact if unsure.
+A: The server treats them as strings and passes to the Ed25519 verifier. Use the same encoding your SDK produces (commonly base64 or hex). Confirm with your Ekiden contact if unsure. Nonce must be Base64URL (A‑Z, a‑z, 0‑9, -, _), 8–64 chars.
 
 **Q: Is /ws namespaced under /api/v1?**
 
