@@ -39,14 +39,21 @@ const account = new Ed25519Account({ privateKey });
 
 const publicKey = account.publicKey.toString();
 
-const messageBytes = new TextEncoder().encode("AUTHORIZE");
+const nowMs = Date.now();
+const nonce = crypto.getRandomValues(new Uint8Array(16))
+  .reduce((acc, b) => acc + String.fromCharCode(b), "");
+const nonceB64Url = btoa(nonce).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+const signed = `AUTHORIZE|${nowMs}|${nonceB64Url}`;
+const messageBytes = new TextEncoder().encode(signed);
 const signature = account.sign(messageBytes).toString();
 
 
 // Authorize (get JWT)
 const { token } = await ekiden.authorize({
-  signature: signature,
-  public_key: publicKey
+  signature,
+  public_key: publicKey,
+  timestamp_ms: nowMs,
+  nonce: nonceB64Url
 });
 
 ```
