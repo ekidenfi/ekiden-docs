@@ -25,7 +25,7 @@ Ack:
 
 ## Events
 
-Messages arrive with `op: "event"`, `topic: "position"`, and `data` is an array of `PositionResponse`.
+Messages arrive with `op: "event"`, `topic: "position"`, and `data` is an array of `PositionResponse` augmented with PnL fields.
 
 Example:
 
@@ -36,14 +36,22 @@ Example:
 	"data": [
 		{
 			"sid": "0xpos1",
+			"market_addr": "0xmarket",
+			"user_addr": "0xuser",
 			"size": -250,
 			"price": 100100,
+			"entry_price": 100100,
 			"margin": 50000,
 			"funding_index": 12345,
 			"epoch": 42,
 			"is_cross": true,
+			"mark_price": 100200,
 			"seq": 999,
-			"timestamp": 1681234568001
+			"timestamp": 1681234568001,
+			"side": "sell",
+			"unrealized_pnl": -25,
+			"realized_pnl_delta": 0,
+			"realized_pnl_cum": 0
 		}
 	]
 }

@@ -27,15 +27,15 @@ Snapshot example:
 
 ```json
 {
-	"op": "event",
-	"topic": "orderbook/0x88a70ff...",
-	"data": {
-		"market_addr": "0x88a70ff...",
-		"seq": 123,
-		"bids": [{ "price": "100.1", "qty": "5" }],
-		"asks": [{ "price": "100.2", "qty": "3" }],
-		"ts": 1681234567890123456
-	}
+    "op": "event",
+    "topic": "orderbook/0x88a70ff...",
+    "data": {
+        "market_addr": "0x88a70ff...",
+        "seq": 123,
+        "asks": [[100200, 3], [100300, 2]],
+        "bids": [[100100, 5], [100000, 1]],
+        "timestamp": 1681234567
+    }
 }
 ```
 
@@ -43,24 +43,29 @@ Delta example:
 
 ```json
 {
-	"op": "event",
-	"topic": "orderbook/0x88a70ff...",
-	"data": {
-		"market_addr": "0x88a70ff...",
-		"seq": 124,
-		"bids_upserts": [{ "price": "100.1", "qty": "7" }],
-		"asks_upserts": [],
-		"bids_deletes": [],
-		"asks_deletes": [{ "price": "100.3" }],
-		"ts": 1681234567890123457
-	}
+    "op": "event",
+    "topic": "orderbook/0x88a70ff...",
+    "data": {
+        "market_addr": "0x88a70ff...",
+        "seq": 124,
+        "asks": [[100300, 0]],
+        "bids": [[100100, 7]],
+        "timestamp": 1681234568
+    }
 }
 ```
 
 ## Building a Local Book
 
 - On subscribe, wait for a snapshot, then apply subsequent deltas by ascending `seq`.
-- Deltas are incremental changes since the last sequence; remove levels found in `*_deletes` and upsert those in `*_upserts`.
+- Each price level is a two-element array `[price, size]`.
+- Delta semantics: if `size === 0`, delete the level at `price`; otherwise upsert the level to `size`.
 - If you detect a gap in `seq`, resubscribe to receive a fresh snapshot.
+
+### Notes
+
+- Arrays `asks` and `bids` are ordered by ascending price.
+- `timestamp` is a Unix timestamp in seconds.
+- Zero-change deltas: it is valid for one or both sides to be empty when no sizes changed for that side. Clients should treat such messages as a no-op and maintain their current local book. Servers may omit sending zero-change deltas entirely in future versions.
 
 See schema details in [AsyncAPI](../websockets/public): `OrderbookSnapshot`, `OrderbookDelta`.
