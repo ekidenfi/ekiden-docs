@@ -31,9 +31,9 @@ Example:
 	"topic": "trade/0x88a70ff...",
 	"data": {
 		"market_addr": "0x88a70ff...",
-		"trades": [
-			{ "side": "buy", "price": "100.2", "qty": "1", "ts": 1681234567890123458 },
-			{ "side": "sell", "price": "100.1", "qty": "2", "ts": 1681234567890123459 }
+        "trades": [
+			{ "id": 9723498234, "side": "buy",  "price": "100.2", "qty": "1", "ts": 1681234567890123458 },
+			{ "id": 7349823987, "side": "sell", "price": "100.1", "qty": "2", "ts": 1681234567890123459 }
 		],
 		"ts": 1681234567890123460
 	}
@@ -41,3 +41,13 @@ Example:
 ```
 
 See schema details in [AsyncAPI](../websockets/public): `AggregatedTrades`, `Trade`.
+
+### Trade ID
+
+Field `id` is a 64‑bit unsigned integer, stable for a given aggregated trade and unique within a market. It is derived from a hash of `(market_addr, price, side, seq, timestamp)` after aggregation:
+
+- Multiple fills at the same `price` & `side` inside the same execution window collapse into one aggregated trade sharing a single `id`.
+- Identical (price, side, seq, timestamp) on different markets produce different IDs (market included in hash).
+- If the same batch is replayed (e.g. recovery) the `id` remains stable, aiding client deduplication.
+
+You can treat `id` + `market_addr` as a primary key. Do not assume ordering by `id`; rely on provided `seq` and `ts`.

@@ -383,11 +383,12 @@ components:
     Trade:
       type: object
       properties:
+        id: { type: integer, format: int64, description: Stable aggregated trade identifier (hash of market_addr, price, side, seq, timestamp) }
         side: { type: string, enum: [buy, sell] }
         price: { type: string }
         qty: { type: string }
         ts: { type: integer, format: int64 }
-      required: [side, price, qty, ts]
+      required: [id, side, price, qty, ts]
 
     # Private event schemas
     OrderResponse:
