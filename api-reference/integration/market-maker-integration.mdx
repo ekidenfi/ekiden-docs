@@ -212,4 +212,5 @@ A: Open Swagger UI at /swagger-ui or fetch /api-docs/openapi.json. Those are gen
 
 ## **10. Changelog**
 
+- **v1.1** – Added `id` field to WebSocket aggregated trades (`trade/{market_addr}`) events. Deterministic per aggregated price/side in an execution: hash(market_addr, price, side, seq, timestamp). Use (`market_addr`, `id`) as a stable key for upserts / dedupe.
 - **v1.0** – Initial draft based on Axum service wiring and utoipa annotations provided in source.
