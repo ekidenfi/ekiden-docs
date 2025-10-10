@@ -22,3 +22,12 @@ const order = await ekiden.createOrder({
   signature: "0x..."
 });
 ```
+
+### Response fields
+
+- `timestamp_ms` — Unix milliseconds when the order was created.
+- `timestamp` — Unix seconds (deprecated; kept for backward compatibility).
+- `is_cross` — true for cross margin, false for isolated.
+- `initial_margin` — required initial margin for the order at current price/size (if available).
+
+See full schema in OpenAPI for `OrderResponse`.

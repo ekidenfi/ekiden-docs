@@ -41,7 +41,7 @@ ws.onmessage = (ev) => {
     if (msg.op === "subscribed") console.log("Subscribed:", msg.args);
     if (msg.op === "unsubscribed") console.log("Unsubscribed:", msg.args);
     if (msg.op === "error") console.warn("Error:", msg.message);
-    if (msg.op === "pong") console.log("RTT ns:", msg.server_ts - (msg.client_ts ?? 0));
+    if (msg.op === "pong") console.log("RTT ns:", msg.server_ts - (msg.client_ts ?? 0)); // ping/pong timestamps are in nanoseconds
 
     // Handle events (market or user, depending on stream)
     if (msg.op === "event") {
@@ -51,7 +51,8 @@ ws.onmessage = (ev) => {
 
 // Heartbeat every ~20s
 setInterval(() => {
-    ws.send(JSON.stringify({ op: "ping", ts: Date.now() * 1e6, req_id: "hb" }));
+    // Use Unix nanoseconds for ping `ts`
+    ws.send(JSON.stringify({ op: "ping", ts: BigInt(Date.now()) * 1_000_000n, req_id: "hb" }));
 }, 20_000);
 ```
 
@@ -105,19 +106,35 @@ Ack:
 
 ## Heartbeat (Ping/Pong)
 
-Send ping periodically to maintain the connection and measure RTT.
+There are two kinds of heartbeats:
+
+1) Application-level ping/pong
+    - Client sends `op=ping` with an optional `ts` in Unix nanoseconds to measure RTT and clock skew.
+    - Server replies with `op=pong` echoing `client_ts` and adding `server_ts` (both in ns).
+
+2) WebSocket-level ping/pong (control frames)
+    - The server also sends standard WebSocket ping frames at intervals.
+    - Your WS client library should automatically reply with WS-level pong frames.
+    - If the server doesn’t receive WS-level pongs within the timeout window, it will close the connection.
+
+Send an application-level ping periodically to measure RTT (optional):
 
 ```json
-{ "op": "ping", "ts": 1681234567890123114, "req_id": "100004" }
+{ "op": "ping", "ts": 1681234567890123114, "req_id": "100004" } // ts in Unix nanoseconds
 ```
 
 Pong response:
 
 ```json
-{ "op": "pong", "server_ts": 1681234567890123456, "client_ts": 1681234567890123114, "req_id": "100004" }
+{ "op": "pong", "server_ts": 1681234567890123456, "client_ts": 1681234567890123114, "req_id": "100004" } // both in Unix nanoseconds
 ```
 
-<Warning>Send a ping about every 20 seconds. Excessive connects/disconnects or idle sockets without heartbeats may be rate limited or closed.</Warning>
+<Warning>
+Keep the connection healthy:
+- Your client should automatically respond to WebSocket-level pings with pongs.
+- Optionally send application-level pings every ~20 seconds to monitor RTT.
+- Idle sockets without responding to WS-level pings may be closed by the server.
+</Warning>
 
 ## Rate Limits & Best Practices
 
@@ -126,4 +143,4 @@ Pong response:
 - Backoff and retry on `error` responses; watch for policy messages like rate limits.
 - Do not assume ordering across different topics; sequence/order applies within a topic only.
 
-For message shapes and fields, refer to [AsyncAPI](./asyncapi.yaml) messages: `SubscribeRequest`, `UnsubscribeRequest`, `Pong`, `Error`, and `Event`.
+For message shapes and fields, refer to [AsyncAPI](../websockets/private) messages: `SubscribeRequest`, `UnsubscribeRequest`, `Pong`, `Error`, and `Event`.

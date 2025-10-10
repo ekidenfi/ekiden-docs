@@ -2,17 +2,128 @@
 title: "Onboarding Signature & API Auth"
 ---
 
-Sign the fixed message AUTHORIZE with your Ed25519 key and send it to:
+This guide shows how to obtain a JWT and use it for authenticated REST and WebSocket access.
 
-```bash
-POST /api/v1/authorize
+---
 
+## 1) Sign the authorize message
+
+Construct the message and sign it with your Ed25519 key:
+
+Message format:
+
+```
+AUTHORIZE|{timestamp_ms}|{nonce}
+```
+
+- `timestamp_ms`: Unix time in milliseconds
+- `nonce`: random, unique per request (replay-protected per public_key)
+
+Example body:
+
+```json
 {
-    "signature": "",
-    "public_key": ""
+    "public_key": "0xa9d81da788977638194c857b918f12ff2233c7a86e82b44705761b2d02426f6d",
+    "signature": "0xf5ec808e52d014f5...",
+    "timestamp_ms": 1731541800000,
+    "nonce": "b7d1c2e8f5a94f3db2f8c6a9d1e4"
 }
 ```
 
-Response will return JWT token.
+POST it to the gateway:
 
-JWT token is valid for 7 days
+```http
+POST /api/v1/authorize
+Content-Type: application/json
+
+{ "public_key": "0x...", "signature": "0x...", "timestamp_ms": 1731541800000, "nonce": "..." }
+```
+
+Successful response:
+
+```json
+{ "token": "<jwt>" }
+```
+
+Token validity: 7 days from issuance.
+
+---
+
+## 2) Use the token for REST
+
+Include the token as a Bearer in the Authorization header:
+
+```http
+GET /api/v1/user/portfolio
+Authorization: Bearer <jwt>
+```
+
+Private endpoints under `/api/v1/user/*` and certain actions require this header.
+
+---
+
+## 3) Use the token for private WebSocket
+
+Connect to the private WS endpoint and authenticate, then subscribe to private topics:
+
+1. Connect: `wss://api.ekiden.fi/ws/private` (or staging)
+2. Authenticate:
+
+Client → Server
+
+```json
+{ "op": "auth", "bearer": "<jwt>", "req_id": "auth-1" }
+```
+
+Server → Client
+
+```json
+{ "op": "auth", "success": true, "user_id": "<account_id>", "req_id": "auth-1" }
+```
+
+3. Subscribe to private topics (examples):
+
+```json
+{ "op": "subscribe", "args": ["order", "position", "fill"], "req_id": "sub-1" }
+```
+
+Public topics like `orderbook/{market_addr}`, `trade/{market_addr}`, `ticker/{market_addr}` are available on `/ws/public` without auth.
+
+---
+
+## Timestamp units and replay protection
+
+- `timestamp_ms` is required in the authorize request and must be close to server time.
+- Each `(public_key, nonce)` pair may be used once; reusing a nonce will be rejected.
+
+---
+
+## Optional: curl examples
+
+Request token:
+
+```bash
+curl -X POST "https://api.ekiden.fi/api/v1/authorize" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "public_key": "0x...",
+        "signature": "0x...",
+        "timestamp_ms": 1731541800000,
+        "nonce": "b7d1c2e8f5a94f3db2f8c6a9d1e4"
+    }'
+```
+
+Call a private REST endpoint:
+
+```bash
+curl -H "Authorization: Bearer <jwt>" \
+    "https://api.ekiden.fi/api/v1/user/portfolio"
+```
+
+---
+
+## Troubleshooting
+
+- 400 on /authorize: check signature, timestamp_ms freshness, and nonce uniqueness.
+- 401 on private REST or WS auth: token expired or invalid.
+- WS: authenticate before subscribing to private topics on `/ws/private`.

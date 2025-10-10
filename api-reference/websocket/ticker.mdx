@@ -1,0 +1,51 @@
+---
+title: "Ticker"
+---
+
+Real-time ticker snapshots for a market.
+
+- Topic: `ticker/{market_addr}`
+- Stream: Public (`wss://api.ekiden.fi/ws/public`)
+
+## Subscribe
+
+```json
+{ "op": "subscribe", "args": ["ticker/0x88a70ff..."], "req_id": "101001" }
+```
+
+Ack:
+
+```json
+{ "op": "subscribed", "args": ["ticker/0x88a70ff..."], "req_id": "101001" }
+```
+
+## Event shape
+
+`data` is a `TickerSnapshot`.
+
+```json
+{
+  "op": "event",
+  "topic": "ticker/0x88a70ff...",
+  "data": {
+    "symbol": "BTC-PERP",
+    "market_addr": "0x88a70ff...",
+    "ts": 1718000000000,
+    "last_price": 100000000000,
+    "mark_price": 100000000000,
+    "index_price": 99900000000,
+    "open_interest": 12345,
+    "open_interest_value": 987654321,
+    "funding_rate": 0.0001,
+    "next_funding_time": 1718003600000,
+    "volume_24h": 123456,
+    "turnover_24h": 987654321
+  }
+}
+```
+
+Notes:
+
+- `ts` and `next_funding_time` are in milliseconds.
+- Prices are scaled integers, consistent with the REST API.
+- If there is no recent trade, `last_price` may equal `mark_price`.

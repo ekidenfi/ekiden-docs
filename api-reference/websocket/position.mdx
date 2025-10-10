@@ -47,14 +47,21 @@ Example:
 			"is_cross": true,
 			"mark_price": 100200,
 			"seq": 999,
-			"timestamp": 1681234568001,
+			"timestamp": 1681234567,
+			"timestamp_ms": 1681234567000,
 			"side": "sell",
 			"unrealized_pnl": -25,
 			"realized_pnl_delta": 0,
-			"realized_pnl_cum": 0
+			"realized_pnl_cum": 0,
+			"initial_margin": 1200,
+			"maintenance_margin": 800,
+			"leverage": 10,
+			"liq_price": 100000
 		}
 	]
 }
 ```
+
+Note: WebSocket `timestamp` is in seconds; `timestamp_ms` is also provided for millisecond precision.
 
 See schema details in [AsyncAPI](../websockets/private): `PositionResponse`.

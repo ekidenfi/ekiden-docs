@@ -6,3 +6,12 @@ title: "Closing Positions"
 
 - Send reduce-only order equal to position size.
 - Or send a market order in the opposite direction.
+
+### Position fields to watch
+
+- `is_cross` — cross vs isolated margin mode.
+- `maintenance_margin`, `initial_margin`, `leverage` — helpful for risk management.
+- `liq_price` — estimated liquidation price (considers margin mode, maintenance ratio, funding, and leverage limits).
+- `timestamp_ms` — last update time of the position in milliseconds (`timestamp` in seconds is deprecated).
+
+See also: PnL, Margin & Funding for more details on cross vs isolated behavior.
