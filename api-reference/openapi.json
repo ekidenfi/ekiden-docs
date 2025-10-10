@@ -210,9 +210,12 @@
           {
             "name": "market_addr",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
           },
@@ -484,9 +487,12 @@
           {
             "name": "market_addr",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
           },
@@ -799,9 +805,12 @@
           {
             "name": "market_addr",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
           },
@@ -860,7 +869,7 @@
           "User"
         ],
         "summary": "Send a new intent",
-        "description": "Send a new intent (create orders, cancel, assign leverage, etc). The intent must have valid signature and unique nonce.",
+        "description": "Send a new intent (create orders, cancel specific orders, cancel all orders optionally filtered by market, assign leverage). The intent must have valid signature and unique nonce.",
         "operationId": "send_intent",
         "requestBody": {
           "content": {
@@ -1047,9 +1056,12 @@
           {
             "name": "market_addr",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "example": "0x2245549db5a39c5644f4ff69aaab297df252649b8b59e18a9130d48f01d09ea"
           },
@@ -1274,6 +1286,52 @@
           }
         ]
       }
+    },
+    "/api/v1/user/vaults/withdraw": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Withdraw funds",
+        "description": "Withdraw funds from trading vault to funding vault",
+        "operationId": "withdraw_funds",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TradingWithdrawalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Withdrawn request processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TradingWithdrawalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid withdraw request parameters"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication token"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1342,6 +1400,27 @@
                 }
               }
             ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderCancelAllAction"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "order_cancel_all"
+                    ]
+                  }
+                }
+              }
+            ]
           }
         ]
       },
@@ -1388,6 +1467,7 @@
         "type": "object",
         "required": [
           "timestamp",
+          "timestamp_ms",
           "open",
           "high",
           "low",
@@ -1432,6 +1512,12 @@
             "format": "int64",
             "description": "Unix timestamp for the candle open time",
             "example": 1640995200
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix timestamp in milliseconds for the candle open time",
+            "example": 1640995200000
           },
           "volume": {
             "type": "integer",
@@ -1529,7 +1615,8 @@
           "side",
           "size",
           "price",
-          "fee",
+          "maker_fee",
+          "taker_fee",
           "taker_order_sid",
           "taker_addr",
           "maker_order_sid",
@@ -1540,17 +1627,18 @@
           "taker_leverage",
           "maker_is_cross",
           "taker_is_cross",
-          "timestamp"
+          "timestamp",
+          "timestamp_ms"
         ],
         "properties": {
-          "fee": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
           "maker_addr": {
             "type": "string",
             "description": "The address of the maker"
+          },
+          "maker_fee": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
           },
           "maker_is_cross": {
             "type": "boolean",
@@ -1597,6 +1685,11 @@
             "type": "string",
             "description": "The address of the taker"
           },
+          "taker_fee": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
           "taker_is_cross": {
             "type": "boolean",
             "description": "Taker is cross margin"
@@ -1614,7 +1707,16 @@
           "timestamp": {
             "type": "integer",
             "format": "int64",
-            "description": "The timestamp of the execution where this fill was created",
+            "description": "Unix timestamp in seconds of the execution where this fill was created",
+            "deprecated": true,
+            "example": 1718000000,
+            "minimum": 0
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix timestamp in milliseconds of the execution where this fill was created",
+            "example": 1718000000000,
             "minimum": 0
           }
         }
@@ -1772,6 +1874,27 @@
                     "type": "string",
                     "enum": [
                       "leverage_assign"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderCancelAllIntentOutput"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "order_cancel_all"
                     ]
                   }
                 }
@@ -2068,6 +2191,32 @@
           }
         }
       },
+      "OrderCancelAllAction": {
+        "type": "object",
+        "properties": {
+          "market_addr": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "If provided, cancels all active orders for this market. If None, cancels all active orders for the user."
+          }
+        }
+      },
+      "OrderCancelAllIntentOutput": {
+        "type": "object",
+        "required": [
+          "outputs"
+        ],
+        "properties": {
+          "outputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderCancelOutput"
+            }
+          }
+        }
+      },
       "OrderCancelIntentOutput": {
         "type": "object",
         "required": [
@@ -2130,6 +2279,17 @@
             "format": "int64",
             "minimum": 0
           },
+          "time_in_force": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TimeInForce",
+                "description": "Time in force strategy. Defaults to GTC if not provided by the client."
+              }
+            ]
+          },
           "type": {
             "type": "string",
             "description": "The type of the order (limit, market, etc.)"
@@ -2189,9 +2349,19 @@
           "market_addr",
           "is_cross",
           "seq",
-          "timestamp"
+          "timestamp",
+          "timestamp_ms"
         ],
         "properties": {
+          "initial_margin": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Required initial margin for this order at current price/size",
+            "minimum": 0
+          },
           "is_cross": {
             "type": "boolean",
             "description": "Is cross or isolated margin"
@@ -2235,7 +2405,16 @@
           "timestamp": {
             "type": "integer",
             "format": "int64",
-            "description": "The timestamp of the action batch where this order was created",
+            "description": "Unix timestamp in seconds of the action batch where this order was created",
+            "deprecated": true,
+            "example": 1718000000,
+            "minimum": 0
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix timestamp in milliseconds of the action batch where this order was created",
+            "example": 1718000000000,
             "minimum": 0
           },
           "type": {
@@ -2259,7 +2438,8 @@
           "funding_index",
           "epoch",
           "seq",
-          "timestamp"
+          "timestamp",
+          "timestamp_ms"
         ],
         "properties": {
           "epoch": {
@@ -2316,8 +2496,16 @@
           "timestamp": {
             "type": "integer",
             "format": "int64",
-            "description": "Position timestamp",
+            "description": "Position timestamp (seconds)",
+            "deprecated": true,
             "example": 1640995200,
+            "minimum": 0
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Position timestamp in milliseconds",
+            "example": 1640995200000,
             "minimum": 0
           }
         }
@@ -2363,9 +2551,25 @@
           "total_vaults",
           "total_balance",
           "total_margin_used",
-          "total_available_balance"
+          "total_available_balance",
+          "collateral_notional",
+          "maintenance_margin_required"
         ],
         "properties": {
+          "collateral_notional": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total notional value of open positions (in quote units)",
+            "example": 125000,
+            "minimum": 0
+          },
+          "maintenance_margin_required": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Maintenance margin required to keep positions open",
+            "example": 2500,
+            "minimum": 0
+          },
           "total_available_balance": {
             "type": "integer",
             "format": "int64",
@@ -2433,16 +2637,31 @@
         "type": "object",
         "required": [
           "sid",
+          "market_addr",
+          "user_addr",
           "size",
           "price",
+          "entry_price",
           "margin",
           "funding_index",
           "epoch",
           "is_cross",
+          "mark_price",
           "seq",
-          "timestamp"
+          "timestamp",
+          "timestamp_ms",
+          "side",
+          "unrealized_pnl",
+          "realized_pnl_delta",
+          "realized_pnl_cum"
         ],
         "properties": {
+          "entry_price": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Alias of price for clarity in PnL calculations",
+            "minimum": 0
+          },
           "epoch": {
             "type": "integer",
             "format": "int64",
@@ -2453,18 +2672,68 @@
             "format": "int64",
             "minimum": 0
           },
+          "initial_margin": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "Required initial margin for this position at current price/size",
+            "minimum": 0
+          },
           "is_cross": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Margin mode: true for cross, false for isolated"
+          },
+          "leverage": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "Computed leverage = notional / margin",
+            "minimum": 0
+          },
+          "liq_price": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "Estimated liquidation price for this position (scaled integer).\n\nNotes:\n- Considers funding indices, leverage limits, and maintenance ratios\n- Applies the correct margin mode (cross vs isolated)\n- Absent when not computable (e.g., zero size)",
+            "example": 65000000000,
+            "minimum": 0
+          },
+          "maintenance_margin": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "Required maintenance margin for this position at current price/size",
+            "minimum": 0
           },
           "margin": {
             "type": "integer",
             "format": "int64",
             "minimum": 0
           },
+          "mark_price": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Current market mark price (scaled integer)",
+            "minimum": 0
+          },
+          "market_addr": {
+            "type": "string",
+            "description": "Market address"
+          },
           "price": {
             "type": "integer",
             "format": "int64",
             "minimum": 0
+          },
+          "realized_pnl_cum": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Cumulative realized PnL for this position during connection lifetime (scaled integer, signed)"
+          },
+          "realized_pnl_delta": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Realized PnL for this update (scaled integer, signed)"
           },
           "seq": {
             "type": "integer",
@@ -2476,6 +2745,10 @@
             "type": "string",
             "description": "The address of the user vault"
           },
+          "side": {
+            "type": "string",
+            "description": "Side inferred from size (\"buy\" for long, \"sell\" for short)"
+          },
           "size": {
             "type": "integer",
             "format": "int64"
@@ -2483,8 +2756,25 @@
           "timestamp": {
             "type": "integer",
             "format": "int64",
-            "description": "The timestamp of the execution where this position was updated",
+            "description": "Unix timestamp in seconds of the execution where this position was updated",
+            "example": 1718000000,
             "minimum": 0
+          },
+          "timestamp_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix timestamp in milliseconds of the execution where this position was updated",
+            "example": 1718000000000,
+            "minimum": 0
+          },
+          "unrealized_pnl": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unrealized PnL at current mark (scaled integer, signed)"
+          },
+          "user_addr": {
+            "type": "string",
+            "description": "User address"
           }
         }
       },
@@ -2607,6 +2897,97 @@
           "market_addr": {
             "type": "string",
             "description": "The address of the market for which the preferred leverage is set"
+          }
+        }
+      },
+      "TimeInForce": {
+        "type": "string",
+        "description": "Supported timeInForce strategy: GTC, IOC, FOK, PostOnly",
+        "enum": [
+          "GTC",
+          "IOC",
+          "FOK",
+          "PostOnly"
+        ]
+      },
+      "TradingWithdrawalRequest": {
+        "type": "object",
+        "required": [
+          "addr_from",
+          "addr_to",
+          "asset_metadata",
+          "timestamp",
+          "nonce",
+          "amount",
+          "withdraw_available",
+          "signature"
+        ],
+        "properties": {
+          "addr_from": {
+            "type": "string",
+            "description": "Sub account address, owner of the trading account",
+            "example": "0x1234567890abcdef..."
+          },
+          "addr_to": {
+            "type": "string",
+            "description": "Sub account address, owner of the funding account",
+            "example": "0x1234567890abcdef..."
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Amount to withdraw",
+            "example": 10,
+            "minimum": 0
+          },
+          "asset_metadata": {
+            "type": "string",
+            "description": "Asset address for the vaults, NOT part of the signed request",
+            "example": "0x9876543210fedcba..."
+          },
+          "nonce": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unique nonce of the request",
+            "example": "123456",
+            "minimum": 0
+          },
+          "signature": {
+            "type": "string",
+            "description": "Signature of the request, signed by the owner of the TRADING account"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Timestamp of the request creation",
+            "example": 1759745086,
+            "minimum": 0
+          },
+          "withdraw_available": {
+            "type": "boolean",
+            "description": "If this is set to `true`, if the available balance if lower than the amount to withdraw,\nthe available amount l be withdrawn instead of the requested amount.",
+            "example": false
+          }
+        }
+      },
+      "TradingWithdrawalResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "total_withdrawn"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "True if withdraw successfully",
+            "example": true
+          },
+          "total_withdrawn": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total amount withdrawn",
+            "example": 10,
+            "minimum": 0
           }
         }
       },

@@ -4,11 +4,21 @@ title: "Market Data"
 
 ### **Sources**
 
-- **GraphQL (snapshot \+ queries)**: https://hasura.ekiden.fi/v1/graphql
-- **WebSocket (real-time)**: wss://[api.ekiden.fi/ws](http://api.ekiden.fi/ws)
+- REST: see API Reference for `/api/v1/market/*` endpoints (candles, fills, market_info, funding)
+- GraphQL (snapshots/queries): https://hasura.ekiden.fi/v1/graphql
+- WebSocket (real-time):
+	- Public: `wss://api.ekiden.fi/ws/public` (or staging)
+	- Private: `wss://api.ekiden.fi/ws/private` (requires JWT auth)
 
 ### **Common Subscriptions**
 
-- Orderbook snapshots and diffs
-- Trades (fills)
-- Funding index
+- Orderbook snapshots and deltas: `orderbook/{market_addr}`
+- Trades (aggregated): `trade/{market_addr}`
+- Ticker snapshots: `ticker/{market_addr}`
+- Private user streams (on private WS after auth): `order`, `position`, `fill`
+
+### Timestamps
+
+- Ticker snapshots use `ts` in milliseconds.
+- WS ping/pong use nanoseconds for `ts`/`client_ts`/`server_ts`.
+- See Conventions → Timestamps for the full matrix.

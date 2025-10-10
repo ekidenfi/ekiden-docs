@@ -80,7 +80,6 @@
                         "group": "Market Make",
                         "pages": [
                             "api-reference/integration/market-maker-integration"
-                            
                         ]
                     },
                     {
@@ -108,7 +107,8 @@
                                 "group": "Public",
                                 "pages": [
                                     "api-reference/websocket/orderbook",
-                                    "api-reference/websocket/trade"
+                                    "api-reference/websocket/trade",
+                                    "api-reference/websocket/ticker"
                                 ]
                             },
                             {

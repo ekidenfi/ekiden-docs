@@ -2,5 +2,29 @@
 title: "PnL, Margin & Funding"
 ---
 
-- **Funding index** is embedded in GET /api/v1/user/positions response.
+- Funding index is embedded in GET /api/v1/user/positions response.
 - PnL = (Mark Price - Entry Price) × Position Size ± Funding
+
+## Margin Modes
+
+Ekiden supports both cross and isolated margin:
+
+- Cross margin (`is_cross: true`): All positions on a market share the same margin pool. Maintenance and initial margin ratios use the market’s cross settings. Liquidation risk is assessed against the shared equity.
+- Isolated margin (`is_cross: false`): Each position has its own margin. Maintenance and initial ratios use the market’s isolated settings. Risk is isolated per position.
+
+API surfaces include:
+
+- `GET /api/v1/user/positions` with `is_cross` indicating the mode.
+- `initial_margin`, `maintenance_margin`, and `leverage` pre-computed per position for convenience.
+- `liq_price` (estimated liquidation price) mirrors the on-chain Move logic and considers:
+	- margin mode (cross vs isolated)
+	- maintenance ratio
+	- maximum leverage constraints
+	- funding index (market vs position)
+
+Notes:
+
+- `initial_margin` is computed from entry notional and the applicable initial margin ratio.
+- `maintenance_margin` is computed from mark-notional and the applicable maintenance ratio.
+- `leverage = notional / margin` with guards for zero values.
+- `liq_price` may be absent when it cannot be computed (e.g., zero size).

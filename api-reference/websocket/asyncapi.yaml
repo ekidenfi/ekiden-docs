@@ -11,8 +11,9 @@ info:
        - Staging: `wss://api.staging.ekiden.fi`
     2. Connect to `/ws/public` or `/ws/private` on the chosen host.
     3. Send a **Subscribe** request on the root channel `/` with a channel name:
-     - `orderbook/{market_addr}`
-     - `trade/{market_addr}`
+       - `orderbook/{market_addr}`
+       - `trade/{market_addr}`
+       - `ticker/{market_addr}`
     4. Receive **Subscribed**, then streaming events on the channel you subscribed to.
     5. Use **Unsubscribe** or **Ping** when needed.
 
@@ -127,8 +128,8 @@ components:
             items:
               type: string
               default: orderbook/
-              pattern: '^(orderbook|trade)\/[^\/\s]+$'
-              description: orderbook/{market_addr} or trade/{market_addr}
+              pattern: '^(orderbook|trade|ticker)\/[^\/\s]+$'
+              description: orderbook/{market_addr} or trade/{market_addr} or ticker/{market_addr}
             minItems: 1
             uniqueItems: true
             description: List of topics to subscribe to
@@ -159,8 +160,8 @@ components:
             items:
               type: string
               default: orderbook/
-              pattern: '^(orderbook|trade)\/[^\/\s]+$'
-              description: orderbook/{market_addr} or trade/{market_addr}
+              pattern: '^(orderbook|trade|ticker)\/[^\/\s]+$'
+              description: orderbook/{market_addr} or trade/{market_addr} or ticker/{market_addr}
             minItems: 1
             uniqueItems: true
             description: List of topics to unsubscribe from
@@ -308,7 +309,7 @@ components:
       title: Event
       description: |
         Unified event envelope. `data` can be one of public market updates or private user updates.
-        - Public: `OrderbookSnapshot`, `OrderbookDelta`, `AggregatedTrades`
+        - Public: `OrderbookSnapshot`, `OrderbookDelta`, `AggregatedTrades`, `TickerSnapshot`
         - Private: arrays of `OrderResponse`, `FillResponse`, `PositionResponse`
       examples:
         - payload:
@@ -330,6 +331,7 @@ components:
               - $ref: '#/components/schemas/OrderbookSnapshot'
               - $ref: '#/components/schemas/OrderbookDelta'
               - $ref: '#/components/schemas/AggregatedTrades'
+              - $ref: '#/components/schemas/TickerSnapshot'
               - { type: array, title: Vec<OrderResponse>, items: { $ref: '#/components/schemas/OrderResponse' } }
               - { type: array, title: Vec<FillResponse>, items: { $ref: '#/components/schemas/FillResponse' } }
               - { type: array, title: Vec<PositionResponse>, items: { $ref: '#/components/schemas/PositionResponse' } }
@@ -366,6 +368,24 @@ components:
         trades: { type: array, items: { $ref: '#/components/schemas/Trade' } }
         ts: { type: integer, format: int64 }
       additionalProperties: true
+
+    # New public snapshot: Ticker
+    TickerSnapshot:
+      type: object
+      properties:
+        symbol: { type: string, description: Market symbol }
+        market_addr: { type: string, description: Market address }
+        ts: { type: integer, format: int64, description: Snapshot timestamp in milliseconds }
+        last_price: { type: integer, format: int64, description: Last traded price (scaled integer) }
+        mark_price: { type: integer, format: int64, description: Mark price (scaled integer) }
+        index_price: { type: integer, format: int64, description: Index/oracle price (scaled integer) }
+        open_interest: { type: integer, format: int64, description: Open interest size (base units) }
+        open_interest_value: { type: integer, format: int64, description: Open interest value (quote units, scaled) }
+        funding_rate: { type: number, format: double, description: Funding rate as percentage (e.g., 0.0001 => 1 bps) }
+        next_funding_time: { type: integer, format: int64, description: Next funding time in milliseconds }
+        volume_24h: { type: integer, format: int64, description: 24h volume in base units }
+        turnover_24h: { type: integer, format: int64, description: 24h turnover in quote units (scaled) }
+      required: [market_addr, ts, mark_price]
 
     Level:
       type: object

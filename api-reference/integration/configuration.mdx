@@ -1,9 +1,20 @@
 ---
 title: "Configuration"
-description: "This section lists the production endpoint URLs for REST, WebSocket, and GraphQL connections, helping you configure your client for seamless integration with Ekiden’s services."
+description: "This section lists the production and staging endpoint URLs for REST, WebSocket, and GraphQL connections, helping you configure your client for seamless integration with Ekiden’s services."
 ---
 
+## Production
+
 - **REST (Gateway)**: https://api.ekiden.fi/api/v1
-- **SDK WebSocket**: wss://api.ekiden.fi/ws
+- **SDK WebSocket Public**: wss://api.ekiden.fi/ws/public
+- **SDK WebSocket Private**: wss://api.ekiden.fi/ws/private
 - **GraphQL HTTP**: https://hasura.ekiden.fi/v1/graphql
 - **GraphQL WS**: wss://hasura.ekiden.fi/v1/graphql
+
+## Staging
+
+- **REST (Gateway)**: https://api.staging.ekiden.fi/api/v1
+- **SDK WebSocket Public**: wss://api.staging.ekiden.fi/ws/public
+- **SDK WebSocket Private**: wss://api.staging.ekiden.fi/ws/private
+- **GraphQL HTTP**: https://hasura.staging.ekiden.fi/v1/graphql
+- **GraphQL WS**: wss://hasura.staging.ekiden.fi/v1/graphql

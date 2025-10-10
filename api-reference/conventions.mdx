@@ -12,6 +12,7 @@ Ekiden provides separate base URLs for each environment:
 
 - **Mainnet**: `(Coming Soon)`
 - **Testnet Beta**: [https://api.ekiden.fi/api/v1](http://app.ekiden.fi/api/v1)
+- **Testnet Staging**: [https://api.staging.ekiden.fi/api/v1](http://app.staging.ekiden.fi/api/v1)
 
 > All API calls must use **HTTPS**.
 
@@ -44,48 +45,119 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 
 ## 4. WebSocket Protocol
 
-**Endpoint**:
+Endpoints:
 
-- **Mainnet**: `(Coming Soon)`
-- **Testnet Beta wss://api.ekiden.fi/ws**
+- Mainnet: `(Coming Soon)`
+- Testnet Beta:
+  - Public data: `wss://api.ekiden.fi/ws/public`
+  - Private data: `wss://api.ekiden.fi/ws/private`
+- Testnet Staging:
+  - Public data: `wss://api.staging.ekiden.fi/ws/public`
+  - Private data: `wss://api.staging.ekiden.fi/ws/private`
 
-### Subscribe to a public channel
+Messages use an `op` field with snake_case values. Optional `req_id` lets you correlate requests/responses.
+
+### Topics
+
+- Public:
+  - `orderbook/{market_addr}`
+  - `trade/{market_addr}`
+  - `ticker/{market_addr}`
+- Private (only over `/ws/private` after auth):
+  - `order`
+  - `position`
+  - `fill`
+
+### Subscribe
+
+Client → Server
 
 ```json
 {
-  "type": "subscribe",
-  "channel": "orderbook/{address market}",
+  "op": "subscribe",
+  "args": ["orderbook/{market_addr}", "ticker/{market_addr}"],
+  "req_id": "optional-id"
 }
 ```
 
-### Subscribe to private (authenticated) channels
+Server → Client
 
 ```json
 {
-  "type": "subscribe",
-  "channel": "orders",
-  "apiKey": "your_api_key",
-  "signature": "your_signature",
-  "timestamp": "2025-05-10T12:34:56Z"
+  "op": "subscribed",
+  "args": ["orderbook/{market_addr}", "ticker/{market_addr}"],
+  "req_id": "optional-id"
 }
+```
+
+### Unsubscribe
+
+```json
+{
+  "op": "unsubscribe",
+  "args": ["orderbook/{market_addr}"]
+}
+```
+
+### Event delivery
+
+```json
+{
+  "op": "event",
+  "topic": "ticker/{market_addr}",
+  "data": { /* snapshot or update payload */ }
+}
+```
+
+### Authenticate (private WS only)
+
+Send your JWT (see REST auth below) over `/ws/private`:
+
+Client → Server
+
+```json
+{ "op": "auth", "bearer": "<jwt>", "req_id": "optional-id" }
+```
+
+Server → Client
+
+```json
+{ "op": "auth", "success": true, "user_id": "<account_id>", "req_id": "optional-id" }
 ```
 
 ---
 
 ## 5. Authentication (REST)
 
-Private endpoints require:
+Private REST and private WebSocket use a short-lived JWT issued by the gateway.
 
-- `EKIDEN-API-KEY`
-- `EKIDEN-TIMESTAMP` (ISO 8601 UTC)
-- `EKIDEN-SIGNATURE` (HMAC SHA256 of `timestamp + method + path + body`)
+1) Request a token via `POST /api/v1/authorize` by signing the message:
 
-### Example headers
+```
+AUTHORIZE|{timestamp_ms}|{nonce}
+```
+
+with Ed25519. Body:
+
+```json
+{
+  "public_key": "0x...",
+  "signature": "0x...",
+  "timestamp_ms": 1731541800000,
+  "nonce": "random-unique-string"
+}
+```
+
+Response:
+
+```json
+{ "token": "<jwt>" }
+```
+
+2) Use the token with Bearer auth for private endpoints:
 
 ```http
-EKIDEN-API-KEY: your_key
-EKIDEN-TIMESTAMP: 2025-05-10T12:34:56Z
-EKIDEN-SIGNATURE: base64(hmac_sha256(...))
+Authorization: Bearer <jwt>
 ```
 
 ---
@@ -104,11 +176,15 @@ EKIDEN-SIGNATURE: base64(hmac_sha256(...))
 
 ## 7. Timestamps
 
-- Format: ISO 8601 with `Z` (UTC)
+We use explicit units depending on the field name and context:
 
-```json
-"2025-05-10T12:34:56Z"
-```
+- `timestamp` (REST resources like orders, fills, positions): Unix seconds since epoch (int). Example: `1718000000`.
+- `timestamp_ms` (REST authorize flow): Unix milliseconds since epoch (int). Example: `1718000000000`.
+- `ts` (WebSocket ticker snapshots and ping/pong client_ts/server_ts):
+  - For ticker `ts`: Unix milliseconds since epoch (int). Example: `1718000000000`.
+  - For WS ping/pong `ts`/`client_ts`/`server_ts`: Unix nanoseconds since epoch (int). Example: `1718000000000000000`.
+
+When an ISO 8601 string appears (e.g., funding endpoints), it is explicitly documented in the schema, e.g. `"2025-05-10T12:34:56Z"`.
 
 ---
 
@@ -139,8 +215,8 @@ EKIDEN-SIGNATURE: base64(hmac_sha256(...))
 
 ## 9. Rate Limits
 
-- **Public endpoints**: 60 requests/minute
-- **Private endpoints**: 30 requests/minute per API key
+- Public REST endpoints: 60 requests/minute
+- Private REST endpoints: 30 requests/minute per token
 
 ### Example response on limit exceeded
 
@@ -155,22 +231,15 @@ EKIDEN-SIGNATURE: base64(hmac_sha256(...))
 
 ## 10. Pagination
 
-Cursor-based pagination:
+Offset-style pagination with page counters:
 
-- Query params: `limit`, `cursor`
+- Query params: `page` (default 1), `per_page` (default 20)
 
 ```http
-GET /v1/trades?limit=100&cursor=abc123
+GET /api/v1/market/fills?market_addr=0xabc&page=1&per_page=20
 ```
 
-### Response
-
-```json
-{
-  "data": [...],
-  "next_cursor": "abc123"
-}
-```
+Responses generally return arrays for list endpoints (see schema in the API reference).
 
 ---
 
@@ -208,21 +277,30 @@ All responses are JSON objects.
 
 ## 13. WebSocket Heartbeats
 
-To keep the connection alive:
+There are two heartbeat layers:
 
-### Client sends
+1) Application-level ping/pong (for latency measurement)
 
-```json
-{ "type": "ping" }
-```
-
-### Server responds
+- Client may send:
 
 ```json
-{ "type": "pong" }
+{ "op": "ping", "req_id": "optional-id", "ts": 1718000000000000000 }
 ```
 
-> Idle connections close after 60 seconds without activity.
+- Server replies:
+
+```json
+{ "op": "pong", "req_id": "optional-id", "client_ts": 1718000000000000000, "server_ts": 1718000001000000000 }
+```
+
+Timestamps are Unix nanoseconds. Use these to compute RTT and clock deltas.
+
+2) WebSocket-level ping/pong (keepalive)
+
+- The server periodically sends WebSocket-level pings and expects pongs.
+- If the server does not see a pong within the timeout window (~30s by default), it will close the connection.
+
+Clients should automatically answer WS-level pings and may also send periodic app-level `ping` messages if desired.
 
 ---
 
