@@ -31,14 +31,18 @@ Example:
 	"topic": "trade/0x88a70ff...",
 	"data": {
 		"market_addr": "0x88a70ff...",
-        "trades": [
-			{ "id": 9723498234, "side": "buy",  "price": "100.2", "qty": "1", "ts": 1681234567890123458 },
-			{ "id": 7349823987, "side": "sell", "price": "100.1", "qty": "2", "ts": 1681234567890123459 }
-		],
-		"ts": 1681234567890123460
+		"trades": [
+			{ "id": 9723498234, "side": "buy",  "price": 100200000000, "size": 100000000, "seq": 12345, "timestamp": 1718000000 },
+			{ "id": 7349823987, "side": "sell", "price": 100100000000, "size": 200000000, "seq": 12346, "timestamp": 1718000001 }
+		]
 	}
 }
 ```
+
+Notes:
+- `price` and `size` are scaled integers (int64). They match private streams and on-chain representation.
+- `seq` is the max sequence among fills aggregated into the trade; `timestamp` is the latest fill timestamp (seconds).
+- There is no top-level `ts` in the trade event payload.
 
 See schema details in [AsyncAPI](../websockets/public): `AggregatedTrades`, `Trade`.
 
