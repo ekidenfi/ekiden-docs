@@ -366,7 +366,6 @@ components:
       properties:
         market_addr: { type: string }
         trades: { type: array, items: { $ref: '#/components/schemas/Trade' } }
-        ts: { type: integer, format: int64 }
       additionalProperties: true
 
     # New public snapshot: Ticker
@@ -405,10 +404,11 @@ components:
       properties:
         id: { type: integer, format: int64, description: Stable aggregated trade identifier (hash of market_addr, price, side, seq, timestamp) }
         side: { type: string, enum: [buy, sell] }
-        price: { type: string }
-        qty: { type: string }
-        ts: { type: integer, format: int64 }
-      required: [id, side, price, qty, ts]
+        price: { type: integer, format: int64, description: Scaled integer price }
+        size: { type: integer, format: int64, description: Aggregated size in base units (scaled integer) }
+        seq: { type: integer, format: int64, description: Max sequence among aggregated fills }
+        timestamp: { type: integer, format: int64, description: Latest fill timestamp in seconds }
+      required: [id, side, price, size, seq, timestamp]
 
     # Private event schemas
     OrderResponse:
