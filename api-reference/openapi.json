@@ -2553,7 +2553,9 @@
           "total_margin_used",
           "total_available_balance",
           "collateral_notional",
-          "maintenance_margin_required"
+          "maintenance_margin_required",
+          "unrealized_pnl_total",
+          "unrealized_funding_total"
         ],
         "properties": {
           "collateral_notional": {
@@ -2602,6 +2604,18 @@
             "description": "Total number of vaults",
             "example": 2,
             "minimum": 0
+          },
+          "unrealized_funding_total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Aggregated unrealized funding payments across all positions (can be negative). Not yet settled to balance.",
+            "example": -250
+          },
+          "unrealized_pnl_total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Aggregated unrealized PnL across all positions (can be negative)",
+            "example": 1500
           }
         }
       },
@@ -2648,12 +2662,10 @@
           "is_cross",
           "mark_price",
           "seq",
-          "timestamp",
-          "timestamp_ms",
           "side",
           "unrealized_pnl",
-          "realized_pnl_delta",
-          "realized_pnl_cum"
+          "timestamp",
+          "timestamp_ms"
         ],
         "properties": {
           "entry_price": {
@@ -2673,9 +2685,11 @@
             "minimum": 0
           },
           "initial_margin": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "nullable": true,
             "description": "Required initial margin for this position at current price/size",
             "minimum": 0
           },
@@ -2684,24 +2698,30 @@
             "description": "Margin mode: true for cross, false for isolated"
           },
           "leverage": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "nullable": true,
             "description": "Computed leverage = notional / margin",
             "minimum": 0
           },
           "liq_price": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "nullable": true,
             "description": "Estimated liquidation price for this position (scaled integer).\n\nNotes:\n- Considers funding indices, leverage limits, and maintenance ratios\n- Applies the correct margin mode (cross vs isolated)\n- Absent when not computable (e.g., zero size)",
             "example": 65000000000,
             "minimum": 0
           },
           "maintenance_margin": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "nullable": true,
             "description": "Required maintenance margin for this position at current price/size",
             "minimum": 0
           },
@@ -2725,16 +2745,6 @@
             "format": "int64",
             "minimum": 0
           },
-          "realized_pnl_cum": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Cumulative realized PnL for this position during connection lifetime (scaled integer, signed)"
-          },
-          "realized_pnl_delta": {
-            "type": "integer",
-            "format": "int64",
-            "description": "Realized PnL for this update (scaled integer, signed)"
-          },
           "seq": {
             "type": "integer",
             "format": "int64",
@@ -2757,6 +2767,7 @@
             "type": "integer",
             "format": "int64",
             "description": "Unix timestamp in seconds of the execution where this position was updated",
+            "deprecated": true,
             "example": 1718000000,
             "minimum": 0
           },
