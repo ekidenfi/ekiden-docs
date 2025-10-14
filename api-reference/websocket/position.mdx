@@ -45,23 +45,49 @@ Example:
 			"funding_index": 12345,
 			"epoch": 42,
 			"is_cross": true,
+			"initial_margin": 1200,
+			"maintenance_margin": 800,
+			"leverage": 10,
 			"mark_price": 100200,
 			"seq": 999,
 			"timestamp": 1681234567,
 			"timestamp_ms": 1681234567000,
 			"side": "sell",
 			"unrealized_pnl": -25,
-			"realized_pnl_delta": 0,
-			"realized_pnl_cum": 0,
-			"initial_margin": 1200,
-			"maintenance_margin": 800,
-			"leverage": 10,
 			"liq_price": 100000
 		}
 	]
 }
 ```
 
-Note: WebSocket `timestamp` is in seconds; `timestamp_ms` is also provided for millisecond precision.
+Field notes:
+
+- `initial_margin`, `maintenance_margin`, `leverage`, and `liq_price` may be null when not computable (e.g., zero size), though typical streaming updates include them.
+- `timestamp` (seconds) is deprecated; prefer `timestamp_ms`.
+
+### Fields
+
+| Field | Type | Notes |
+|-------|------|-------|
+| sid | string | Position identifier (vault address) |
+| market_addr | string | Market address |
+| user_addr | string | User address |
+| size | integer | Signed base units (scaled) |
+| price | integer | Entry price alias (scaled) |
+| entry_price | integer | Same as `price` for clarity |
+| margin | integer | Margin allocated to position |
+| funding_index | integer | Position funding index |
+| epoch | integer | Internal epoch/version |
+| is_cross | boolean | Margin mode |
+| initial_margin | integer or null | Required initial margin |
+| maintenance_margin | integer or null | Required maintenance margin |
+| leverage | integer or null | Notional / margin |
+| mark_price | integer | Current mark price |
+| seq | integer | Sequence of last update |
+| side | string | `buy` or `sell` inferred from size |
+| unrealized_pnl | integer | Signed PnL (scaled) |
+| liq_price | integer or null | Estimated liquidation price |
+| timestamp | integer | Deprecated seconds timestamp |
+| timestamp_ms | integer | Milliseconds timestamp (preferred) |
 
 See schema details in [AsyncAPI](../websockets/private): `PositionResponse`.

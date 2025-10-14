@@ -237,8 +237,8 @@ components:
             type: array
             items:
               type: string
-              pattern: '^(orderbook|trade)\/[^\/\s]+$'
-              description: orderbook/{market_addr} or trade/{market_addr}
+              pattern: '^(orderbook|trade|ticker)\/[^\/\s]+$'
+              description: orderbook/{market_addr} or trade/{market_addr} or ticker/{market_addr}
             minItems: 1
             uniqueItems: true
             description: List of topics subscribed to
@@ -262,8 +262,8 @@ components:
             type: array
             items:
               type: string
-              pattern: '^(orderbook|trade)\/[^\/\s]+$'
-              description: orderbook/{market_addr} or trade/{market_addr}
+              pattern: '^(orderbook|trade|ticker)\/[^\/\s]+$'
+              description: orderbook/{market_addr} or trade/{market_addr} or ticker/{market_addr}
             minItems: 1
             uniqueItems: true
             description: List of topics unsubscribed from
@@ -415,17 +415,19 @@ components:
       type: object
       properties:
         sid: { type: string }
+        user_addr: { type: string }
         side: { type: string }
         size: { type: integer, format: int64 }
         price: { type: integer, format: int64 }
         leverage: { type: integer, format: int64 }
+        initial_margin: { type: integer, format: int64, nullable: true }
         type: { type: string }
         status: { type: string }
-        user_addr: { type: string }
         market_addr: { type: string }
         is_cross: { type: boolean }
         seq: { type: integer, format: int64 }
-        timestamp: { type: integer, format: int64 }
+        timestamp: { type: integer, format: int64, description: Deprecated seconds timestamp }
+        timestamp_ms: { type: integer, format: int64, description: Milliseconds timestamp }
       additionalProperties: true
 
     FillResponse:
@@ -435,7 +437,8 @@ components:
         side: { type: string }
         size: { type: integer, format: int64 }
         price: { type: integer, format: int64 }
-        fee: { type: integer, format: int64 }
+        maker_fee: { type: integer, format: int64 }
+        taker_fee: { type: integer, format: int64 }
         taker_order_sid: { type: string }
         taker_addr: { type: string }
         maker_order_sid: { type: string }
@@ -446,19 +449,31 @@ components:
         taker_leverage: { type: integer, format: int64 }
         maker_is_cross: { type: boolean }
         taker_is_cross: { type: boolean }
-        timestamp: { type: integer, format: int64 }
+        timestamp: { type: integer, format: int64, description: Deprecated seconds timestamp }
+        timestamp_ms: { type: integer, format: int64, description: Milliseconds timestamp }
       additionalProperties: true
 
     PositionResponse:
       type: object
       properties:
         sid: { type: string }
+        market_addr: { type: string }
+        user_addr: { type: string }
         size: { type: integer, format: int64 }
         price: { type: integer, format: int64 }
+        entry_price: { type: integer, format: int64 }
         margin: { type: integer, format: int64 }
         funding_index: { type: integer, format: int64 }
         epoch: { type: integer, format: int64 }
         is_cross: { type: boolean }
+        initial_margin: { type: integer, format: int64, nullable: true }
+        maintenance_margin: { type: integer, format: int64, nullable: true }
+        leverage: { type: integer, format: int64, nullable: true }
+        mark_price: { type: integer, format: int64 }
         seq: { type: integer, format: int64 }
-        timestamp: { type: integer, format: int64 }
+        side: { type: string, enum: [buy, sell] }
+        unrealized_pnl: { type: integer, format: int64 }
+        liq_price: { type: integer, format: int64, nullable: true }
+        timestamp: { type: integer, format: int64, description: Deprecated seconds timestamp }
+        timestamp_ms: { type: integer, format: int64, description: Milliseconds timestamp }
       additionalProperties: true

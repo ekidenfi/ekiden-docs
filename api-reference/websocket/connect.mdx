@@ -144,3 +144,45 @@ Keep the connection healthy:
 - Do not assume ordering across different topics; sequence/order applies within a topic only.
 
 For message shapes and fields, refer to [AsyncAPI](../websockets/private) messages: `SubscribeRequest`, `UnsubscribeRequest`, `Pong`, `Error`, and `Event`.
+
+## Topics
+
+Public stream topics (subscribe on `/ws/public`):
+
+- `orderbook/{market_addr}`
+- `trade/{market_addr}`
+- `ticker/{market_addr}`
+
+Private stream topics (after auth on `/ws/private`):
+
+- `order`
+- `fill`
+- `position`
+
+Regex patterns enforced server-side:
+
+```
+^(orderbook|trade|ticker)/[^/\s]+$  # public
+^(order|fill|position)$             # private
+```
+
+## Unified Event Envelope
+
+All streamed payloads share a common envelope:
+
+```json
+{
+    "op": "event",
+    "topic": "ticker/0x...",
+    "data": { /* object or array variant */ }
+}
+```
+
+`data` variants:
+
+- `OrderbookSnapshot` | `OrderbookDelta`
+- `AggregatedTrades` (with `trades` array of `Trade` objects)
+- `TickerSnapshot`
+- `OrderResponse[]`, `FillResponse[]`, `PositionResponse[]` (private)
+
+Deprecated timestamps: many payloads include both `timestamp` (seconds, deprecated) and `timestamp_ms` (milliseconds). Prefer `timestamp_ms`.

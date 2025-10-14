@@ -40,6 +40,7 @@ Example:
 			"size": 1000,
 			"price": 100200,
 			"leverage": 5,
+			"initial_margin": 250,
 			"type": "limit",
 			"status": "placed",
 			"user_addr": "0xuser...",
@@ -52,5 +53,28 @@ Example:
 	]
 }
 ```
+
+Field notes:
+
+- `timestamp` (seconds) is deprecated; prefer `timestamp_ms`.
+
+### Fields
+
+| Field | Type | Notes |
+|-------|------|-------|
+| sid | string | Order identifier |
+| side | string | `buy` or `sell` |
+| size | integer | Base units (scaled) |
+| price | integer | Scaled price |
+| leverage | integer | Requested leverage |
+| initial_margin | integer or null | Present when computed, else null |
+| type | string | Order type (limit, market, etc.) |
+| status | string | placed, filled, cancelled, etc. |
+| user_addr | string | User account address |
+| market_addr | string | Market address |
+| is_cross | boolean | Cross vs isolated margin |
+| seq | integer | Sequence of creation batch |
+| timestamp | integer | Deprecated seconds timestamp |
+| timestamp_ms | integer | Milliseconds timestamp (preferred) |
 
 See schema details in [AsyncAPI](../websockets/private): `OrderResponse`.

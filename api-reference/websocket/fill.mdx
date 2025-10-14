@@ -39,7 +39,8 @@ Example:
 			"side": "buy",
 			"size": 500,
 			"price": 100250,
-			"fee": 10,
+			"maker_fee": 4,
+			"taker_fee": 10,
 			"taker_order_sid": "0xordT",
 			"taker_addr": "0xuserT...",
 			"maker_order_sid": "0xordM",
@@ -56,5 +57,33 @@ Example:
 	]
 }
 ```
+
+Field notes:
+
+- Fees are split: `maker_fee` and `taker_fee`.
+- `timestamp` (seconds) is deprecated; prefer `timestamp_ms`.
+
+### Fields
+
+| Field | Type | Notes |
+|-------|------|-------|
+| sid | string | Fill identifier |
+| side | string | `buy` or `sell` (taker perspective) |
+| size | integer | Base units (scaled) |
+| price | integer | Execution price (scaled) |
+| maker_fee | integer | Maker fee (quote units scaled) |
+| taker_fee | integer | Taker fee (quote units scaled) |
+| taker_order_sid | string | Taker order id |
+| taker_addr | string | Taker user address |
+| maker_order_sid | string | Maker order id |
+| maker_addr | string | Maker user address |
+| market_addr | string | Market address |
+| seq | integer | Sequence of execution batch |
+| maker_leverage | integer | Maker leverage at fill |
+| taker_leverage | integer | Taker leverage at fill |
+| maker_is_cross | boolean | Maker margin mode |
+| taker_is_cross | boolean | Taker margin mode |
+| timestamp | integer | Deprecated seconds timestamp |
+| timestamp_ms | integer | Milliseconds timestamp (preferred) |
 
 See schema details in [AsyncAPI](../websockets/private): `FillResponse`.
