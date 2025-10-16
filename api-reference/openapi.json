@@ -2690,7 +2690,16 @@
               "null"
             ],
             "format": "int64",
-            "description": "Required initial margin for this position at current price/size",
+            "description": "Initial margin requirement based on ENTRY price notional.\n\nDetails:\n- Uses entry notional = |size| * entry_price / 10^base_decimals\n- Multiplied by market's initial_margin_ratio (scaled by MARGIN_RATIO_SCALE)\n- Does not fluctuate with current mark price\n- Quote-currency units (scaled integer)",
+            "minimum": 0
+          },
+          "initial_margin_mark": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Initial margin requirement based on current MARK price notional.\n\nDetails:\n- Uses mark notional = |size| * mark_price / 10^base_decimals\n- Multiplied by market's initial_margin_ratio (scaled by MARGIN_RATIO_SCALE)\n- Fluctuates with mark price\n- Quote-currency units (scaled integer)",
             "minimum": 0
           },
           "is_cross": {
@@ -2728,6 +2737,7 @@
           "margin": {
             "type": "integer",
             "format": "int64",
+            "description": "Actual collateral currently assigned to this position.\n\nDetails:\n- Quote-currency units (scaled integer)\n- Used in equity and liquidation calculations\n- Effective leverage is computed as notional(entry) / margin\n- May differ from initial/maintenance requirements (due to PnL, fees, funding, manual add/remove)\n- In cross mode, reflects the portion of cross margin allocated to this position",
             "minimum": 0
           },
           "mark_price": {
