@@ -462,13 +462,14 @@ components:
         size: { type: integer, format: int64 }
         price: { type: integer, format: int64 }
         entry_price: { type: integer, format: int64 }
-        margin: { type: integer, format: int64 }
+        margin: { type: integer, format: int64, description: Margin allocated to position (quote units, scaled) }
         funding_index: { type: integer, format: int64 }
         epoch: { type: integer, format: int64 }
         is_cross: { type: boolean }
-        initial_margin: { type: integer, format: int64, nullable: true }
+        initial_margin: { type: integer, format: int64, nullable: true, description: Required initial margin (entry notional) }
+        initial_margin_mark: { type: integer, format: int64, nullable: true, description: Required initial margin (mark notional) }
         maintenance_margin: { type: integer, format: int64, nullable: true }
-        leverage: { type: integer, format: int64, nullable: true }
+        leverage: { type: integer, format: int64, nullable: true, description: Entry notional / margin }
         mark_price: { type: integer, format: int64 }
         seq: { type: integer, format: int64 }
         side: { type: string, enum: [buy, sell] }
