@@ -73,7 +73,8 @@
                         "pages": [
                             "api-reference/integration/orders",
                             "api-reference/integration/closing-position",
-                            "api-reference/integration/Adjust-the-leverage"
+                            "api-reference/integration/adjust-the-leverage",
+                            "api-reference/integration/tpsl"
                         ]
                     },
                     {
