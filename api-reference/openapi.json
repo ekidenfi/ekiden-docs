@@ -793,6 +793,89 @@
         }
       }
     },
+    "/api/v1/user/accounts/owned": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Get SubAccounts owned by root",
+        "description": "Return SubAccounts owned by the authenticated root; if the caller is a subaccount, resolve to its root automatically.",
+        "operationId": "get_owned_accounts",
+        "responses": {
+          "200": {
+            "description": "Owned SubAccounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOwnedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication token"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/user/accounts/owner": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Get user owner by SubAccount",
+        "description": "Given a SubAccount address, return its RootAccount address.",
+        "operationId": "get_owner_account",
+        "parameters": [
+          {
+            "name": "sub_addr",
+            "in": "query",
+            "description": "SubAccount address",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Owner found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOwnerResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication token"
+          },
+          "403": {
+            "description": "Forbidden - Caller is neither the SubAccount nor its RootOwner"
+          },
+          "404": {
+            "description": "SubAccount not linked to any RootAccount"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
     "/api/v1/user/fills": {
       "get": {
         "tags": [
@@ -1815,6 +1898,31 @@
           }
         }
       },
+      "GetOwnedResponse": {
+        "type": "object",
+        "required": [
+          "sub_accounts"
+        ],
+        "properties": {
+          "sub_accounts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GetOwnerResponse": {
+        "type": "object",
+        "required": [
+          "root_addr"
+        ],
+        "properties": {
+          "root_addr": {
+            "type": "string"
+          }
+        }
+      },
       "IntentOutput": {
         "oneOf": [
           {
@@ -2254,6 +2362,17 @@
           "is_cross"
         ],
         "properties": {
+          "bracket": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TpSlBracket",
+                "description": "Optional TP/SL bracket attached to this order."
+              }
+            ]
+          },
           "is_cross": {
             "type": "boolean"
           },
@@ -2266,10 +2385,25 @@
             "type": "string",
             "description": "The address of the market"
           },
+          "order_link_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Client-provided correlation id analogous to Bybit's orderLinkId."
+          },
           "price": {
             "type": "integer",
             "format": "int64",
             "minimum": 0
+          },
+          "reduce_only": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Reduce-only flag. If true, the order must not increase the absolute\nposition size; any non-reducing remainder is rejected.",
+            "example": true
           },
           "side": {
             "type": "string"
@@ -2289,6 +2423,16 @@
                 "description": "Time in force strategy. Defaults to GTC if not provided by the client."
               }
             ]
+          },
+          "trigger_price": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Optional trigger price. If set, this order is conditional and should\nonly be activated when the market price crosses the trigger.",
+            "example": "50000000000",
+            "minimum": 0
           },
           "type": {
             "type": "string",
@@ -2930,6 +3074,77 @@
           "FOK",
           "PostOnly"
         ]
+      },
+      "TpSlBracket": {
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/TpSlMode"
+          },
+          "stop_loss": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TpSlSpec"
+              }
+            ]
+          },
+          "take_profit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TpSlSpec"
+              }
+            ]
+          }
+        }
+      },
+      "TpSlMode": {
+        "type": "string",
+        "enum": [
+          "FULL",
+          "PARTIAL"
+        ]
+      },
+      "TpSlOrderType": {
+        "type": "string",
+        "enum": [
+          "MARKET",
+          "LIMIT"
+        ]
+      },
+      "TpSlSpec": {
+        "type": "object",
+        "required": [
+          "trigger_price",
+          "order_type"
+        ],
+        "properties": {
+          "limit_price": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Required when order_type == LIMIT",
+            "minimum": 0
+          },
+          "order_type": {
+            "$ref": "#/components/schemas/TpSlOrderType"
+          },
+          "trigger_price": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
       },
       "TradingWithdrawalRequest": {
         "type": "object",

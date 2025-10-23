@@ -31,3 +31,20 @@ const order = await ekiden.createOrder({
 - `initial_margin` — required initial margin for the order at current price/size (if available).
 
 See full schema in OpenAPI for `OrderResponse`.
+
+### Triggers and Brackets
+
+- **Order field: `trigger_price`**
+  - If set, the order is conditional and activates when the mark crosses the trigger (boundary equality applies). Direction is derived from side and relation to current mark.
+
+- **Bracket field: `bracket`**
+  - Attach Take Profit / Stop Loss to an entry.
+  - Structure:
+    - `mode`: `FULL` or `PARTIAL`.
+    - `take_profit` / `stop_loss`: `{ trigger_price, order_type: MARKET|LIMIT, limit_price? }` (`limit_price` required for LIMIT).
+  - Execution semantics: reduce-only, IOC. MARKET legs are converted to LIMIT IOC with a slippage guard band.
+
+- **Reduce-only**
+  - Use `reduce_only: true` to prevent increasing exposure. Triggered bracket legs always enforce reduce-only.
+
+See the dedicated page: TP/SL, Triggers, and Reduce-Only.
