@@ -952,7 +952,7 @@
           "User"
         ],
         "summary": "Send a new intent",
-        "description": "Send a new intent (create orders, cancel specific orders, cancel all orders optionally filtered by market, assign leverage). The intent must have valid signature and unique nonce.\n\nOrder types: market | limit. Time-in-Force: GTC | IOC | FOK | PostOnly (rejected if it would take liquidity). Conditional entries via trigger_price: Stop-Market (type=market) or Stop-Limit (type=limit + price).\n\nActionStatus values: 0 = Pending, 1 = Success, 2 = Rejected. Use POST /api/v1/user/intent/commit to wait for a final Success/Rejected result.",
+        "description": "Send a signed intent (create/cancel/cancel-all/assign-leverage). Requires Ed25519 signature and unique nonce. Orders: type=market|limit; TIF=GTC|IOC|FOK|PostOnly; stops via trigger_price. For final status use POST /api/v1/user/intent/commit (ActionStatus: 0 Pending, 1 Success, 2 Rejected).",
         "operationId": "send_intent",
         "requestBody": {
           "content": {
@@ -998,7 +998,7 @@
           "User"
         ],
         "summary": "Send intent and wait for commitment",
-        "description": "Send a new intent and wait for it to be committed or rejected.\n\nOrder types: market | limit. Time-in-Force: GTC | IOC | FOK | PostOnly. Conditional entries via trigger_price: Stop-Market or Stop-Limit.\n\nActionStatus values: 0 = Pending, 1 = Success, 2 = Rejected.",
+        "description": "Send a signed intent and block until it’s committed or rejected (or times out). Orders: type=market|limit; TIF=GTC|IOC|FOK|PostOnly; stops via trigger_price. ActionStatus: 0 Pending, 1 Success, 2 Rejected.",
         "operationId": "send_intent_with_commit",
         "requestBody": {
           "content": {
@@ -2431,7 +2431,7 @@
             ],
             "format": "int64",
             "description": "Optional trigger price. If set, this order is conditional and should\nonly be activated when the market price crosses the trigger.",
-            "example": "50000000000",
+            "example": 50000000000,
             "minimum": 0
           },
           "type": {
@@ -2959,7 +2959,7 @@
           },
           "payload": {
             "$ref": "#/components/schemas/ActionPayload",
-            "description": "Intent payload variants include order_create, order_cancel, order_cancel_all, etc.\n\nFor order_create:\n- Entry order types: `type = \"market\" | \"limit\"`\n- Time-in-Force: `time_in_force = \"GTC\" | \"IOC\" | \"FOK\" | \"PostOnly\"`\n  - PostOnly ensures the order only adds liquidity; it is rejected if it would execute immediately.\n- Conditional entries (stops): supply `trigger_price` to create Stop-Market (type=\"market\") or\n  Stop-Limit (type=\"limit\" + `price`). Trigger fires on boundary equality using mark price.\n- Optional TP/SL bracket: `bracket` with `take_profit` / `stop_loss` legs where\n  `order_type = MARKET | LIMIT` (LIMIT requires `limit_price`). Bracket legs execute reduce-only with IOC semantics."
+            "description": "Intent payload variants include:\n- `order_create`\n- `order_cancel`\n- `order_cancel_all`\n- `leverage_assign`\n\nFor `order_create` entries:\n- Types: `type = \"market\" | \"limit\"`\n- Time-in-Force: `GTC` | `IOC` | `FOK` | `PostOnly` (rejected if it would take liquidity)\n- Conditional via `trigger_price`:\n  - Stop-Market: `type = \"market\"`\n  - Stop-Limit: `type = \"limit\"` + `price`\n- Optional TP/SL bracket (`bracket`):\n  - Legs: `take_profit`, `stop_loss`\n  - `order_type = MARKET | LIMIT` (LIMIT requires `limit_price`)\n  - Legs are reduce-only with IOC semantics"
           },
           "signature": {
             "type": "string",
