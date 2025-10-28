@@ -9,6 +9,56 @@ title: "Orders"
 - **Place Order**: POST /api/v1/user/intent (order_create payload)
 - **Cancel Order**: POST /api/v1/user/intent (order_cancel payload)
 
+### Order types and Time-in-Force
+
+This section describes all supported order types for entries and how Time-in-Force (TIF) affects execution. Entry orders support two base types; conditional entries and bracket exits extend these with triggers.
+
+#### Entry orders
+
+- Market
+  - type: `"market"`
+  - Executes immediately against the order book at the best available prices.
+  - Any unfilled remainder does not rest on the book; pair with `time_in_force: "IOC"` or `"FOK"` to enforce stricter behavior explicitly.
+
+- Limit
+  - type: `"limit"`
+  - Executes up to the specified `price`; any unfilled remainder can rest on the book depending on TIF.
+  - Common pairings: `time_in_force: "GTC"` to rest, `"IOC"` to cancel any remainder, `"FOK"` to require full fill, `"PostOnly"` to ensure it only adds liquidity (rejected if it would take).
+
+Recommended: set `time_in_force` explicitly for clarity rather than relying on implicit defaults.
+
+#### Time-in-Force
+
+- GTC — Good-Till-Cancelled. Rests until filled or cancelled.
+- IOC — Immediate-Or-Cancel. Fill what you can immediately; cancel the rest.
+- FOK — Fill-Or-Kill. Either fully fills immediately or is cancelled.
+- PostOnly — Must add liquidity; if it would execute immediately, it is rejected.
+
+Provide TIF as a string: `"GTC" | "IOC" | "FOK" | "PostOnly"`.
+
+#### Conditional entries (stop orders)
+
+You can turn an entry into a stop-style order by supplying `trigger_price`:
+
+- Stop-Market
+  - `type: "market"` + `trigger_price`
+  - Activates when the mark price crosses the trigger; executes as a market-taker on activation.
+
+- Stop-Limit
+  - `type: "limit"` + `trigger_price` + `price`
+  - Activates when the mark price crosses the trigger; places a limit order at `price` on activation.
+
+Trigger direction is derived from side and the relationship to the current mark; equality at the boundary is treated as triggered.
+
+#### Commit and status
+
+Order intents are processed asynchronously. ActionStatus values indicate lifecycle state:
+- 0 = Pending — accepted, awaiting commitment
+- 1 = Success — committed to the ledger
+- 2 = Rejected — failed validation or execution
+
+Use `POST /api/v1/user/intent/commit` if you want the API to wait and return the final `status` (with an optional `error_message` when Rejected).
+
 **SDK Examples**
 
 ```typescript
@@ -23,12 +73,82 @@ const order = await ekiden.createOrder({
 });
 ```
 
+#### Examples by type
+
+Limit GTC (rest on book):
+
+```ts
+await ekiden.createOrder({
+  market_addr: "0x...",
+  side: "buy",
+  size: "100",
+  price: "123.45",
+  type: "limit",
+  time_in_force: "GTC",
+  is_cross: true,
+});
+```
+
+Limit PostOnly (add liquidity only):
+
+```ts
+await ekiden.createOrder({
+  market_addr: "0x...",
+  side: "sell",
+  size: "50",
+  price: "130.00",
+  type: "limit",
+  time_in_force: "PostOnly",
+});
+```
+
+Market IOC (take liquidity now):
+
+```ts
+await ekiden.createOrder({
+  market_addr: "0x...",
+  side: "buy",
+  size: "25",
+  type: "market",
+  time_in_force: "IOC",
+});
+```
+
+Stop-Market (conditional entry):
+
+```ts
+await ekiden.createOrder({
+  market_addr: "0x...",
+  side: "sell",
+  size: "10",
+  type: "market",
+  trigger_price: "100.00",
+});
+```
+
+Stop-Limit (conditional entry):
+
+```ts
+await ekiden.createOrder({
+  market_addr: "0x...",
+  side: "sell",
+  size: "10",
+  type: "limit",
+  price: "99.50",
+  trigger_price: "100.00",
+  time_in_force: "GTC",
+});
+```
+
 ### Response fields
 
 - `timestamp_ms` — Unix milliseconds when the order was created.
 - `timestamp` — Unix seconds (deprecated; kept for backward compatibility).
 - `is_cross` — true for cross margin, false for isolated.
 - `initial_margin` — required initial margin for the order at current price/size (if available).
+- `time_in_force` — one of `GTC | IOC | FOK | PostOnly`.
+- `reduce_only` — when true, the order will not increase exposure.
+- `trigger_price` — present for conditional entries (see Stop-Market/Stop-Limit above).
 
 See full schema in OpenAPI for `OrderResponse`.
 

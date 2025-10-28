@@ -12,6 +12,13 @@ Ekiden supports isolated leverage settings per market. This allows users to cont
 
 Adjust the leverage multiplier for a specific market. This endpoint applies only to the specified market and cancels any open orders associated with it.
 
+ActionStatus values used across intent processing:
+- 0 = Pending — intent accepted and awaiting commitment
+- 1 = Success — intent committed successfully
+- 2 = Rejected — intent failed; see error message when available
+
+If you need to wait for a definitive result, use `POST /api/v1/user/intent/commit`, which blocks until the intent is committed (Success) or rejected and returns the `status` (0/1/2) and optional `error_message`.
+
 ### Headers
 
 ```
