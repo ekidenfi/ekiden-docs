@@ -122,7 +122,7 @@
               }
             ],
             "asyncapi": {
-              "source": "/api-reference/websocket/asyncapi.yaml"
+              "source": "https://raw.githubusercontent.com/ekidenfi/ekiden-docs/main/api-reference/websocket/asyncapi.yaml"
             }
           }
         ]
