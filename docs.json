@@ -23,8 +23,8 @@
             "pages": [
               "index",
               "architecture",
-              "Fees",
-              "VIP-program"
+              "fees",
+              "vip-program"
             ]
           }
         ]
@@ -116,12 +116,13 @@
                 "pages": [
                   "api-reference/websocket/order",
                   "api-reference/websocket/position",
-                  "api-reference/websocket/fill"
+                  "api-reference/websocket/execution",
+                  "api-reference/websocket/account_balance"
                 ]
               }
             ],
             "asyncapi": {
-              "source": "https://raw.githubusercontent.com/ekidenfi/ekiden-docs/main/api-reference/websocket/asyncapi.yaml"
+              "source": "/api-reference/websocket/asyncapi.yaml"
             }
           }
         ]

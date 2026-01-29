@@ -11,8 +11,8 @@ This document outlines Ekiden's API design conventions and standards. These ensu
 Ekiden provides separate base URLs for each environment:
 
 - **Mainnet**: `(Coming Soon)`
-- **Testnet Beta**: [https://api.ekiden.fi/api/v1](http://app.ekiden.fi/api/v1)
-- **Testnet Staging**: [https://api.staging.ekiden.fi/api/v1](http://app.staging.ekiden.fi/api/v1)
+- **Testnet Beta**: [https://api.ekiden.fi/api/v1](https://api.ekiden.fi/api/v1)
+- **Testnet Staging**: [https://api.staging.ekiden.fi/api/v1](https://api.staging.ekiden.fi/api/v1)
 
 > All API calls must use **HTTPS**.
 
@@ -23,7 +23,7 @@ Ekiden provides separate base URLs for each environment:
 We use URI-based versioning:
 
 - **Format**: `/v1/`
-- **Example**: `GET /v1/orders`
+- **Example**: `GET /v1/market/instruments`
 
 Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 
@@ -39,7 +39,7 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 | `PATCH`  | Update partial resources                |
 
 - Resources are nouns, pluralized when appropriate
-  - Example: `/v1/orders`, `/v1/fills`
+  - Example: `/v1/trade/orders`, `/v1/trade/executions`
 
 ---
 
@@ -59,14 +59,16 @@ Messages use an `op` field with snake_case values. Optional `req_id` lets you co
 
 ### Topics
 
-- Public:
-  - `orderbook/{market_addr}`
-  - `trade/{market_addr}`
-  - `ticker/{market_addr}`
-- Private (only over `/ws/private` after auth):
+- Public (Market-scoped):
+  - `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTCUSDC`)
+  - `trade.<symbol>`
+  - `ticker.<symbol>`
+  - `kline.<interval>.<symbol>`
+- Private (User-scoped, only over `/ws/private` after auth):
   - `order`
   - `position`
-  - `fill`
+  - `execution`
+  - `account_balance`
 
 ### Subscribe
 
@@ -75,7 +77,7 @@ Client → Server
 ```json
 {
   "op": "subscribe",
-  "args": ["orderbook/{market_addr}", "ticker/{market_addr}"],
+  "args": ["orderbook.1.BTCUSDC", "ticker.BTCUSDC"],
   "req_id": "optional-id"
 }
 ```
@@ -85,7 +87,7 @@ Server → Client
 ```json
 {
   "op": "subscribed",
-  "args": ["orderbook/{market_addr}", "ticker/{market_addr}"],
+  "args": ["orderbook.1.BTCUSDC", "ticker.BTCUSDC"],
   "req_id": "optional-id"
 }
 ```
@@ -95,7 +97,7 @@ Server → Client
 ```json
 {
   "op": "unsubscribe",
-  "args": ["orderbook/{market_addr}"]
+  "args": ["orderbook.1.BTCUSDC"]
 }
 ```
 
@@ -104,7 +106,8 @@ Server → Client
 ```json
 {
   "op": "event",
-  "topic": "ticker/{market_addr}",
+  "topic": "ticker.BTCUSDC",
+  "server_ts_ms": 1731541800000,
   "data": { /* snapshot or update payload */ }
 }
 ```
@@ -122,14 +125,16 @@ Client → Server
 Server → Client
 
 ```json
-{ "op": "auth", "success": true, "user_id": "<account_id>", "req_id": "optional-id" }
+{ "op": "auth", "success": true, "user_id": "<user_id>", "req_id": "optional-id" }
 ```
 
 ---
 
 ## 5. Authentication (REST)
 
-Private REST and private WebSocket use a short-lived JWT issued by the gateway.
+Private REST and private WebSocket use a short-lived JWT issued by the gateway, or API Key authentication.
+
+### JWT Authentication
 
 1) Request a token via `POST /api/v1/authorize` by signing the message:
 
@@ -151,7 +156,7 @@ with Ed25519. Body:
 Response:
 
 ```json
-{ "token": "<jwt>" }
+{ "token": "<jwt>", "user_id": "<user_id>" }
 ```
 
 2) Use the token with Bearer auth for private endpoints:
@@ -159,6 +164,15 @@ Response:
 ```http
 Authorization: Bearer <jwt>
 ```
+
+### API Key Authentication
+
+Gateway supports API-key auth via headers:
+
+- `X-API-KEY`: Your API public key
+- `X-SIGNATURE`: Ed25519 signature over `EKIDEN_API|{method}|{uri}|{timestamp_ms}|{nonce}`
+- `X-TIMESTAMP-MS`: Current Unix timestamp in milliseconds
+- `X-NONCE`: Random unique string
 
 ---
 
@@ -179,10 +193,11 @@ Authorization: Bearer <jwt>
 We use explicit units depending on the field name and context:
 
 - `timestamp` (REST resources like orders, fills, positions): Unix seconds since epoch (int). Example: `1718000000`.
-- `timestamp_ms` (REST authorize flow): Unix milliseconds since epoch (int). Example: `1718000000000`.
+- `timestamp_ms` (REST authorize flow, API Key headers): Unix milliseconds since epoch (int). Example: `1718000000000`.
+- `server_ts_ms` (WebSocket event envelope): Unix milliseconds since epoch (int).
 - `ts` (WebSocket ticker snapshots and ping/pong client_ts/server_ts):
   - For ticker `ts`: Unix milliseconds since epoch (int). Example: `1718000000000`.
-  - For WS ping/pong `ts`/`client_ts`/`server_ts`: Unix nanoseconds since epoch (int). Example: `1718000000000000000`.
+  - For WS ping/pong `client_ts`/`server_ts`: Unix milliseconds since epoch (int). Example: `1718000000000`.
 
 When an ISO 8601 string appears (e.g., funding endpoints), it is explicitly documented in the schema, e.g. `"2025-05-10T12:34:56Z"`.
 
@@ -194,22 +209,24 @@ When an ISO 8601 string appears (e.g., funding endpoints), it is explicitly docu
 
 ```json
 {
-  "error_code": 2001,
-  "error_message": "Invalid signature"
+  "code": "UNAUTHORIZED",
+  "message": "Unauthorized"
 }
 ```
 
-### Error codes
+### Common Error Codes
 
-| Code | Meaning               |
-| ---- | --------------------- |
-| 2000 | Invalid request       |
-| 2001 | Authentication failed |
-| 2002 | Signature expired     |
-| 2003 | Rate limit exceeded   |
-| 2004 | Resource not found    |
+| Code | Meaning |
+| ---- | ------- |
+| `BAD_REQUEST` | Invalid request parameters |
+| `UNAUTHORIZED` | Authentication failed or token expired |
+| `FORBIDDEN` | Insufficient permissions (scopes) |
+| `RateLimitExceeded` | Too many requests |
+| `NOT_FOUND` | Resource not found |
+| `SERVICE_UNAVAILABLE` | Backend service down or lagging |
+| `INTERNAL` | Unexpected server error |
 
-> HTTP status codes (`400`, `401`, `429`, etc.) are used appropriately.
+> HTTP status codes (`400`, `401`, `403`, `404`, `429`, `500`, `503`) are used appropriately.
 
 ---
 
@@ -222,8 +239,8 @@ When an ISO 8601 string appears (e.g., funding endpoints), it is explicitly docu
 
 ```json
 {
-  "error_code": 2003,
-  "error_message": "Rate limit exceeded"
+  "code": "RateLimitExceeded",
+  "message": "Rate limit exceeded"
 }
 ```
 
@@ -236,66 +253,39 @@ Offset-style pagination with page counters:
 - Query params: `page` (default 1), `per_page` (default 20)
 
 ```http
-GET /api/v1/market/fills?market_addr=0xabc&page=1&per_page=20
+GET /api/v1/trade/executions?symbol=BTCUSDC&page=1&per_page=20
 ```
 
 Responses generally return arrays for list endpoints (see schema in the API reference).
 
 ---
 
-## 11. Response Structure
-
-All responses are JSON objects.
-
-### Success
-
-```json
-{
-  "success": true,
-  "data": { ... }
-}
-```
-
-### Error
-
-```json
-{
-  "error_code": 2001,
-  "error_message": "Invalid signature"
-}
-```
-
----
-
-## 12. Field Naming
+## 11. Field Naming
 
 - All JSON keys use `snake_case`
-- All numeric values are strings
-- Timestamps are always strings in ISO 8601
+- All numeric values are strings (except timestamps and page counters)
 
 ---
 
-## 13. WebSocket Heartbeats
+## 12. WebSocket Heartbeats
 
-There are two heartbeat layers:
-
-1) Application-level ping/pong (for latency measurement)
+### Application-level ping/pong
 
 - Client may send:
 
 ```json
-{ "op": "ping", "req_id": "optional-id", "ts": 1718000000000000000 }
+{ "op": "ping", "req_id": "optional-id", "ts": 1718000000000 }
 ```
 
 - Server replies:
 
 ```json
-{ "op": "pong", "req_id": "optional-id", "client_ts": 1718000000000000000, "server_ts": 1718000001000000000 }
+{ "op": "pong", "req_id": "optional-id", "client_ts": 1718000000000, "server_ts": 1718000001000 }
 ```
 
-Timestamps are Unix nanoseconds. Use these to compute RTT and clock deltas.
+Timestamps are Unix milliseconds.
 
-2) WebSocket-level ping/pong (keepalive)
+### WebSocket-level ping/pong (keepalive)
 
 - The server periodically sends WebSocket-level pings and expects pongs.
 - If the server does not see a pong within the timeout window (~30s by default), it will close the connection.

@@ -3,19 +3,21 @@ info:
   title: Ekiden WebSocket API
   version: 1.0.0
   description: |
-    Real-time feeds for orderbooks and aggregated trades.
+    Real-time feeds for market data and account updates.
 
     ### Flow
     1. Choose environment:
        - Production: `wss://api.ekiden.fi`
        - Staging: `wss://api.staging.ekiden.fi`
     2. Connect to `/ws/public` or `/ws/private` on the chosen host.
-    3. Send a **Subscribe** request on the root channel `/` with a channel name:
-       - `orderbook/{market_addr}`
-       - `trade/{market_addr}`
-       - `ticker/{market_addr}`
-    4. Receive **Subscribed**, then streaming events on the channel you subscribed to.
-    5. Use **Unsubscribe** or **Ping** when needed.
+    3. Send a **Subscribe** request with dot-separated topics:
+       - `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTCUSDC`)
+       - `trade.<symbol>` (e.g., `trade.BTCUSDC`)
+       - `ticker.<symbol>` (e.g., `ticker.BTCUSDC`)
+       - `kline.<interval>.<symbol>` (e.g., `kline.1m.BTCUSDC`)
+    4. For private data, first send an **Auth** request on `/ws/private`.
+    5. Receive **Subscribed** acknowledgement, then streaming **Event** messages.
+    6. Use **Unsubscribe** or **Ping** when needed.
 
 servers:
   production:
@@ -108,11 +110,11 @@ components:
 
     SubscribeRequest:
       title: Subscribe
-      description: Subscribe to a public topics. Server will respond with a `Subscribed` message.
+      description: Subscribe to topics. Server will respond with a `Subscribed` message.
       examples: 
         - payload:
             op: subscribe
-            args: ["orderbook/0x88a70ff..."]
+            args: ["orderbook.1.BTCUSDC", "trade.BTCUSDC"]
             req_id: "100001"
       payload:
         type: object
@@ -120,16 +122,14 @@ components:
         properties:
           op:
             type: string
+            const: "subscribe"
             default: "subscribe"
-            readOnly: true
             description: Operation name
           args:
             type: array
             items:
               type: string
-              default: orderbook/
-              pattern: '^(orderbook|trade|ticker)\/[^\/\s]+$'
-              description: orderbook/{market_addr} or trade/{market_addr} or ticker/{market_addr}
+              description: Topic name (e.g., orderbook.1.BTCUSDC, trade.BTCUSDC, ticker.BTCUSDC, kline.1m.BTCUSDC, order, position, execution, account_balance)
             minItems: 1
             uniqueItems: true
             description: List of topics to subscribe to
@@ -140,11 +140,11 @@ components:
 
     UnsubscribeRequest:
       title: Unsubscribe
-      description: Unsubscribe from a public topics. Server will respond with an `Unsubscribed` message.
+      description: Unsubscribe from topics. Server will respond with an `Unsubscribed` message.
       examples: 
         - payload:
             op: unsubscribe
-            args: ["orderbook/0x88a70ff..."]
+            args: ["orderbook.1.BTCUSDC"]
             req_id: "100002"
       payload:
         type: object
@@ -152,16 +152,13 @@ components:
         properties:
           op:
             type: string
+            const: "unsubscribe"
             default: "unsubscribe"
-            readOnly: true
             description: Operation name
           args:
             type: array
             items:
               type: string
-              default: orderbook/
-              pattern: '^(orderbook|trade|ticker)\/[^\/\s]+$'
-              description: orderbook/{market_addr} or trade/{market_addr} or ticker/{market_addr}
             minItems: 1
             uniqueItems: true
             description: List of topics to unsubscribe from
@@ -184,8 +181,8 @@ components:
         properties:
           op:
             type: string
+            const: "ping"
             default: "ping"
-            readOnly: true
             description: Operation name
           ts:
             type: integer
@@ -227,7 +224,7 @@ components:
       examples:
         - payload:
             op: subscribed
-            args: ["orderbook/0x88a70ff..."]
+            args: ["orderbook.1.BTCUSDC"]
             req_id: "100001"
       payload:
         type: object
@@ -235,10 +232,7 @@ components:
           op: { type: string, const: subscribed, description: Operation name }
           args:
             type: array
-            items:
-              type: string
-              pattern: '^(orderbook|trade|ticker)\/[^\/\s]+$'
-              description: orderbook/{market_addr} or trade/{market_addr} or ticker/{market_addr}
+            items: { type: string }
             minItems: 1
             uniqueItems: true
             description: List of topics subscribed to
@@ -251,8 +245,7 @@ components:
       examples:
         - payload:
             op: unsubscribed
-            args:
-              - "orderbook/0x88a70ff..."
+            args: ["orderbook.1.BTCUSDC"]
             req_id: "100002"
       payload:
         type: object
@@ -260,10 +253,7 @@ components:
           op: { type: string, const: unsubscribed, description: Operation name }
           args:
             type: array
-            items:
-              type: string
-              pattern: '^(orderbook|trade|ticker)\/[^\/\s]+$'
-              description: orderbook/{market_addr} or trade/{market_addr} or ticker/{market_addr}
+            items: { type: string }
             minItems: 1
             uniqueItems: true
             description: List of topics unsubscribed from
@@ -294,7 +284,7 @@ components:
       examples:
         - payload:
             op: error
-            message: "INVALID_TOPIC_FOR_PUBLIC_WS: position"
+            message: "Invalid topic format: ticker. Expected one of: trade.<symbol>, orderbook.<depth>.<symbol>..."
             req_id: "100004"
       payload:
         type: object
@@ -309,172 +299,230 @@ components:
       title: Event
       description: |
         Unified event envelope. `data` can be one of public market updates or private user updates.
-        - Public: `OrderbookSnapshot`, `OrderbookDelta`, `AggregatedTrades`, `TickerSnapshot`
-        - Private: arrays of `OrderResponse`, `FillResponse`, `PositionResponse`
       examples:
         - payload:
             op: event
-            topic: "orderbook/0x88a70ff..."
+            server_ts_ms: 1681234567890
+            topic: "orderbook.1.BTCUSDC"
+            type: "snapshot"
             data:
-              market_addr: "0x88a70ff..."
-              seq: 123
-              bids: [ { price: "100.1", qty: "5" } ]
-              asks: [ { price: "100.2", qty: "3" } ]
-              ts: 1681234567890123456
+              s: "BTCUSDC"
+              ts: 1681234567890
+              b: [ ["100.1", "5"] ]
+              a: [ ["100.2", "3"] ]
+              u: 123
+              seq: 21
+              mts: 1681234567880
       payload:
         type: object
         properties:
           op: { type: string, const: event, description: Operation name }
+          server_ts_ms: { type: integer, description: Server timestamp in milliseconds }
           topic: { type: string, description: Topic name }
-          data:
-            oneOf:
-              - $ref: '#/components/schemas/OrderbookSnapshot'
-              - $ref: '#/components/schemas/OrderbookDelta'
-              - $ref: '#/components/schemas/AggregatedTrades'
-              - $ref: '#/components/schemas/TickerSnapshot'
-              - { type: array, title: Vec<OrderResponse>, items: { $ref: '#/components/schemas/OrderResponse' } }
-              - { type: array, title: Vec<FillResponse>, items: { $ref: '#/components/schemas/FillResponse' } }
-              - { type: array, title: Vec<PositionResponse>, items: { $ref: '#/components/schemas/PositionResponse' } }
-        required: [op, topic, data]
+          oneOf:
+            - $ref: '#/components/messages/OrderbookEvent'
+            - $ref: '#/components/messages/TradeEvent'
+            - $ref: '#/components/messages/TickerEvent'
+            - $ref: '#/components/messages/KlineEvent'
+            - $ref: '#/components/messages/OrderEvent'
+            - $ref: '#/components/messages/ExecutionEvent'
+            - $ref: '#/components/messages/PositionEvent'
+            - $ref: '#/components/messages/AccountBalanceEvent'
+        required: [op, server_ts_ms, topic]
+
+    # Event Variants
+    OrderbookEvent:
+      payload:
+        type: object
+        properties:
+          type: { type: string, enum: [snapshot, delta] }
+          data: { $ref: '#/components/schemas/OrderBookSnapshot' }
+        required: [type, data]
+
+    TradeEvent:
+      payload:
+        type: object
+        properties:
+          data: { type: array, items: { $ref: '#/components/schemas/PublicTrade' } }
+        required: [data]
+
+    TickerEvent:
+      payload:
+        type: object
+        properties:
+          data: { $ref: '#/components/schemas/TickerSnapshot' }
+        required: [data]
+
+    KlineEvent:
+      payload:
+        type: object
+        properties:
+          data: { $ref: '#/components/schemas/KlineSnapshot' }
+        required: [data]
+
+    OrderEvent:
+      payload:
+        type: object
+        properties:
+          data: { type: array, items: { $ref: '#/components/schemas/Order' } }
+        required: [data]
+
+    ExecutionEvent:
+      payload:
+        type: object
+        properties:
+          data: { type: array, items: { $ref: '#/components/schemas/Execution' } }
+        required: [data]
+
+    PositionEvent:
+      payload:
+        type: object
+        properties:
+          data: { type: array, items: { $ref: '#/components/schemas/Position' } }
+        required: [data]
+
+    AccountBalanceEvent:
+      payload:
+        type: object
+        properties:
+          data: { $ref: '#/components/schemas/AccountBalance' }
+        required: [data]
 
   schemas:
     # Public event schemas
-    OrderbookSnapshot:
+    OrderBookSnapshot:
       type: object
       properties:
-        market_addr: { type: string }
-        seq: { type: integer, format: int64 }
-        bids: { type: array, items: { $ref: '#/components/schemas/Level' } }
-        asks: { type: array, items: { $ref: '#/components/schemas/Level' } }
-        ts: { type: integer, format: int64 }
-      additionalProperties: true
+        s: { type: string, description: Symbol }
+        ts: { type: integer, description: Timestamp (ms) }
+        b: { type: array, items: { $ref: '#/components/schemas/OrderBookLevel' }, description: Bids }
+        a: { type: array, items: { $ref: '#/components/schemas/OrderBookLevel' }, description: Asks }
+        u: { type: integer, description: Update ID }
+        seq: { type: integer, description: Sequence }
+        mts: { type: integer, description: Matching timestamp (ms) }
+      required: [s, ts, b, a, u, seq, mts]
 
-    OrderbookDelta:
+    OrderBookLevel:
+      type: array
+      items: { type: string }
+      minItems: 2
+      maxItems: 2
+      description: "[price, size]"
+
+    PublicTrade:
       type: object
       properties:
-        market_addr: { type: string }
-        seq: { type: integer, format: int64 }
-        bids_upserts: { type: array, items: { $ref: '#/components/schemas/Level' } }
-        asks_upserts: { type: array, items: { $ref: '#/components/schemas/Level' } }
-        bids_deletes: { type: array, items: { $ref: '#/components/schemas/PriceKey' } }
-        asks_deletes: { type: array, items: { $ref: '#/components/schemas/PriceKey' } }
-        ts: { type: integer, format: int64 }
-      additionalProperties: true
+        i: { type: string, description: Trade ID }
+        s: { type: string, description: Symbol }
+        S: { type: string, enum: [Buy, Sell], description: Side }
+        v: { type: string, description: Size }
+        p: { type: string, description: Price }
+        seq: { type: integer, description: Sequence }
+        T: { type: integer, description: Trade time (ms) }
+      required: [i, s, S, v, p, seq, T]
 
-    AggregatedTrades:
-      type: object
-      properties:
-        market_addr: { type: string }
-        trades: { type: array, items: { $ref: '#/components/schemas/Trade' } }
-      additionalProperties: true
-
-    # New public snapshot: Ticker
     TickerSnapshot:
       type: object
       properties:
-        symbol: { type: string, description: Market symbol }
-        market_addr: { type: string, description: Market address }
-        ts: { type: integer, format: int64, description: Snapshot timestamp in milliseconds }
-        last_price: { type: integer, format: int64, description: Last traded price (scaled integer) }
-        mark_price: { type: integer, format: int64, description: Mark price (scaled integer) }
-        index_price: { type: integer, format: int64, description: Index/oracle price (scaled integer) }
-        open_interest: { type: integer, format: int64, description: Open interest size (base units) }
-        open_interest_value: { type: integer, format: int64, description: Open interest value (quote units, scaled) }
-        funding_rate: { type: number, format: double, description: Funding rate as percentage (e.g., 0.0001 => 1 bps) }
-        next_funding_time: { type: integer, format: int64, description: Next funding time in milliseconds }
-        volume_24h: { type: integer, format: int64, description: 24h volume in base units }
-        turnover_24h: { type: integer, format: int64, description: 24h turnover in quote units (scaled) }
-      required: [market_addr, ts, mark_price]
+        symbol: { type: string }
+        addr: { type: string }
+        last_price: { type: string }
+        index_price: { type: string }
+        mark_price: { type: string }
+        prev_price_24h: { type: string }
+        high_price_24h: { type: string }
+        low_price_24h: { type: string }
+        prev_price_1h: { type: string }
+        volume_24h: { type: string }
+        turnover_24h: { type: string }
+        open_interest: { type: string }
+        open_interest_value: { type: string }
+        funding_rate: { type: string }
+        next_funding_time: { type: integer, description: Next funding time (ms) }
+        best_ask_size: { type: string }
+        best_ask_price: { type: string }
+        best_bid_size: { type: string }
+        best_bid_price: { type: string }
+      required: [symbol, addr, last_price, mark_price]
 
-    Level:
+    KlineSnapshot:
       type: object
       properties:
-        price: { type: string }
-        qty:   { type: string }
-      required: [price, qty]
-
-    PriceKey:
-      type: object
-      properties:
-        price: { type: string }
-      required: [price]
-
-    Trade:
-      type: object
-      properties:
-        id: { type: integer, format: int64, description: Stable aggregated trade identifier (hash of market_addr, price, side, seq, timestamp) }
-        side: { type: string, enum: [buy, sell] }
-        price: { type: integer, format: int64, description: Scaled integer price }
-        size: { type: integer, format: int64, description: Aggregated size in base units (scaled integer) }
-        seq: { type: integer, format: int64, description: Max sequence among aggregated fills }
-        timestamp: { type: integer, format: int64, description: Latest fill timestamp in seconds }
-      required: [id, side, price, size, seq, timestamp]
+        t: { type: integer, description: Open time (ms) }
+        i: { type: string, description: Interval }
+        o: { type: string, description: Open price }
+        h: { type: string, description: High price }
+        l: { type: string, description: Low price }
+        c: { type: string, description: Close price }
+        T: { type: integer, description: Close time (ms) }
+        v: { type: string, description: Volume }
+        n: { type: string, description: Trade count }
+      required: [t, i, o, h, l, c, T, v, n]
 
     # Private event schemas
-    OrderResponse:
+    Order:
       type: object
       properties:
-        sid: { type: string }
-        user_addr: { type: string }
+        order_id: { type: string }
+        order_link_id: { type: string, nullable: true }
+        symbol: { type: string }
+        sub_account_address: { type: string }
+        price: { type: string }
+        qty: { type: string }
         side: { type: string }
-        size: { type: integer, format: int64 }
-        price: { type: integer, format: int64 }
-        leverage: { type: integer, format: int64 }
-        initial_margin: { type: integer, format: int64, nullable: true }
-        type: { type: string }
-        status: { type: string }
-        market_addr: { type: string }
-        is_cross: { type: boolean }
-        seq: { type: integer, format: int64 }
-        timestamp: { type: integer, format: int64, description: Deprecated seconds timestamp }
-        timestamp_ms: { type: integer, format: int64, description: Milliseconds timestamp }
-      additionalProperties: true
+        margin_mode: { type: string }
+        order_status: { type: string }
+        avg_price: { type: string }
+        leaves_qty: { type: string }
+        cum_exec_qty: { type: string }
+        cum_exec_value: { type: string }
+        cum_exec_fee: { type: string }
+        created_time: { type: integer }
+        updated_time: { type: integer }
+      required: [order_id, symbol, sub_account_address, price, qty, side, order_status]
 
-    FillResponse:
+    Execution:
       type: object
       properties:
-        sid: { type: string }
+        exec_id: { type: string }
+        symbol: { type: string }
+        order_id: { type: string }
         side: { type: string }
-        size: { type: integer, format: int64 }
-        price: { type: integer, format: int64 }
-        maker_fee: { type: integer, format: int64 }
-        taker_fee: { type: integer, format: int64 }
-        taker_order_sid: { type: string }
-        taker_addr: { type: string }
-        maker_order_sid: { type: string }
-        maker_addr: { type: string }
-        market_addr: { type: string }
-        seq: { type: integer, format: int64 }
-        maker_leverage: { type: integer, format: int64 }
-        taker_leverage: { type: integer, format: int64 }
-        maker_is_cross: { type: boolean }
-        taker_is_cross: { type: boolean }
-        timestamp: { type: integer, format: int64, description: Deprecated seconds timestamp }
-        timestamp_ms: { type: integer, format: int64, description: Milliseconds timestamp }
-      additionalProperties: true
+        sub_account_address: { type: string }
+        exec_price: { type: string }
+        exec_qty: { type: string }
+        exec_value: { type: string }
+        exec_type: { type: string }
+        exec_time: { type: integer }
+        is_maker: { type: boolean }
+        fee_rate: { type: string }
+        seq: { type: integer }
+      required: [exec_id, symbol, order_id, side, sub_account_address, exec_price, exec_qty, exec_time]
 
-    PositionResponse:
+    Position:
       type: object
       properties:
-        sid: { type: string }
-        market_addr: { type: string }
-        user_addr: { type: string }
-        size: { type: integer, format: int64 }
-        price: { type: integer, format: int64 }
-        entry_price: { type: integer, format: int64 }
-        margin: { type: integer, format: int64, description: Margin allocated to position (quote units, scaled) }
-        funding_index: { type: integer, format: int64 }
-        epoch: { type: integer, format: int64 }
-        is_cross: { type: boolean }
-        initial_margin: { type: integer, format: int64, nullable: true, description: Required initial margin (entry notional) }
-        initial_margin_mark: { type: integer, format: int64, nullable: true, description: Required initial margin (mark notional) }
-        maintenance_margin: { type: integer, format: int64, nullable: true }
-        leverage: { type: integer, format: int64, nullable: true, description: Entry notional / margin }
-        mark_price: { type: integer, format: int64 }
-        seq: { type: integer, format: int64 }
-        side: { type: string, enum: [buy, sell] }
-        unrealized_pnl: { type: integer, format: int64 }
-        liq_price: { type: integer, format: int64, nullable: true }
-        timestamp: { type: integer, format: int64, description: Deprecated seconds timestamp }
-        timestamp_ms: { type: integer, format: int64, description: Milliseconds timestamp }
-      additionalProperties: true
+        symbol: { type: string }
+        sub_account_address: { type: string }
+        side: { type: string }
+        size: { type: string }
+        avg_price: { type: string }
+        position_value: { type: string }
+        leverage: { type: string }
+        mark_price: { type: string }
+        unrealized_pnl: { type: string }
+        realized_pnl_cum: { type: string }
+        updated_time: { type: integer }
+        seq: { type: integer }
+      required: [symbol, sub_account_address, side, size, avg_price]
+
+    AccountBalance:
+      type: object
+      properties:
+        sub_account_address: { type: string }
+        equity: { type: string }
+        vault_balance: { type: string }
+        margin_balance: { type: string }
+        available_balance: { type: string }
+        unrealised_pnl: { type: string }
+      required: [sub_account_address, equity, vault_balance, margin_balance, available_balance]

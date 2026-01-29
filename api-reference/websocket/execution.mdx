@@ -1,10 +1,10 @@
 ---
-title: "Fill"
+title: "Execution"
 ---
 
-Receive real-time updates on your fills (trade executions).
+Receive real-time updates on your executions (fills).
 
-- Topic: `fill`
+- Topic: `execution`
 - Stream: Private (`wss://api.ekiden.fi/ws/private`)
 
 ## Authenticate
@@ -14,33 +14,34 @@ Use authentication flow described in the [Connect](./connect) page.
 ## Subscribe
 
 ```json
-{ "op": "subscribe", "args": ["fill"], "req_id": "203001" }
+{ "op": "subscribe", "args": ["execution"], "req_id": "203001" }
 ```
 
 Ack:
 
 ```json
-{ "op": "subscribed", "args": ["fill"], "req_id": "203001" }
+{ "op": "subscribed", "args": ["execution"], "req_id": "203001" }
 ```
 
 ## Events
 
-Messages arrive with `op: "event"`, `topic: "fill"`, and `data` is an array of `FillResponse`.
+Messages arrive with `op: "event"`, `topic: "execution"`, and `data` is an array of `Execution`.
 
 Example:
 
 ```json
 {
 	"op": "event",
-	"topic": "fill",
+	"topic": "execution",
+	"server_ts_ms": 1731541800000,
 	"data": [
 		{
 			"sid": "0xfill1",
 			"side": "buy",
-			"size": 500,
-			"price": 100250,
-			"maker_fee": 4,
-			"taker_fee": 10,
+			"size": "500",
+			"price": "100250",
+			"maker_fee": "4",
+			"taker_fee": "10",
 			"taker_order_sid": "0xordT",
 			"taker_addr": "0xuserT...",
 			"maker_order_sid": "0xordM",
@@ -62,6 +63,7 @@ Field notes:
 
 - Fees are split: `maker_fee` and `taker_fee`.
 - `timestamp` (seconds) is deprecated; prefer `timestamp_ms`.
+- `size`, `price`, `maker_fee`, `taker_fee` are strings to preserve precision.
 
 ### Fields
 
@@ -69,10 +71,10 @@ Field notes:
 |-------|------|-------|
 | sid | string | Fill identifier |
 | side | string | `buy` or `sell` (taker perspective) |
-| size | integer | Base units (scaled) |
-| price | integer | Execution price (scaled) |
-| maker_fee | integer | Maker fee (quote units scaled) |
-| taker_fee | integer | Taker fee (quote units scaled) |
+| size | string | Base units (scaled) |
+| price | string | Execution price (scaled) |
+| maker_fee | string | Maker fee (quote units scaled) |
+| taker_fee | string | Taker fee (quote units scaled) |
 | taker_order_sid | string | Taker order id |
 | taker_addr | string | Taker user address |
 | maker_order_sid | string | Maker order id |
@@ -86,4 +88,4 @@ Field notes:
 | timestamp | integer | Deprecated seconds timestamp |
 | timestamp_ms | integer | Milliseconds timestamp (preferred) |
 
-See schema details in [AsyncAPI](../websockets/private): `FillResponse`.
+See schema details in [AsyncAPI](../websockets/private): `Execution`.

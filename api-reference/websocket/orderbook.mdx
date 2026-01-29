@@ -4,36 +4,37 @@ title: "Orderbook"
 
 Subscribe to real-time orderbook updates for a market.
 
-- Topic: `orderbook/{market_addr}`
+- Topic: `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTCUSDC`)
 - Stream: Public (`wss://api.ekiden.fi/ws/public`)
 
 ## Subscribe
 
 ```json
-{ "op": "subscribe", "args": ["orderbook/0x88a70ff..."], "req_id": "101001" }
+{ "op": "subscribe", "args": ["orderbook.1.BTCUSDC"], "req_id": "101001" }
 ```
 
 Ack:
 
 ```json
-{ "op": "subscribed", "args": ["orderbook/0x88a70ff..."], "req_id": "101001" }
+{ "op": "subscribed", "args": ["orderbook.1.BTCUSDC"], "req_id": "101001" }
 ```
 
 ## Events
 
-Messages arrive with `op: "event"`, `topic: "orderbook/{addr}"`, and `data` being either a snapshot or a delta.
+Messages arrive with `op: "event"`, `topic: "orderbook.<depth>.<symbol>"`, and `data` being either a snapshot or a delta.
 
 Snapshot example:
 
 ```json
 {
     "op": "event",
-    "topic": "orderbook/0x88a70ff...",
+    "topic": "orderbook.1.BTCUSDC",
+    "server_ts_ms": 1731541800000,
     "data": {
-        "market_addr": "0x88a70ff...",
+        "symbol": "BTCUSDC",
         "seq": 123,
-        "asks": [[100200, 3], [100300, 2]],
-        "bids": [[100100, 5], [100000, 1]],
+        "asks": [["100200", "3"], ["100300", "2"]],
+        "bids": [["100100", "5"], ["100000", "1"]],
         "timestamp": 1681234567
     }
 }
@@ -44,12 +45,13 @@ Delta example:
 ```json
 {
     "op": "event",
-    "topic": "orderbook/0x88a70ff...",
+    "topic": "orderbook.1.BTCUSDC",
+    "server_ts_ms": 1731541801000,
     "data": {
-        "market_addr": "0x88a70ff...",
+        "symbol": "BTCUSDC",
         "seq": 124,
-        "asks": [[100300, 0]],
-        "bids": [[100100, 7]],
+        "asks": [["100300", "0"]],
+        "bids": [["100100", "7"]],
         "timestamp": 1681234568
     }
 }
@@ -59,13 +61,14 @@ Delta example:
 
 - On subscribe, wait for a snapshot, then apply subsequent deltas by ascending `seq`.
 - Each price level is a two-element array `[price, size]`.
-- Delta semantics: if `size === 0`, delete the level at `price`; otherwise upsert the level to `size`.
+- Delta semantics: if `size === "0"`, delete the level at `price`; otherwise upsert the level to `size`.
 - If you detect a gap in `seq`, resubscribe to receive a fresh snapshot.
 
 ### Notes
 
 - Arrays `asks` and `bids` are ordered by ascending price.
 - `timestamp` is a Unix timestamp in seconds.
-- Zero-change deltas: it is valid for one or both sides to be empty when no sizes changed for that side. Clients should treat such messages as a no-op and maintain their current local book. Servers may omit sending zero-change deltas entirely in future versions.
+- `server_ts_ms` is the gateway processing time in milliseconds.
+- All numeric values in `data` are strings to preserve precision.
 
 See schema details in [AsyncAPI](../websockets/public): `OrderbookSnapshot`, `OrderbookDelta`.
