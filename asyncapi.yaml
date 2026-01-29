@@ -294,41 +294,41 @@ components:
           req_id: { type: string, description: Client generated request ID (optional) }
         required: [op, message]
 
-    # Server -> Client event (single envelope with variants)
-    Event:
-      title: Event
-      description: |
-        Unified event envelope. `data` can be one of public market updates or private user updates.
-      examples:
-        - payload:
-            op: event
-            server_ts_ms: 1681234567890
-            topic: "orderbook.1.BTCUSDC"
-            type: "snapshot"
-            data:
-              s: "BTCUSDC"
-              ts: 1681234567890
-              b: [ ["100.1", "5"] ]
-              a: [ ["100.2", "3"] ]
-              u: 123
-              seq: 21
-              mts: 1681234567880
-      payload:
-        type: object
-        properties:
-          op: { type: string, const: event, description: Operation name }
-          server_ts_ms: { type: integer, description: Server timestamp in milliseconds }
-          topic: { type: string, description: Topic name }
-          oneOf:
-            - $ref: '#/components/messages/OrderbookEvent'
-            - $ref: '#/components/messages/TradeEvent'
-            - $ref: '#/components/messages/TickerEvent'
-            - $ref: '#/components/messages/KlineEvent'
-            - $ref: '#/components/messages/OrderEvent'
-            - $ref: '#/components/messages/ExecutionEvent'
-            - $ref: '#/components/messages/PositionEvent'
-            - $ref: '#/components/messages/AccountBalanceEvent'
-        required: [op, server_ts_ms, topic]
+    # # Server -> Client event (single envelope with variants)
+    # Event:
+    #   title: Event
+    #   description: |
+    #     Unified event envelope. `data` can be one of public market updates or private user updates.
+    #   examples:
+    #     - payload:
+    #         op: event
+    #         server_ts_ms: 1681234567890
+    #         topic: "orderbook.1.BTCUSDC"
+    #         type: "snapshot"
+    #         data:
+    #           s: "BTCUSDC"
+    #           ts: 1681234567890
+    #           b: [ ["100.1", "5"] ]
+    #           a: [ ["100.2", "3"] ]
+    #           u: 123
+    #           seq: 21
+    #           mts: 1681234567880
+    #   payload:
+    #     type: object
+    #     properties:
+    #       op: { type: string, const: event, description: Operation name }
+    #       server_ts_ms: { type: integer, description: Server timestamp in milliseconds }
+    #       topic: { type: string, description: Topic name }
+    #       oneOf:
+    #         - $ref: '#/components/messages/OrderbookEvent'
+    #         - $ref: '#/components/messages/TradeEvent'
+    #         - $ref: '#/components/messages/TickerEvent'
+    #         - $ref: '#/components/messages/KlineEvent'
+    #         - $ref: '#/components/messages/OrderEvent'
+    #         - $ref: '#/components/messages/ExecutionEvent'
+    #         - $ref: '#/components/messages/PositionEvent'
+    #         - $ref: '#/components/messages/AccountBalanceEvent'
+    #     required: [op, server_ts_ms, topic]
 
     # Event Variants
     OrderbookEvent:
@@ -525,4 +525,4 @@ components:
         margin_balance: { type: string }
         available_balance: { type: string }
         unrealised_pnl: { type: string }
-      required: [sub_account_address, equity, vault_balance, margin_balance, available_balance]
+      required: [sub_account_address, equity, vault_balance, margin_balance, available_balance] 
