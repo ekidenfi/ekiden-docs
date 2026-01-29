@@ -1,0 +1,67 @@
+---
+title: "Account Balance"
+---
+
+Receive real-time updates on your account balance.
+
+- Topic: `account_balance`
+- Stream: Private (`wss://api.ekiden.fi/ws/private`)
+
+## Authenticate
+
+Use authentication flow described in the [Connect](./connect) page.
+
+## Subscribe
+
+```json
+{ "op": "subscribe", "args": ["account_balance"], "req_id": "204001" }
+```
+
+Ack:
+
+```json
+{ "op": "subscribed", "args": ["account_balance"], "req_id": "204001" }
+```
+
+## Events
+
+Messages arrive with `op: "event"`, `topic: "account_balance"`, and `data` is an `AccountBalance` object.
+
+Example:
+
+```json
+{
+	"op": "event",
+	"topic": "account_balance",
+	"server_ts_ms": 1731541800000,
+	"data": {
+		"user_addr": "0xuser...",
+		"collateral": "1000000",
+		"free_collateral": "950000",
+		"total_initial_margin": "50000",
+		"total_maintenance_margin": "30000",
+		"unrealized_pnl": "1000",
+		"timestamp_ms": 1731541800000
+	}
+}
+```
+
+Field notes:
+
+- All numeric values are strings to preserve precision.
+- `collateral` is the total account equity.
+- `free_collateral` is the equity available for new positions.
+
+### Fields
+
+| Field | Type | Notes |
+|-------|------|-------|
+| user_addr | string | User account address |
+| collateral | string | Total account equity (quote units, scaled) |
+| free_collateral | string | Available collateral (quote units, scaled) |
+| total_initial_margin | string | Sum of initial margin requirements |
+| total_maintenance_margin | string | Sum of maintenance margin requirements |
+| unrealized_pnl | string | Total unrealized PnL across all positions |
+| timestamp_ms | integer | Milliseconds timestamp |
+
+See schema details in [AsyncAPI](../websockets/private): `AccountBalance`.

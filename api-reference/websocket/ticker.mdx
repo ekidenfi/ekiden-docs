@@ -2,21 +2,21 @@
 title: "Ticker"
 ---
 
-Real-time ticker snapshots for a market.
+Real-time ticker snapshots for a symbol.
 
-- Topic: `ticker/{market_addr}`
+- Topic: `ticker.<symbol>` (e.g., `ticker.BTCUSDC`)
 - Stream: Public (`wss://api.ekiden.fi/ws/public`)
 
 ## Subscribe
 
 ```json
-{ "op": "subscribe", "args": ["ticker/0x88a70ff..."], "req_id": "101001" }
+{ "op": "subscribe", "args": ["ticker.BTCUSDC"], "req_id": "101001" }
 ```
 
 Ack:
 
 ```json
-{ "op": "subscribed", "args": ["ticker/0x88a70ff..."], "req_id": "101001" }
+{ "op": "subscribed", "args": ["ticker.BTCUSDC"], "req_id": "101001" }
 ```
 
 ## Event shape
@@ -26,28 +26,28 @@ Ack:
 ```json
 {
   "op": "event",
-  "topic": "ticker/0x88a70ff...",
+  "topic": "ticker.BTCUSDC",
+  "server_ts_ms": 1731541800000,
   "data": {
-    "symbol": "BTC-PERP",
-    "market_addr": "0x88a70ff...",
+    "symbol": "BTCUSDC",
     "ts": 1718000000000,
-    "last_price": 100000000000,
-    "mark_price": 100000000000,
-    "index_price": 99900000000,
-    "open_interest": 12345,
-    "open_interest_value": 987654321,
-    "funding_rate": 0.0001,
+    "last_price": "100000",
+    "mark_price": "100000",
+    "index_price": "99900",
+    "open_interest": "12345",
+    "open_interest_value": "987654321",
+    "funding_rate": "0.0001",
     "next_funding_time": 1718003600000,
-    "volume_24h": 123456,
-    "turnover_24h": 987654321
+    "volume_24h": "123456",
+    "turnover_24h": "987654321"
   }
 }
 ```
 
 Notes:
 
-- `ts` and `next_funding_time` are in milliseconds.
-- Prices are scaled integers, consistent with the REST API.
+- `ts`, `next_funding_time`, and `server_ts_ms` are in milliseconds.
+- Prices and other numeric values are strings to preserve precision.
 - If there is no recent trade, `last_price` may equal `mark_price`.
 
 ### Fields
@@ -55,14 +55,13 @@ Notes:
 | Field | Type | Notes |
 |-------|------|-------|
 | symbol | string | Market symbol |
-| market_addr | string | Market address |
 | ts | integer | Snapshot timestamp (ms) |
-| last_price | integer | Last traded price (scaled) |
-| mark_price | integer | Mark price (scaled) |
-| index_price | integer | Oracle/index price (scaled) |
-| open_interest | integer | Open interest size (base units) |
-| open_interest_value | integer | Open interest value (quote units scaled) |
-| funding_rate | number | Funding rate (e.g. 0.0001 = 1 bps) |
+| last_price | string | Last traded price |
+| mark_price | string | Mark price |
+| index_price | string | Oracle/index price |
+| open_interest | string | Open interest size (base units) |
+| open_interest_value | string | Open interest value (quote units) |
+| funding_rate | string | Funding rate (e.g. "0.0001" = 1 bps) |
 | next_funding_time | integer | Next funding time (ms) |
-| volume_24h | integer | 24h base volume |
-| turnover_24h | integer | 24h quote turnover (scaled) |
+| volume_24h | string | 24h base volume |
+| turnover_24h | string | 24h quote turnover |

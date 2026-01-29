@@ -42,14 +42,58 @@ Content-Type: application/json
 Successful response:
 
 ```json
-{ "token": "<jwt>" }
+{ "token": "<jwt>", "user_id": "<user_id>" }
 ```
 
 Token validity: 7 days from issuance.
 
 ---
 
-## 2) Use the token for REST
+## 2) Session Delegation Auth
+
+Gateway supports session delegation auth where a root account delegates permissions to a session key.
+
+POST to `/api/v1/authorize/session`:
+
+```http
+POST /api/v1/authorize/session
+Content-Type: application/json
+
+{
+  "delegation": {
+    "root_public_key": "0x...",
+    "session_public_key": "0x...",
+    "expires_at": 1731541800,
+    "scopes": ["Full"],
+    "signature": "0x..."
+  },
+  "signature": "0x...",
+  "timestamp_ms": 1731541800000,
+  "nonce": "..."
+}
+```
+
+Successful response:
+
+```json
+{ "token": "<jwt>", "user_id": "<user_id>" }
+```
+
+---
+
+## 3) API Key Auth
+
+Gateway supports API-key auth headers for programmatic access without obtaining a JWT first.
+
+Headers:
+- `X-API-KEY`: Your API public key
+- `X-SIGNATURE`: Ed25519 signature over `EKIDEN_API|{method}|{uri}|{timestamp_ms}|{nonce}`
+- `X-TIMESTAMP-MS`: Unix milliseconds
+- `X-NONCE`: Random unique string
+
+---
+
+## 4) Use the token for REST
 
 Include the token as a Bearer in the Authorization header:
 
@@ -62,7 +106,7 @@ Private endpoints under `/api/v1/user/*` and certain actions require this header
 
 ---
 
-## 3) Use the token for private WebSocket
+## 5) Use the token for private WebSocket
 
 Connect to the private WS endpoint and authenticate, then subscribe to private topics:
 
@@ -78,16 +122,16 @@ Client → Server
 Server → Client
 
 ```json
-{ "op": "auth", "success": true, "user_id": "<account_id>", "req_id": "auth-1" }
+{ "op": "auth", "success": true, "user_id": "<user_id>", "req_id": "auth-1" }
 ```
 
 3. Subscribe to private topics (examples):
 
 ```json
-{ "op": "subscribe", "args": ["order", "position", "fill"], "req_id": "sub-1" }
+{ "op": "subscribe", "args": ["order", "position", "execution", "account_balance"], "req_id": "sub-1" }
 ```
 
-Public topics like `orderbook/{market_addr}`, `trade/{market_addr}`, `ticker/{market_addr}` are available on `/ws/public` without auth.
+Public topics like `orderbook.1.BTCUSDC`, `trade.BTCUSDC`, `ticker.BTCUSDC` are available on `/ws/public` without auth.
 
 ---
 

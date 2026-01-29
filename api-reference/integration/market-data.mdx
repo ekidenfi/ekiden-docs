@@ -4,7 +4,7 @@ title: "Market Data"
 
 ### **Sources**
 
-- REST: see API Reference for `/api/v1/market/*` endpoints (candles, fills, market_info, funding)
+- REST: see API Reference for `/api/v1/market/*` endpoints (kline, recent-trades, tickers, funding-rate)
 - GraphQL (snapshots/queries): https://hasura.ekiden.fi/v1/graphql
 - WebSocket (real-time):
 	- Public: `wss://api.ekiden.fi/ws/public` (or staging)
@@ -12,13 +12,15 @@ title: "Market Data"
 
 ### **Common Subscriptions**
 
-- Orderbook snapshots and deltas: `orderbook/{market_addr}`
-- Trades (aggregated): `trade/{market_addr}`
-- Ticker snapshots: `ticker/{market_addr}`
-- Private user streams (on private WS after auth): `order`, `position`, `fill`
+- Orderbook snapshots and deltas: `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTCUSDC`)
+- Trades (aggregated): `trade.<symbol>`
+- Ticker snapshots: `ticker.<symbol>`
+- Klines (candlesticks): `kline.<interval>.<symbol>`
+- Private user streams (on private WS after auth): `order`, `position`, `execution`, `account_balance`
 
 ### Timestamps
 
 - Ticker snapshots use `ts` in milliseconds.
-- WS ping/pong use nanoseconds for `ts`/`client_ts`/`server_ts`.
+- WS ping/pong use milliseconds for `client_ts`/`server_ts`.
+- WS event envelope uses `server_ts_ms` in milliseconds.
 - See Conventions → Timestamps for the full matrix.

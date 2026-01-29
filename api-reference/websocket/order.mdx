@@ -25,7 +25,7 @@ Ack:
 
 ## Events
 
-Messages arrive with `op: "event"`, `topic: "order"`, and `data` is an array of `OrderResponse`.
+Messages arrive with `op: "event"`, `topic: "order"`, and `data` is an array of `Order`.
 
 Example:
 
@@ -33,14 +33,15 @@ Example:
 {
 	"op": "event",
 	"topic": "order",
+	"server_ts_ms": 1731541800000,
 	"data": [
 		{
 			"sid": "0xord1",
 			"side": "buy",
-			"size": 1000,
-			"price": 100200,
+			"size": "1000",
+			"price": "100200",
 			"leverage": 5,
-			"initial_margin": 250,
+			"initial_margin": "250",
 			"type": "limit",
 			"status": "placed",
 			"user_addr": "0xuser...",
@@ -57,6 +58,7 @@ Example:
 Field notes:
 
 - `timestamp` (seconds) is deprecated; prefer `timestamp_ms`.
+- `size`, `price`, `initial_margin` are strings to preserve precision.
 
 ### Fields
 
@@ -64,10 +66,10 @@ Field notes:
 |-------|------|-------|
 | sid | string | Order identifier |
 | side | string | `buy` or `sell` |
-| size | integer | Base units (scaled) |
-| price | integer | Scaled price |
+| size | string | Base units (scaled) |
+| price | string | Scaled price |
 | leverage | integer | Requested leverage |
-| initial_margin | integer or null | Present when computed, else null |
+| initial_margin | string or null | Present when computed, else null |
 | type | string | Order type (limit, market, etc.) |
 | status | string | placed, filled, cancelled, etc. |
 | user_addr | string | User account address |
@@ -77,4 +79,4 @@ Field notes:
 | timestamp | integer | Deprecated seconds timestamp |
 | timestamp_ms | integer | Milliseconds timestamp (preferred) |
 
-See schema details in [AsyncAPI](../websockets/private): `OrderResponse`.
+See schema details in [AsyncAPI](../websockets/private): `Order`.
