@@ -120,10 +120,7 @@
                   "api-reference/websocket/account_balance"
                 ]
               }
-            ],
-            "asyncapi": {
-              "source": "https://raw.githubusercontent.com/ekidenfi/ekiden-docs/main/asyncapi.yaml"
-            }
+            ]
           }
         ]
       }
