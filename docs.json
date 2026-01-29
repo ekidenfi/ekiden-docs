@@ -121,7 +121,9 @@
                 ]
               }
             ],
-            "asyncapi": "/asyncapi.yaml"
+            "asyncapi": {
+              "source": "/asyncapi.yaml"
+            }
           }
         ]
       }
