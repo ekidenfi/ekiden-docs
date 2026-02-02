@@ -122,7 +122,7 @@
               }
             ],
             "asyncapi": {
-              "source": "https://raw.githubusercontent.com/ekidenfi/ekiden-docs/main/api-reference/asyncapi.yaml"
+              "source": "https://raw.githubusercontent.com/ekidenfi/ekiden-docs/refs/heads/feat/add-asyncapi/api-reference/asyncapi.yaml"
             }
           }
         ]
