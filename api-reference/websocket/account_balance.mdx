@@ -35,13 +35,19 @@ Example:
 	"topic": "account_balance",
 	"server_ts_ms": 1731541800000,
 	"data": {
-		"user_addr": "0xuser...",
-		"collateral": "1000000",
-		"free_collateral": "950000",
-		"total_initial_margin": "50000",
-		"total_maintenance_margin": "30000",
-		"unrealized_pnl": "1000",
-		"timestamp_ms": 1731541800000
+		"sub_account_address": "0xsubacct...",
+		"account_type": "Trading",
+		"equity": "1000000",
+		"vault_balance": "1000000",
+		"margin_balance": "950000",
+		"available_balance": "925000",
+		"accrued_interest": "0",
+		"total_order_im": "25000",
+		"total_position_im": "50000",
+		"total_position_mm": "30000",
+		"unrealised_pnl": "1000",
+		"unrealized_funding": "-5",
+		"realised_pnl_cum": "12345"
 	}
 }
 ```
@@ -49,19 +55,25 @@ Example:
 Field notes:
 
 - All numeric values are strings to preserve precision.
-- `collateral` is the total account equity.
-- `free_collateral` is the equity available for new positions.
+- `equity` is account equity in USDC before collateral value ratio adjustments.
+- `margin_balance` / `available_balance` reflect amounts available for margin after collateral value ratio adjustments.
 
 ### Fields
 
 | Field | Type | Notes |
 |-------|------|-------|
-| user_addr | string | User account address |
-| collateral | string | Total account equity (quote units, scaled) |
-| free_collateral | string | Available collateral (quote units, scaled) |
-| total_initial_margin | string | Sum of initial margin requirements |
-| total_maintenance_margin | string | Sum of maintenance margin requirements |
-| unrealized_pnl | string | Total unrealized PnL across all positions |
-| timestamp_ms | integer | Milliseconds timestamp |
+| sub_account_address | string | Sub-account address |
+| account_type | string | Account type (e.g. Funding, Trading) |
+| equity | string | Equity (USDC) |
+| vault_balance | string | Vault balance (USDC) |
+| margin_balance | string | Margin balance (USDC) |
+| available_balance | string | Available balance for new positions (USDC) |
+| accrued_interest | string | Accrued interest |
+| total_order_im | string | Pre-occupied margin for orders (USDC) |
+| total_position_im | string | Sum of initial margin across positions |
+| total_position_mm | string | Sum of maintenance margin across positions |
+| unrealised_pnl | string | Unrealised PnL |
+| unrealized_funding | string | Aggregated unrealized funding (USDC) |
+| realised_pnl_cum | string | Cumulative realised PnL |
 
 See schema details in [AsyncAPI](../websockets/private): `AccountBalance`.

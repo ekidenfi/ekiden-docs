@@ -4,19 +4,19 @@ title: "Trade"
 
 Subscribe to real-time trades for a symbol.
 
-- Topic: `trade.<symbol>` (e.g., `trade.BTCUSDC`)
+- Topic: `trade.<symbol>` (e.g., `trade.BTC-USDC`)
 - Stream: Public (`wss://api.ekiden.fi/ws/public`)
 
 ## Subscribe
 
 ```json
-{ "op": "subscribe", "args": ["trade.BTCUSDC"], "req_id": "102001" }
+{ "op": "subscribe", "args": ["trade.BTC-USDC"], "req_id": "102001" }
 ```
 
 Ack:
 
 ```json
-{ "op": "subscribed", "args": ["trade.BTCUSDC"], "req_id": "102001" }
+{ "op": "subscribed", "args": ["trade.BTC-USDC"], "req_id": "102001" }
 ```
 
 ## Events
@@ -28,24 +28,24 @@ Example:
 ```json
 {
 	"op": "event",
-	"topic": "trade.BTCUSDC",
+	"topic": "trade.BTC-USDC",
 	"server_ts_ms": 1731541800000,
 	"data": [
-		{ "id": "9723498234", "side": "buy",  "price": "100200", "size": "1", "seq": 12345, "timestamp": 1718000000 },
-		{ "id": "7349823987", "side": "sell", "price": "100100", "size": "2", "seq": 12346, "timestamp": 1718000001 }
+		{ "i": "9723498234", "s": "BTC-USDC", "S": "Buy",  "p": "100200", "v": "1", "seq": 12345, "T": "1718000000000" },
+		{ "i": "7349823987", "s": "BTC-USDC", "S": "Sell", "p": "100100", "v": "2", "seq": 12346, "T": "1718000001000" }
 	]
 }
 ```
 
 Notes:
-- `price` and `size` are strings to preserve precision.
-- `seq` is the max sequence among fills aggregated into the trade; `timestamp` is the latest fill timestamp (seconds).
+- `p` (price) and `v` (size) are strings to preserve precision.
+- `T` is the trade timestamp in milliseconds (encoded as a string).
 - `server_ts_ms` is the gateway processing time in milliseconds.
 
 See schema details in [AsyncAPI](../websockets/public): `PublicTrade`.
 
 ### Trade ID
 
-Field `id` is a stable string identifier for a given aggregated trade and unique within a market.
+Field `i` is a stable string identifier for a given trade and unique within a market.
 
-You can treat `id` + `symbol` as a primary key. Do not assume ordering by `id`; rely on provided `seq` and `timestamp`.
+You can treat `i` + `s` as a primary key. Do not assume ordering by `i`; rely on `seq` and `T`.

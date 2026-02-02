@@ -36,24 +36,26 @@ Example:
 	"server_ts_ms": 1731541800000,
 	"data": [
 		{
-			"sid": "0xfill1",
-			"side": "buy",
-			"size": "500",
-			"price": "100250",
-			"maker_fee": "4",
-			"taker_fee": "10",
-			"taker_order_sid": "0xordT",
-			"taker_addr": "0xuserT...",
-			"maker_order_sid": "0xordM",
-			"maker_addr": "0xuserM...",
-			"market_addr": "0x88a70ff...",
-			"seq": 789,
-			"maker_leverage": 3,
-			"taker_leverage": 5,
-			"maker_is_cross": true,
-			"taker_is_cross": false,
-			"timestamp": 1681234567,
-			"timestamp_ms": 1681234567000
+			"exec_id": "550e8400-e29b-41d4-a716-446655440111",
+			"symbol": "BTC-USDC",
+			"order_id": "550e8400-e29b-41d4-a716-446655440000",
+			"order_link_id": null,
+			"side": "Buy",
+			"sub_account_address": "0xsubacct...",
+			"order_price": "100200",
+			"order_qty": "1000",
+			"leaves_qty": "500",
+			"order_type": "Limit",
+			"exec_price": "100250",
+			"exec_qty": "500",
+			"exec_value": "50125000",
+			"exec_type": "Trade",
+			"exec_time": "1731541800000",
+			"is_maker": false,
+			"fee_rate": "0.0002",
+			"mark_price": "100260",
+			"index_price": "100240",
+			"seq": 789
 		}
 	]
 }
@@ -61,31 +63,35 @@ Example:
 
 Field notes:
 
-- Fees are split: `maker_fee` and `taker_fee`.
-- `timestamp` (seconds) is deprecated; prefer `timestamp_ms`.
-- `size`, `price`, `maker_fee`, `taker_fee` are strings to preserve precision.
+- Numeric values are encoded as strings to preserve precision.
+- `exec_time` is Unix milliseconds (encoded as a string).
 
 ### Fields
 
 | Field | Type | Notes |
 |-------|------|-------|
-| sid | string | Fill identifier |
-| side | string | `buy` or `sell` (taker perspective) |
-| size | string | Base units (scaled) |
-| price | string | Execution price (scaled) |
-| maker_fee | string | Maker fee (quote units scaled) |
-| taker_fee | string | Taker fee (quote units scaled) |
-| taker_order_sid | string | Taker order id |
-| taker_addr | string | Taker user address |
-| maker_order_sid | string | Maker order id |
-| maker_addr | string | Maker user address |
-| market_addr | string | Market address |
-| seq | integer | Sequence of execution batch |
-| maker_leverage | integer | Maker leverage at fill |
-| taker_leverage | integer | Taker leverage at fill |
-| maker_is_cross | boolean | Maker margin mode |
-| taker_is_cross | boolean | Taker margin mode |
-| timestamp | integer | Deprecated seconds timestamp |
-| timestamp_ms | integer | Milliseconds timestamp (preferred) |
+| exec_id | string | Execution ID (UUID) |
+| symbol | string | Symbol name |
+| order_id | string | Order ID (UUID) |
+| order_link_id | string or null | Client-provided link id, if set |
+| side | string | `Buy` or `Sell` |
+| sub_account_address | string | Sub-account address |
+| order_price | string | Original order price |
+| order_qty | string | Original order quantity |
+| leaves_qty | string | Remaining quantity after this fill |
+| create_type | string or null | Create source/type |
+| order_type | string | `Limit` or `Market` |
+| stop_order_type | string or null | Stop order type, if applicable |
+| exec_price | string | Execution price |
+| exec_qty | string | Execution quantity |
+| exec_value | string | Executed value (price * qty) |
+| exec_type | string | Execution type (e.g. `Trade`, `Adl`, ...) |
+| exec_time | string | Executed timestamp (ms) |
+| is_maker | boolean | `true` maker, `false` taker |
+| fee_rate | string | Trading fee rate |
+| mark_price | string | Mark price at execution |
+| index_price | string | Index price at execution |
+| closed_size | string or null | Closed position size |
+| seq | integer | Cross sequence |
 
 See schema details in [AsyncAPI](../websockets/private): `Execution`.

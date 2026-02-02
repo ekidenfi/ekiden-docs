@@ -1,0 +1,71 @@
+---
+title: "Kline"
+---
+
+Subscribe to real-time candlesticks (klines) for a symbol.
+
+- Topic: `kline.<interval>.<symbol>` (e.g., `kline.1m.BTC-USDC`)
+- Stream: Public (`wss://api.ekiden.fi/ws/public`)
+
+## Subscribe
+
+```json
+{ "op": "subscribe", "args": ["kline.1m.BTC-USDC"], "req_id": "103001" }
+```
+
+Ack:
+
+```json
+{ "op": "subscribed", "args": ["kline.1m.BTC-USDC"], "req_id": "103001" }
+```
+
+## Events
+
+Messages arrive with `op: "event"`, `topic: "kline.<interval>.<symbol>"`, and `data` is a `KlineSnapshot`.
+
+Example:
+
+```json
+{
+	"op": "event",
+	"topic": "kline.1m.BTC-USDC",
+	"server_ts_ms": 1731541800000,
+	"data": {
+		"t": "1731541740000",
+		"i": "1m",
+		"o": "100000",
+		"h": "100250",
+		"l": "99950",
+		"c": "100200",
+		"T": "1731541800000",
+		"v": "123.45",
+		"n": "42"
+	}
+}
+```
+
+Notes:
+
+- `t` and `T` are Unix timestamps in milliseconds (encoded as strings).
+- Price and volume fields are strings to preserve precision.
+- `server_ts_ms` is the gateway processing time in milliseconds.
+
+### Intervals
+
+Common intervals include: `1m`, `3m`, `5m`, `15m`, `30m`, `1h`, `2h`, `4h`, `6h`, `12h`, `1d`, `3d`, `1w`, `1M`.
+
+### Fields
+
+| Field | Type | Notes |
+|-------|------|-------|
+| t | string | Candle open time (ms) |
+| i | string | Candle interval/timeframe |
+| o | string | Open price |
+| h | string | High price |
+| l | string | Low price |
+| c | string | Close price |
+| T | string | Candle close time (ms) |
+| v | string | Volume |
+| n | string | Trade count |
+
+See schema details in [AsyncAPI](../websockets/public): `KlineSnapshot`.

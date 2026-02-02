@@ -107,6 +107,7 @@
                 "group": "Public",
                 "pages": [
                   "api-reference/websocket/orderbook",
+                  "api-reference/websocket/kline",
                   "api-reference/websocket/trade",
                   "api-reference/websocket/ticker"
                 ]

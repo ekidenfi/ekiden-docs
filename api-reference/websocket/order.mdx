@@ -36,20 +36,37 @@ Example:
 	"server_ts_ms": 1731541800000,
 	"data": [
 		{
-			"sid": "0xord1",
-			"side": "buy",
-			"size": "1000",
+			"order_id": "550e8400-e29b-41d4-a716-446655440000",
+			"order_link_id": null,
+			"symbol": "BTC-USDC",
+			"sub_account_address": "0xsubacct...",
 			"price": "100200",
-			"leverage": 5,
-			"initial_margin": "250",
-			"type": "limit",
-			"status": "placed",
-			"user_addr": "0xuser...",
-			"market_addr": "0x88a70ff...",
-			"is_cross": true,
-			"seq": 456,
-			"timestamp": 1681234567,
-			"timestamp_ms": 1681234567000
+			"qty": "1000",
+			"side": "Buy",
+			"margin_mode": "Cross",
+			"order_status": "New",
+			"create_type": null,
+			"cancel_type": null,
+			"reject_reason": null,
+			"avg_price": "0",
+			"leaves_qty": "1000",
+			"leaves_value": "100200000",
+			"cum_exec_qty": "0",
+			"cum_exec_value": "0",
+			"cum_exec_fee": "0",
+			"closed_pnl": null,
+			"time_in_force": "GTC",
+			"expire_time": null,
+			"order_type": "Limit",
+			"stop_order_type": null,
+			"tpsl": null,
+			"trigger": null,
+			"last_price_on_created": "100150",
+			"post_only": false,
+			"reduce_only": false,
+			"close_on_trigger": false,
+			"created_time": "1731541799000",
+			"updated_time": "1731541800000"
 		}
 	]
 }
@@ -57,26 +74,43 @@ Example:
 
 Field notes:
 
-- `timestamp` (seconds) is deprecated; prefer `timestamp_ms`.
-- `size`, `price`, `initial_margin` are strings to preserve precision.
+- Numeric values are encoded as strings to preserve precision.
+- Times (`created_time`, `updated_time`, `expire_time`) are Unix milliseconds (encoded as strings).
 
 ### Fields
 
 | Field | Type | Notes |
 |-------|------|-------|
-| sid | string | Order identifier |
-| side | string | `buy` or `sell` |
-| size | string | Base units (scaled) |
-| price | string | Scaled price |
-| leverage | integer | Requested leverage |
-| initial_margin | string or null | Present when computed, else null |
-| type | string | Order type (limit, market, etc.) |
-| status | string | placed, filled, cancelled, etc. |
-| user_addr | string | User account address |
-| market_addr | string | Market address |
-| is_cross | boolean | Cross vs isolated margin |
-| seq | integer | Sequence of creation batch |
-| timestamp | integer | Deprecated seconds timestamp |
-| timestamp_ms | integer | Milliseconds timestamp (preferred) |
+| order_id | string | Order ID (UUID) |
+| order_link_id | string or null | Client-provided link id, if set |
+| symbol | string | Symbol name |
+| sub_account_address | string | Sub-account address |
+| price | string | Order price |
+| qty | string | Order quantity |
+| side | string | `Buy` or `Sell` |
+| margin_mode | string | `Cross` or `Isolated` |
+| order_status | string | e.g. `New`, `PartiallyFilled`, `Filled`, `Canceled`, ... |
+| create_type | string or null | Create source/type |
+| cancel_type | string or null | Cancel source/type |
+| reject_reason | string or null | Rejection reason |
+| avg_price | string | Average executed price |
+| leaves_qty | string | Remaining unfilled quantity |
+| leaves_value | string | Estimated value of remaining quantity |
+| cum_exec_qty | string | Cumulative executed quantity |
+| cum_exec_value | string | Cumulative executed value |
+| cum_exec_fee | string | Cumulative fees |
+| closed_pnl | string or null | Present for close position orders (WS only) |
+| time_in_force | string or object | `GTC`, `IOC`, `FOK`, `Day`, or `{"GTD": <ms>}` |
+| expire_time | string or null | Expiration time for GTD orders (ms) |
+| order_type | string | `Limit` or `Market` |
+| stop_order_type | string or null | Stop order type if applicable |
+| tpsl | object or null | Take profit / stop loss details |
+| trigger | object or null | Conditional order details |
+| last_price_on_created | string | Last price when created |
+| post_only | boolean | Post-only flag |
+| reduce_only | boolean | Reduce-only flag |
+| close_on_trigger | boolean | Close-on-trigger flag |
+| created_time | string | Created time (ms) |
+| updated_time | string | Updated time (ms) |
 
 See schema details in [AsyncAPI](../websockets/private): `Order`.

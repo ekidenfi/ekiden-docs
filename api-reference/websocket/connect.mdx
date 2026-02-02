@@ -30,8 +30,8 @@ const ws = new WebSocket("wss://api.ekiden.fi/ws/public"); // use staging URL fo
 ws.onopen = () => {
     // Subscribe to orderbook and trades for a market
     ws.send(JSON.stringify({ op: "subscribe", args: [
-        "orderbook.1.BTCUSDC",
-        "trade.BTCUSDC"
+        "orderbook.1.BTC-USDC",
+        "trade.BTC-USDC"
     ], req_id: "100001" }));
 };
 
@@ -41,7 +41,8 @@ ws.onmessage = (ev) => {
     if (msg.op === "subscribed") console.log("Subscribed:", msg.args);
     if (msg.op === "unsubscribed") console.log("Unsubscribed:", msg.args);
     if (msg.op === "error") console.warn("Error:", msg.message);
-    if (msg.op === "pong") console.log("RTT ms:", msg.server_ts_ms - (msg.client_ts ?? 0)); // server_ts_ms is in milliseconds
+    // Ping/pong timestamps are uint64 Unix nanoseconds in the schema; omit `ts` if your language can’t safely represent u64.
+    if (msg.op === "pong") console.log("Pong:", msg);
 
     // Handle events (market or user, depending on stream)
     if (msg.op === "event") {
@@ -51,8 +52,9 @@ ws.onmessage = (ev) => {
 
 // Heartbeat every ~20s
 setInterval(() => {
-    // Use Unix milliseconds for ping `ts`
-    ws.send(JSON.stringify({ op: "ping", ts: Date.now(), req_id: "hb" }));
+    // `ts` is optional; when provided it should be Unix nanoseconds (u64).
+    // Many clients simply omit it and use pong as a liveness check.
+    ws.send(JSON.stringify({ op: "ping", req_id: "hb" }));
 }, 20_000);
 ```
 
@@ -64,7 +66,7 @@ setInterval(() => {
 
 ```json
 { "op": "auth", "bearer": "<JWT>", "req_id": "200001" }
-``;
+```
 
 Server response examples:
 
@@ -83,25 +85,25 @@ After a successful auth you can subscribe to private topics: `order`, `position`
 Request:
 
 ```json
-{ "op": "subscribe", "args": ["orderbook.1.BTCUSDC"], "req_id": "100002" }
+{ "op": "subscribe", "args": ["orderbook.1.BTC-USDC"], "req_id": "100002" }
 ```
 
 Ack:
 
 ```json
-{ "op": "subscribed", "args": ["orderbook.1.BTCUSDC"], "req_id": "100002" }
+{ "op": "subscribed", "args": ["orderbook.1.BTC-USDC"], "req_id": "100002" }
 ```
 
 Unsubscribe:
 
 ```json
-{ "op": "unsubscribe", "args": ["orderbook.1.BTCUSDC"], "req_id": "100003" }
+{ "op": "unsubscribe", "args": ["orderbook.1.BTC-USDC"], "req_id": "100003" }
 ```
 
 Ack:
 
 ```json
-{ "op": "unsubscribed", "args": ["orderbook.1.BTCUSDC"], "req_id": "100003" }
+{ "op": "unsubscribed", "args": ["orderbook.1.BTC-USDC"], "req_id": "100003" }
 ```
 
 ## Heartbeat (Ping/Pong)
@@ -109,8 +111,9 @@ Ack:
 There are two kinds of heartbeats:
 
 1) Application-level ping/pong
-    - Client sends `op=ping` with an optional `ts` in Unix milliseconds to measure RTT and clock skew.
-    - Server replies with `op=pong` echoing `client_ts` and adding `server_ts_ms` (both in ms).
+    - Client sends `op=ping` with an optional `ts` to measure RTT.
+    - Server replies with `op=pong` echoing `client_ts` and adding `server_ts`.
+    - Timestamps containing Unix nanoseconds (`u64`).
 
 2) WebSocket-level ping/pong (control frames)
     - The server also sends standard WebSocket ping frames at intervals.
@@ -120,13 +123,13 @@ There are two kinds of heartbeats:
 Send an application-level ping periodically to measure RTT (optional):
 
 ```json
-{ "op": "ping", "ts": 1731541800000, "req_id": "100004" } // ts in Unix milliseconds
+{ "op": "ping", "ts": 1731541800000000000, "req_id": "100004" } // ts in Unix nanoseconds
 ```
 
 Pong response:
 
 ```json
-{ "op": "pong", "server_ts_ms": 1731541800123, "client_ts": 1731541800000, "req_id": "100004" } // both in Unix milliseconds
+{ "op": "pong", "server_ts": 1731541800123000000, "client_ts": 1731541800000000000, "req_id": "100004" } // both in Unix nanoseconds
 ```
 
 <Warning>
@@ -153,6 +156,7 @@ Public stream topics (subscribe on `/ws/public`):
 - `trade.<symbol>`
 - `ticker.<symbol>`
 - `kline.<interval>.<symbol>`
+- `all_liquidations.<symbol>`
 
 Private stream topics (after auth on `/ws/private`):
 
@@ -164,7 +168,7 @@ Private stream topics (after auth on `/ws/private`):
 Regex patterns enforced server-side:
 
 ```
-^(orderbook\.[^.]+\.[^.]+|trade\.[^.]+|ticker\.[^.]+|kline\.[^.]+\.[^.]+)$  # public
+^(orderbook\.[^.]+\.[^.]+|trade\.[^.]+|ticker\.[^.]+|kline\.[^.]+\.[^.]+|all_liquidations\.[^.]+)$  # public
 ^(order|position|execution|account_balance)$                                # private
 ```
 
@@ -175,17 +179,20 @@ All streamed payloads share a common envelope:
 ```json
 {
     "op": "event",
-    "topic": "ticker.BTCUSDC",
+    "topic": "ticker.BTC-USDC",
     "server_ts_ms": 1731541800000,
     "data": { /* object or array variant */ }
 }
 ```
 
+Orderbook events additionally include a `type` field (`snapshot` or `delta`).
+
 `data` variants:
 
-- `OrderbookSnapshot` | `OrderbookDelta`
+- `OrderBookSnapshot` (orderbook events also include `type: "snapshot" | "delta"`)
 - `PublicTrade[]`
 - `TickerSnapshot`
+- `KlineSnapshot`
 - `Order[]`, `Execution[]`, `Position[]`, `AccountBalance` (private)
 
-Deprecated timestamps: many payloads include both `timestamp` (seconds, deprecated) and `timestamp_ms` (milliseconds). Prefer `timestamp_ms`.
+Note: `server_ts_ms` in the event envelope is always milliseconds.

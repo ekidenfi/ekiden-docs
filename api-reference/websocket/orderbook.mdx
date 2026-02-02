@@ -4,38 +4,41 @@ title: "Orderbook"
 
 Subscribe to real-time orderbook updates for a market.
 
-- Topic: `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTCUSDC`)
+- Topic: `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTC-USDC`)
 - Stream: Public (`wss://api.ekiden.fi/ws/public`)
 
 ## Subscribe
 
 ```json
-{ "op": "subscribe", "args": ["orderbook.1.BTCUSDC"], "req_id": "101001" }
+{ "op": "subscribe", "args": ["orderbook.1.BTC-USDC"], "req_id": "101001" }
 ```
 
 Ack:
 
 ```json
-{ "op": "subscribed", "args": ["orderbook.1.BTCUSDC"], "req_id": "101001" }
+{ "op": "subscribed", "args": ["orderbook.1.BTC-USDC"], "req_id": "101001" }
 ```
 
 ## Events
 
-Messages arrive with `op: "event"`, `topic: "orderbook.<depth>.<symbol>"`, and `data` being either a snapshot or a delta.
+Messages arrive with `op: "event"`, `topic: "orderbook.<depth>.<symbol>"`, include `type` (`snapshot` or `delta`), and `data` is an `OrderBookSnapshot`.
 
 Snapshot example:
 
 ```json
 {
     "op": "event",
-    "topic": "orderbook.1.BTCUSDC",
+    "topic": "orderbook.1.BTC-USDC",
     "server_ts_ms": 1731541800000,
+    "type": "snapshot",
     "data": {
-        "symbol": "BTCUSDC",
+        "s": "BTC-USDC",
+        "ts": "1731541800000",
+        "mts": "1731541799990",
+        "u": 123,
         "seq": 123,
-        "asks": [["100200", "3"], ["100300", "2"]],
-        "bids": [["100100", "5"], ["100000", "1"]],
-        "timestamp": 1681234567
+        "a": [["100200", "3"], ["100300", "2"]],
+        "b": [["100100", "5"], ["100000", "1"]]
     }
 }
 ```
@@ -45,14 +48,17 @@ Delta example:
 ```json
 {
     "op": "event",
-    "topic": "orderbook.1.BTCUSDC",
+    "topic": "orderbook.1.BTC-USDC",
     "server_ts_ms": 1731541801000,
+    "type": "delta",
     "data": {
-        "symbol": "BTCUSDC",
+        "s": "BTC-USDC",
+        "ts": "1731541801000",
+        "mts": "1731541800990",
+        "u": 124,
         "seq": 124,
-        "asks": [["100300", "0"]],
-        "bids": [["100100", "7"]],
-        "timestamp": 1681234568
+        "a": [["100300", "0"]],
+        "b": [["100100", "7"]]
     }
 }
 ```
@@ -67,8 +73,9 @@ Delta example:
 ### Notes
 
 - Arrays `asks` and `bids` are ordered by ascending price.
-- `timestamp` is a Unix timestamp in seconds.
+- In the payload, asks are `a` and bids are `b`.
+- `ts` and `mts` are Unix timestamps in milliseconds (encoded as strings).
 - `server_ts_ms` is the gateway processing time in milliseconds.
 - All numeric values in `data` are strings to preserve precision.
 
-See schema details in [AsyncAPI](../websockets/public): `OrderbookSnapshot`, `OrderbookDelta`.
+See schema details in [AsyncAPI](../websockets/public): `OrderBookSnapshot`.

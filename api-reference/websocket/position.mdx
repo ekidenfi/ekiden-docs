@@ -36,27 +36,35 @@ Example:
 	"server_ts_ms": 1731541800000,
 	"data": [
 		{
-			"sid": "0xpos1",
-			"market_addr": "0xmarket",
-			"user_addr": "0xuser",
-			"size": "-250",
-			"price": "100100",
-			"entry_price": "100100",
-			"margin": "50000",
-			"funding_index": "12345",
-			"epoch": 42,
-			"is_cross": true,
-			"initial_margin": "1200",
-			"initial_margin_mark": "1210",
-			"maintenance_margin": "800",
-			"leverage": 10,
+			"risk_id": 1,
+			"risk_limit_value": "100000000",
+			"symbol": "BTC-USDC",
+			"sub_account_address": "0xsubacct...",
+			"side": "Sell",
+			"size": "250",
+			"avg_price": "100100",
+			"position_value": "25025000",
+			"margin_mode": "Cross",
+			"position_balance": "50000",
+			"position_status": "Normal",
+			"leverage": "10",
 			"mark_price": "100200",
-			"seq": 999,
-			"timestamp": 1681234567,
-			"timestamp_ms": 1681234567000,
-			"side": "sell",
+			"liq_price": "100000",
+			"bust_price": "95000",
+			"position_im": "1200",
+			"position_im_by_mp": "1210",
+			"position_mm": "800",
+			"position_mm_by_mp": "810",
 			"unrealized_pnl": "-25",
-			"liq_price": "100000"
+			"unrealized_funding": "0",
+			"realized_pnl_cur": "0",
+			"realized_pnl_cum": "1000",
+			"cum_funding": "-5",
+			"adl_rank_indicator": "Zero",
+			"is_reduce_only": false,
+			"created_time": "1731541700000",
+			"updated_time": "1731541800000",
+			"seq": 999
 		}
 	]
 }
@@ -64,35 +72,46 @@ Example:
 
 Field notes:
 
-- `initial_margin`, `initial_margin_mark`, `maintenance_margin`, `leverage`, and `liq_price` may be null when not computable (e.g., zero size), though typical streaming updates include them.
-- `timestamp` (seconds) is deprecated; prefer `timestamp_ms`.
-- `size`, `price`, `entry_price`, `margin`, `funding_index`, `initial_margin`, `initial_margin_mark`, `maintenance_margin`, `mark_price`, `unrealized_pnl`, `liq_price` are strings to preserve precision.
-- Semantics: `initial_margin` is entry-notional based IM requirement; `initial_margin_mark` is mark-notional based IM requirement. `margin` is the actual collateral assigned to the position (quote units, scaled). In cross mode, it represents the portion of account equity allocated to this position for risk and liquidation.
+- Numeric values are encoded as strings to preserve precision.
+- Times (`created_time`, `updated_time`) are Unix milliseconds (encoded as strings).
 
 ### Fields
 
 | Field | Type | Notes |
 |-------|------|-------|
-| sid | string | Position identifier (vault address) |
-| market_addr | string | Market address |
-| user_addr | string | User address |
-| size | string | Signed base units (scaled) |
-| price | string | Entry price alias (scaled) |
-| entry_price | string | Same as `price` for clarity |
-| margin | string | Margin allocated to position (quote units, scaled) |
-| funding_index | string | Position funding index |
-| epoch | integer | Internal epoch/version |
-| is_cross | boolean | Margin mode |
-| initial_margin | string or null | Required initial margin (entry notional) |
-| initial_margin_mark | string or null | Required initial margin (mark notional) |
-| maintenance_margin | string or null | Required maintenance margin |
-| leverage | integer or null | Entry notional / margin |
-| mark_price | string | Current mark price |
-| seq | integer | Sequence of last update |
-| side | string | `buy` or `sell` inferred from size |
-| unrealized_pnl | string | Signed PnL (scaled) |
-| liq_price | string or null | Estimated liquidation price |
-| timestamp | integer | Deprecated seconds timestamp |
-| timestamp_ms | integer | Milliseconds timestamp (preferred) |
+| risk_id | integer | Risk tier ID |
+| risk_limit_value | string | Risk limit value |
+| symbol | string | Symbol name |
+| sub_account_address | string | Sub-account address |
+| side | string | `Buy` (long) or `Sell` (short) |
+| size | string | Position size (always positive) |
+| avg_price | string | Average entry price |
+| position_value | string | Position value |
+| margin_mode | string | `Cross` or `Isolated` |
+| position_balance | string | Position margin |
+| position_status | string | `Normal`, `Liq`, `Adl` |
+| leverage | string | Position leverage |
+| mark_price | string | Mark price |
+| liq_price | string | Liquidation price |
+| bust_price | string | Bankruptcy price |
+| position_im | string | Initial margin |
+| position_im_by_mp | string | Initial margin (mark price) |
+| position_mm | string | Maintenance margin |
+| position_mm_by_mp | string | Maintenance margin (mark price) |
+| take_profit | string or null | Take profit price |
+| stop_loss | string or null | Stop loss price |
+| trailing_stop | string or null | Trailing stop distance |
+| unrealized_pnl | string | Unrealized PnL (mark) |
+| unrealized_funding | string | Net unsettled funding PnL |
+| realized_pnl_cur | string | Current realized PnL since position creation |
+| realized_pnl_cum | string | Cumulative realized PnL |
+| cum_funding | string | Net realized funding PnL |
+| adl_rank_indicator | string | Auto-deleverage rank |
+| is_reduce_only | boolean | Reduce-only flag |
+| created_time | string | Created time (ms) |
+| updated_time | string | Updated time (ms) |
+| seq | integer | Cross sequence |
+| mmr_sys_update_time | string or null | System MM update time (ms) |
+| leverage_sys_updated_time | string or null | System leverage update time (ms) |
 
 See schema details in [AsyncAPI](../websockets/private): `Position`.
