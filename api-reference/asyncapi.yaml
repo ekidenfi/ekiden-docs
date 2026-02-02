@@ -1,0 +1,1534 @@
+asyncapi: 3.1.0
+info:
+  title: Ekiden WebSocket API
+  version: 1.0.0
+  description: |
+    Real-time feeds for market data and account updates over WebSocket.
+
+    ### Endpoints
+    - Public: `wss://{host}/ws/public`
+    - Private: `wss://{host}/ws/private` (requires authentication for private topics)
+
+    ### Connection flow
+    1. Choose environment host:
+       - Production: `api.ekiden.fi`
+       - Staging: `api.staging.ekiden.fi`
+    2. Connect to the desired endpoint (`/ws/public` or `/ws/private`).
+    3. (Private only) Send an **Auth** request with `op=auth` and `bearer=<token>`.
+    4. Send **Subscribe** (`op=subscribe`) with `args=[<topic>, ...]`.
+    5. Receive **Subscribed** acknowledgement, then streaming **Event** messages.
+    6. Use **Unsubscribe** (`op=unsubscribe`) to stop topics, or **Ping** (`op=ping`) to check liveness/RTT.
+
+    ### Topics (strings)
+    Topics are dot-separated strings. Examples:
+    - `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTC-USDC`)
+    - `trade.<symbol>` (e.g., `trade.BTC-USDC`)
+    - `ticker.<symbol>` (e.g., `ticker.BTC-USDC`)
+    - `kline.<interval>.<symbol>` (e.g., `kline.1m.BTC-USDC`)
+    - `all_liquidations.<symbol>` (e.g., `all_liquidations.BTC-USDC`)
+
+    Private topics (no symbol): `order`, `position`, `execution`, `account_balance`.
+
+    ### Message envelope
+    All messages are JSON objects that include an `op` field. Many request/response pairs also include an optional `req_id` that you can set to correlate responses.
+
+    Client -> Server (examples)
+    - Auth: `{ "op": "auth", "bearer": "<token>", "req_id": "..." }`
+    - Subscribe: `{ "op": "subscribe", "args": ["ticker.BTC-USDC"], "req_id": "..." }`
+    - Unsubscribe: `{ "op": "unsubscribe", "args": ["ticker.BTC-USDC"], "req_id": "..." }`
+    - Ping: `{ "op": "ping", "ts": 123, "req_id": "..." }`
+
+    Server -> Client
+    - Acks/results: `auth`, `subscribed`, `unsubscribed`, `pong`
+    - Errors: `error` (includes a human-readable `message`, and may include `req_id`)
+    - Streams: `event`
+
+    Event messages
+    `event` includes `server_ts_ms` plus a flattened payload containing `topic` and `data` (and `type` for orderbook updates).
+    Example: `{ "op": "event", "server_ts_ms": 1700000000000, "topic": "ticker.BTC-USDC", "data": { ... } }`
+servers:
+  production:
+    host: api.ekiden.fi
+    protocol: wss
+    description: Production WebSocket endpoint
+  staging:
+    host: api.staging.ekiden.fi
+    protocol: wss
+    description: Staging WebSocket endpoint for testing
+components:
+  messages:
+    AuthRequest:
+      title: Auth
+      description: Authenticate the connection on the private channel using a bearer token (e.g., JWT). Server responds with `AuthResponse`.
+      payload:
+        type: object
+        properties:
+          op:
+            type: string
+            const: auth
+          bearer:
+            type: string
+          req_id:
+            type:
+            - string
+            - 'null'
+        required:
+        - op
+        - bearer
+    SubscribeRequest:
+      title: Subscribe
+      description: Subscribe to topics. Server will respond with a `Subscribed` message.
+      payload:
+        type: object
+        properties:
+          req_id:
+            type:
+            - string
+            - 'null'
+          op:
+            type: string
+            const: subscribe
+          args:
+            type: array
+            items:
+              $ref: '#/components/schemas/Topic'
+        required:
+        - op
+        - args
+    UnsubscribeRequest:
+      title: Unsubscribe
+      description: Unsubscribe from topics. Server will respond with an `Unsubscribed` message.
+      payload:
+        type: object
+        properties:
+          req_id:
+            type:
+            - string
+            - 'null'
+          args:
+            type: array
+            items:
+              $ref: '#/components/schemas/Topic'
+          op:
+            type: string
+            const: unsubscribe
+        required:
+        - op
+        - args
+    PingRequest:
+      title: Ping
+      description: Ping the server. The server will respond with a `Pong` message. Client can use `ts` to measure RTT.
+      payload:
+        type: object
+        properties:
+          req_id:
+            type:
+            - string
+            - 'null'
+          ts:
+            type:
+            - integer
+            - 'null'
+            description: Client timestamp in Unix nanoseconds (ns since epoch)
+            format: uint64
+            minimum: 0
+          op:
+            type: string
+            const: ping
+        required:
+        - op
+    AuthResponse:
+      title: Auth
+      description: Response to an `Auth` request. Indicates whether authentication succeeded.
+      payload:
+        type: object
+        properties:
+          req_id:
+            type:
+            - string
+            - 'null'
+          user_id:
+            type:
+            - string
+            - 'null'
+          message:
+            type:
+            - string
+            - 'null'
+          success:
+            type: boolean
+          op:
+            type: string
+            const: auth
+        required:
+        - op
+        - success
+    Subscribed:
+      title: Subscribed
+      description: Subscription acknowledgement.
+      payload:
+        type: object
+        properties:
+          req_id:
+            type:
+            - string
+            - 'null'
+          op:
+            type: string
+            const: subscribed
+          args:
+            type: array
+            items:
+              $ref: '#/components/schemas/Topic'
+        required:
+        - op
+        - args
+    Unsubscribed:
+      title: Unsubscribed
+      description: Unsubscribe acknowledgement.
+      payload:
+        type: object
+        properties:
+          req_id:
+            type:
+            - string
+            - 'null'
+          op:
+            type: string
+            const: unsubscribed
+          args:
+            type: array
+            items:
+              $ref: '#/components/schemas/Topic'
+        required:
+        - op
+        - args
+    Pong:
+      title: Pong
+      description: Response to `Ping`.
+      payload:
+        type: object
+        properties:
+          op:
+            type: string
+            const: pong
+          req_id:
+            type:
+            - string
+            - 'null'
+          server_ts:
+            type: integer
+            description: Server timestamp in Unix nanoseconds (ns since epoch)
+            minimum: 0
+            format: uint64
+          client_ts:
+            type:
+            - integer
+            - 'null'
+            format: uint64
+            minimum: 0
+        required:
+        - op
+        - server_ts
+    Error:
+      title: Error
+      description: Error response.
+      payload:
+        type: object
+        properties:
+          message:
+            type: string
+          req_id:
+            type:
+            - string
+            - 'null'
+          op:
+            type: string
+            const: error
+        required:
+        - op
+        - message
+    Event:
+      title: Event
+      description: Streaming event message.
+      payload:
+        type: object
+        properties:
+          server_ts_ms:
+            type: integer
+            format: uint64
+            minimum: 0
+          op:
+            type: string
+            const: event
+        required:
+        - op
+        - server_ts_ms
+        anyOf:
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/OrderbookUpdateType'
+            data:
+              $ref: '#/components/schemas/OrderBookSnapshot'
+            topic:
+              $ref: '#/components/schemas/Topic'
+          required:
+          - topic
+          - type
+          - data
+        - type: object
+          properties:
+            topic:
+              $ref: '#/components/schemas/Topic'
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PublicTrade'
+          required:
+          - topic
+          - data
+        - type: object
+          properties:
+            topic:
+              $ref: '#/components/schemas/Topic'
+            data:
+              $ref: '#/components/schemas/TickerSnapshot'
+          required:
+          - topic
+          - data
+        - type: object
+          properties:
+            topic:
+              $ref: '#/components/schemas/Topic'
+            data:
+              $ref: '#/components/schemas/KlineSnapshot'
+          required:
+          - topic
+          - data
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Order'
+            topic:
+              $ref: '#/components/schemas/Topic'
+          required:
+          - topic
+          - data
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Execution'
+            topic:
+              $ref: '#/components/schemas/Topic'
+          required:
+          - topic
+          - data
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Position'
+            topic:
+              $ref: '#/components/schemas/Topic'
+          required:
+          - topic
+          - data
+        - type: object
+          properties:
+            topic:
+              $ref: '#/components/schemas/Topic'
+            data:
+              $ref: '#/components/schemas/AccountBalance'
+          required:
+          - topic
+          - data
+  schemas:
+    AccountBalance:
+      description: Account-wide wallet and margin metrics.
+      type: object
+      properties:
+        sub_account_address:
+          description: Sub-Account address (the owner of the technical vault)
+          type: string
+        account_type:
+          description: Account type (e.g. Funding, Trading)
+          type: string
+        equity:
+          description: |-
+            Equity under the account without considering the collateral value ratio (calculated in USDC).
+            Equity = Vault Balance + Perp & Futures Unrealized P&L + Unrealized Funding
+          type: string
+        vault_balance:
+          description: Vault Balance (USDC)
+          type: string
+        margin_balance:
+          description: |-
+            Amount that can be used as margin under the account
+            after considering the collateral value ratio (calculated in USDC)
+            Total Vault Balance + Perp Unrealized P&L
+          type: string
+        available_balance:
+          description: The amount of an asset that can be used to open USDC Perpetual positions (USDC)
+          type: string
+        accrued_interest:
+          description: Accrued interest
+          type: string
+        total_order_im:
+          description: Pre-occupied margin for order. Locked balance (USDC)
+          type: string
+        total_position_im:
+          description: Sum of initial margin of all positions + Pre-occupied liquidation fee.
+          type: string
+        total_position_mm:
+          description: Sum of maintenance margin for all positions.
+          type: string
+        unrealised_pnl:
+          description: Unrealised P&L
+          type: string
+        unrealized_funding:
+          description: Aggregated unrealized funding across all positions (USDC)
+          type: string
+        realised_pnl_cum:
+          description: Cumulative Realised P&L
+          type: string
+      required:
+      - sub_account_address
+      - account_type
+      - equity
+      - vault_balance
+      - margin_balance
+      - available_balance
+      - accrued_interest
+      - total_order_im
+      - total_position_im
+      - total_position_mm
+      - unrealised_pnl
+      - unrealized_funding
+      - realised_pnl_cum
+    AdlRankIndicator:
+      description: Auto-deleverage rank indicator.
+      type: string
+      enum:
+      - Zero
+      - One
+      - Two
+      - Three
+      - Four
+      - Five
+    CancelType:
+      description: Reason/Source of the order cancellation.
+      type: string
+      enum:
+      - CancelByUser
+      - CancelByAdmin
+      - CancelBySystem
+      - CancelByReduceOnly
+      - CancelByPrepareLiq
+      - CancelAllBeforeLiq
+      - CancelByPrepareAdl
+      - CancelAllBeforeAdl
+      - CancelBySettle
+      - CancelByTpSlTsClear
+      - CancelBySmp
+      - CancelByDcp
+      - CancelByRebalance
+      - CancelByOcoTpCanceledBySlTriggered
+      - CancelByOcoSlCanceledByTpTriggered
+    ConditionalOrder:
+      type: object
+      properties:
+        trigger_price:
+          description: The price level that activates the order.
+          type: string
+        trigger_direction:
+          description: Up or Down.
+          $ref: '#/components/schemas/TriggerDirection'
+        trigger_by:
+          description: Last Price, Mark Price, or Index Price.
+          $ref: '#/components/schemas/TriggerBy'
+      required:
+      - trigger_price
+      - trigger_direction
+      - trigger_by
+    CreateType:
+      type: string
+      enum:
+      - CreateByUser
+      - CreateByFutureSpread
+      - CreateByAdminClosing
+      - CreateBySettle
+      - CreateByStopOrder
+      - CreateByTakeProfit
+      - CreateByPartialTakeProfit
+      - CreateByStopLoss
+      - CreateByPartialStopLoss
+      - CreateByTrailingStop
+      - CreateByTrailingProfit
+      - CreateByLiq
+      - CreateByTakeOverPassThrough
+      - CreateByAdlPassThrough
+      - CreateByBlockPassThrough
+      - CreateByBlockTradeMovePositionPassThrough
+      - CreateByClosing
+      - CreateByFGridBot
+      - CloseByFGridBot
+      - CreateByTWAP
+      - CreateByTVSignal
+      - CreateByMmRateClose
+      - CreateByMartingaleBot
+      - CloseByMartingaleBot
+      - CreateByIceBerg
+      - CreateByArbitrage
+      - CreateByDdh
+      - CreateByBboOrder
+    ExecType:
+      description: Execution type for trade history entries.
+      oneOf:
+      - description: Regular trade execution.
+        type: string
+        const: Trade
+      - description: Auto-deleveraging.
+        type: string
+        const: AdlTrade
+      - description: Funding fee.
+        type: string
+        const: Funding
+      - description: Takeover liquidation.
+        type: string
+        const: BustTrade
+      - description: USDC futures delivery; position closed by contract delisted.
+        type: string
+        const: Delivery
+      - description: Inverse futures settlement; position closed due to delisting.
+        type: string
+        const: Settle
+      - description: Block trade.
+        type: string
+        const: BlockTrade
+      - description: Move position.
+        type: string
+        const: MovePosition
+      - description: Spread leg execution.
+        type: string
+        const: FutureSpread
+    Execution:
+      description: Single execution (trade fill) record.
+      type: object
+      properties:
+        exec_id:
+          description: Execution ID
+          type: string
+          format: uuid
+        symbol:
+          description: Symbol name, e.g. BTCUSDC
+          type: string
+        order_id:
+          type: string
+          format: uuid
+        order_link_id:
+          type:
+          - string
+          - 'null'
+        side:
+          description: Side. Buy or Sell
+          $ref: '#/components/schemas/Side'
+        sub_account_address:
+          type: string
+        order_price:
+          description: Original order price
+          type: string
+        order_qty:
+          description: Original order quantity
+          type: string
+        leaves_qty:
+          description: Remaining quantity not yet executed after this fill
+          type: string
+        create_type:
+          description: Order create type
+          anyOf:
+          - $ref: '#/components/schemas/CreateType'
+          - type: 'null'
+        order_type:
+          description: Order type. Market or Limit
+          $ref: '#/components/schemas/OrderType'
+        stop_order_type:
+          description: Stop order type if this was a stop order
+          anyOf:
+          - $ref: '#/components/schemas/StopOrderType'
+          - type: 'null'
+        exec_price:
+          description: Execution price
+          type: string
+        exec_qty:
+          description: Execution quantity
+          type: string
+        exec_value:
+          description: Executed value (price * qty)
+          type: string
+        exec_type:
+          description: Execution type (e.g. Trade, Adl, Bust)
+          $ref: '#/components/schemas/ExecType'
+        exec_time:
+          description: Executed timestamp (ms)
+          type: integer
+          format: int64
+        is_maker:
+          description: 'Is maker order. true: maker, false: taker'
+          type: boolean
+        fee_rate:
+          description: Trading fee rate
+          type: string
+        mark_price:
+          description: Mark price at execution
+          type: string
+        index_price:
+          description: Index price at execution
+          type: string
+        closed_size:
+          description: Closed position size
+          type:
+          - string
+          - 'null'
+        seq:
+          description: |-
+            Cross sequence, used to associate each fill and each position update
+            * The seq will be the same when conclude multiple transactions at the same time
+            * Different symbols may have the same seq, please use seq + symbol to check unique
+          type: integer
+          format: uint64
+          minimum: 0
+      required:
+      - exec_id
+      - symbol
+      - order_id
+      - side
+      - sub_account_address
+      - order_price
+      - order_qty
+      - leaves_qty
+      - order_type
+      - exec_price
+      - exec_qty
+      - exec_value
+      - exec_type
+      - exec_time
+      - is_maker
+      - fee_rate
+      - mark_price
+      - index_price
+      - seq
+    Interval:
+      type: string
+      enum:
+      - 1m
+      - 3m
+      - 5m
+      - 15m
+      - 30m
+      - 1h
+      - 2h
+      - 4h
+      - 6h
+      - 12h
+      - 1d
+      - 3d
+      - 1w
+      - 1M
+    KlineSnapshot:
+      type: object
+      properties:
+        t:
+          description: Candle open time (ms).
+          type: integer
+          format: int64
+        i:
+          description: Candle interval - timeframe.
+          $ref: '#/components/schemas/Interval'
+        o:
+          description: Open - the price of the first trade in this candle (opening price).
+          type: string
+        h:
+          description: High - the highest trade price within this interval.
+          type: string
+        l:
+          description: Low - the minimum trade price within this interval.
+          type: string
+        c:
+          description: Close - the price of the last trade in this candle (closing price).
+          type: string
+        T:
+          description: Candle close time (ms).
+          type: integer
+          format: int64
+        v:
+          description: Volume. the trading volume for the candle
+          type: string
+        n:
+          description: Trade count. The number of trades included in this candle
+          type: string
+      required:
+      - t
+      - i
+      - o
+      - h
+      - l
+      - c
+      - T
+      - v
+      - n
+    MarginMode:
+      type: string
+      enum:
+      - Cross
+      - Isolated
+    Order:
+      description: Summary information about an order.
+      type: object
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        order_link_id:
+          type:
+          - string
+          - 'null'
+        symbol:
+          type: string
+        sub_account_address:
+          type: string
+        price:
+          type: string
+        qty:
+          type: string
+        side:
+          $ref: '#/components/schemas/Side'
+        margin_mode:
+          $ref: '#/components/schemas/MarginMode'
+        order_status:
+          $ref: '#/components/schemas/OrderStatus'
+        create_type:
+          anyOf:
+          - $ref: '#/components/schemas/CreateType'
+          - type: 'null'
+        cancel_type:
+          anyOf:
+          - $ref: '#/components/schemas/CancelType'
+          - type: 'null'
+        reject_reason:
+          anyOf:
+          - $ref: '#/components/schemas/RejectReason'
+          - type: 'null'
+        avg_price:
+          description: Average price at which part (or all) of the order has been executed (i.e. filled)
+          type: string
+        leaves_qty:
+          description: Remaining quantity from the order that has not yet been executed
+          type: string
+        leaves_value:
+          description: |-
+            Estimated value of the remaining quantity (leavesQty)
+            that remains unfilled. Basically: how much the unfilled portion is “worth”
+          type: string
+        cum_exec_qty:
+          description: |-
+            Cumulative executed quantity: total amount of the order
+            that has already been filled/executed so far
+          type: string
+        cum_exec_value:
+          description: |-
+            Cumulative executed value: the total value corresponding to the part of
+            the order that has already been filled. Basically: how much worth in total has been executed so far
+          type: string
+        cum_exec_fee:
+          description: 'Cumulative executed trading fee: the total fees charged so far for the executed portion of this order'
+          type: string
+        closed_pnl:
+          description: |-
+            Closed profit and loss for each close position order.
+            Valid only in order WebSocket
+          type:
+          - string
+          - 'null'
+        time_in_force:
+          $ref: '#/components/schemas/TimeInForce'
+        expire_time:
+          description: Expiration time for orders with a time-in-force of Good-Til-Date (GTD)
+          type:
+          - integer
+          - 'null'
+          format: int64
+          default: null
+        order_type:
+          description: Order type. Market, Limit. For TP/SL orders, is the order type after the order was triggered
+          $ref: '#/components/schemas/OrderType'
+        stop_order_type:
+          description: Stop order type. For example, Stop Market or Stop Limit.
+          anyOf:
+          - $ref: '#/components/schemas/StopOrderType'
+          - type: 'null'
+        tpsl:
+          description: Take Profit / Stop Loss details if set
+          anyOf:
+          - $ref: '#/components/schemas/TpSl'
+          - type: 'null'
+        trigger:
+          description: Conditional order details if this is a conditional order
+          anyOf:
+          - $ref: '#/components/schemas/ConditionalOrder'
+          - type: 'null'
+        last_price_on_created:
+          description: Last price at the time the order was created
+          type: string
+        post_only:
+          type: boolean
+        reduce_only:
+          type: boolean
+        close_on_trigger:
+          type: boolean
+        created_time:
+          type: integer
+          format: int64
+        updated_time:
+          type: integer
+          format: int64
+      required:
+      - order_id
+      - symbol
+      - sub_account_address
+      - price
+      - qty
+      - side
+      - margin_mode
+      - order_status
+      - avg_price
+      - leaves_qty
+      - leaves_value
+      - cum_exec_qty
+      - cum_exec_value
+      - cum_exec_fee
+      - time_in_force
+      - order_type
+      - last_price_on_created
+      - post_only
+      - reduce_only
+      - close_on_trigger
+      - created_time
+      - updated_time
+    OrderBookLevel:
+      description: Order book level consisting of price and size.
+      type: array
+      prefixItems:
+      - type: string
+      - type: string
+      minItems: 2
+      maxItems: 2
+    OrderBookSnapshot:
+      description: Order book Snapshot at a specific point in time.
+      type: object
+      properties:
+        s:
+          description: Symbol name
+          type: string
+        ts:
+          description: The timestamp (ms) that the system generates the data
+          type: integer
+          format: int64
+        b:
+          description: Bid levels
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderBookLevel'
+        a:
+          description: Ask levels
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderBookLevel'
+        u:
+          description: Update ID, is always in sequence
+          type: integer
+          format: uint64
+          minimum: 0
+        seq:
+          type: integer
+          format: uint64
+          minimum: 0
+        mts:
+          description: |-
+            The timestamp from the matching engine when this orderbook data is produced.
+            It can be correlated with T from public trade channel
+          type: integer
+          format: int64
+      required:
+      - s
+      - ts
+      - b
+      - a
+      - u
+      - seq
+      - mts
+    OrderStatus:
+      oneOf:
+      - type: string
+        enum:
+        - New
+        - PartiallyFilled
+        - Untriggered
+        - Rejected
+        - PartiallyFilledCanceled
+        - Filled
+        - Canceled
+        - Triggered
+        - Deactivated
+        - Expired
+      - description: Cancel requested by user/admin/system, pending matching confirmation.
+        type: string
+        const: CancelRequested
+    OrderType:
+      description: 'Order type: Limit, Market.'
+      type: string
+      enum:
+      - Limit
+      - Market
+    OrderbookUpdateType:
+      type: string
+      enum:
+      - snapshot
+      - delta
+    Position:
+      description: |-
+        Position information.
+
+        * risk_id: numeric identifier of the current risk tier your position is on for that symbol.
+        * risk_limit_value: the maximum position value allowed under that tier (the tier’s limit). If your position value grows beyond this, the tier steps up (higher requirements).
+
+        Details:
+        * Meaning: Bybit enforces “risk limit tiers” to cap position value and scale maintenance margin. The tier is referenced by riskId, and its cap is riskLimitValue.
+        * Effects: Higher tiers allow larger positions but increase maintenance margin and may constrain leverage.
+        * Portfolio margin note: In portfolio margin mode, both fields are not meaningful and are returned as 0 (docs: “risk limit rules are invalid”).
+      type: object
+      properties:
+        risk_id:
+          description: Risk tier ID
+          type: integer
+          format: uint8
+          minimum: 0
+          maximum: 255
+        risk_limit_value:
+          description: Risk limit value
+          type: string
+        symbol:
+          description: Symbol name
+          type: string
+        sub_account_address:
+          type: string
+        side:
+          description: 'Position side. Buy: long, Sell: short'
+          $ref: '#/components/schemas/Side'
+        size:
+          description: Position size, always positive
+          type: string
+        avg_price:
+          description: Average entry price.
+          type: string
+        position_value:
+          description: Position value
+          type: string
+        margin_mode:
+          description: Is position cross margin or isolated margin
+          $ref: '#/components/schemas/MarginMode'
+        position_balance:
+          description: Position margin
+          type: string
+        position_status:
+          description: Position status. Normal, Liq, Adl
+          $ref: '#/components/schemas/PositionStatus'
+        leverage:
+          description: Position leverage
+          type: string
+        mark_price:
+          description: Mark price
+          type: string
+        liq_price:
+          description: Position liquidation price
+          type: string
+        bust_price:
+          description: Bankruptcy price
+          type: string
+        position_im:
+          description: Initial margin
+          type: string
+        position_im_by_mp:
+          description: Initial margin calculated by mark price
+          type: string
+        position_mm:
+          description: Maintenance margin
+          type: string
+        position_mm_by_mp:
+          description: Maintenance margin calculated by mark price
+          type: string
+        take_profit:
+          description: Take profit price
+          type:
+          - string
+          - 'null'
+        stop_loss:
+          description: Stop loss price
+          type:
+          - string
+          - 'null'
+        trailing_stop:
+          description: Trailing stop (The distance from market price)
+          type:
+          - string
+          - 'null'
+        unrealized_pnl:
+          description: |-
+            How much USDC an account will receive (or pay if negative)
+            if the position is closed at the current MarkPrice
+          type: string
+        unrealized_funding:
+          description: Net unsettled funding PnL for this position (receive positive, pay negative).
+          type: string
+        realized_pnl_cur:
+          description: |-
+            Sum of Fill Realized PnL for position of this symbol/side
+            since this position was created last time
+          type: string
+        realized_pnl_cum:
+          description: Sum of all historical Current Realized PnLs (and the latest one).
+          type: string
+        cum_funding:
+          description: Net realized funding PnL accumulated for this position (receive positive, pay negative).
+          type: string
+        adl_rank_indicator:
+          description: Auto-deleverage rank indicator.
+          $ref: '#/components/schemas/AdlRankIndicator'
+        is_reduce_only:
+          type: boolean
+        created_time:
+          description: Timestamp of the first time a position was created on this symbol (ms)
+          type: integer
+          format: int64
+        updated_time:
+          description: Position data updated timestamp (ms)
+          type: integer
+          format: int64
+        seq:
+          description: |-
+            Cross sequence, used to associate each fill and each position update
+            * Different symbols may have the same seq, please use seq + symbol to check unique
+          type: integer
+          format: uint64
+          minimum: 0
+        mmr_sys_update_time:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          default: null
+        leverage_sys_updated_time:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          default: null
+      required:
+      - risk_id
+      - risk_limit_value
+      - symbol
+      - sub_account_address
+      - side
+      - size
+      - avg_price
+      - position_value
+      - margin_mode
+      - position_balance
+      - position_status
+      - leverage
+      - mark_price
+      - liq_price
+      - bust_price
+      - position_im
+      - position_im_by_mp
+      - position_mm
+      - position_mm_by_mp
+      - unrealized_pnl
+      - unrealized_funding
+      - realized_pnl_cur
+      - realized_pnl_cum
+      - cum_funding
+      - adl_rank_indicator
+      - is_reduce_only
+      - created_time
+      - updated_time
+      - seq
+    PositionStatus:
+      type: string
+      enum:
+      - Normal
+      - Liq
+      - Adl
+    PublicTrade:
+      description: A single trade entry from the public trade stream.
+      type: object
+      properties:
+        i:
+          description: Trade ID.
+          type: string
+        s:
+          description: Symbol name.
+          type: string
+        S:
+          description: Side of taker.
+          $ref: '#/components/schemas/Side'
+        v:
+          description: Trade size.
+          type: string
+        p:
+          description: Trade price.
+          type: string
+        seq:
+          description: Cross sequence.
+          type: integer
+          format: uint64
+          minimum: 0
+        T:
+          description: The timestamp (ms) that the order is filled.
+          type: integer
+          format: uint64
+          minimum: 0
+      required:
+      - i
+      - s
+      - S
+      - v
+      - p
+      - seq
+      - T
+    RejectReason:
+      type: string
+      enum:
+      - EcNoError
+      - EcOthers
+      - EcInsufficientFunds
+      - EcUnknownMessageType
+      - EcMissingClOrdId
+      - EcMissingOrigClOrdId
+      - EcClOrdIdOrigClOrdIdAreTheSame
+      - EcDuplicatedClOrdId
+      - EcOrigClOrdIdDoesNotExist
+      - EcTooLateToCancel
+      - EcUnknownOrderType
+      - EcUnknownSide
+      - EcUnknownTimeInForce
+      - EcWronglyRouted
+      - EcMarketOrderPriceIsNotZero
+      - EcLimitOrderInvalidPrice
+      - EcNoEnoughQtyToFill
+      - EcNoImmediateQtyToFill
+      - EcPerCancelRequest
+      - EcMarketOrderCannotBePostOnly
+      - EcPostOnlyWillTakeLiquidity
+      - EcReduceOnlyNoPosition
+      - EcReduceOnlyWouldIncreasePosition
+      - EcReduceOnlyExceedsPosition
+      - EcCancelReplaceOrder
+      - EcInvalidSymbolStatus
+      - EcCancelForNoFullFill
+      - EcBySelfMatch
+      - EcInCallAuctionStatus
+      - EcQtyCannotBeZero
+      - EcMarketOrderNoSupportTif
+      - EcReachMaxTradeNum
+      - EcInvalidPriceScale
+      - EcBitIndexInvalid
+      - EcStopBySelfMatch
+      - EcInvalidSmpType
+      - EcCancelByMmp
+      - EcInvalidUserType
+      - EcInvalidMirrorOid
+      - EcInvalidMirrorUid
+      - EcEcInvalidQty
+      - EcInvalidAmount
+      - EcLoadOrderCancel
+      - EcMarketQuoteNoSuppSell
+      - EcDisorderOrderId
+      - EcInvalidBaseValue
+      - EcLoadOrderCanMatch
+      - EcSecurityStatusFail
+      - EcReachRiskPriceLimit
+      - EcOrderNotExist
+      - EcCancelByOrderValueZero
+      - EcCancelByMatchValueZero
+      - EcReachMarketPriceLimit
+    Side:
+      description: 'Order side: buy or sell.'
+      oneOf:
+      - description: 'Sell side: short'
+        type: string
+        const: Sell
+      - description: 'Buy side: long'
+        type: string
+        const: Buy
+    StopOrderType:
+      type: string
+      enum:
+      - TakeProfit
+      - StopLoss
+      - TrailingStop
+      - Stop
+      - PartialTakeProfit
+      - PartialStopLoss
+      - TpslOrder
+      - OcoOrder
+      - MmRateClose
+      - BidirectionalTpslOrder
+    TickerSnapshot:
+      description: Query for the latest price snapshot, best bid/ask price, and trading volume in the last 24 hours.
+      type: object
+      properties:
+        symbol:
+          description: Symbol name
+          type: string
+        addr:
+          description: Market address
+          type: string
+        last_price:
+          description: Last traded price
+          type: string
+        index_price:
+          description: Index price
+          type: string
+        mark_price:
+          description: Mark price
+          type: string
+        prev_price_24h:
+          description: Market price 24 hours ago
+          type: string
+        high_price_24h:
+          description: The highest price in the last 24 hours
+          type: string
+        low_price_24h:
+          description: The lowest price in the last 24 hours
+          type: string
+        prev_price_1h:
+          description: Market price 1 hour ago
+          type: string
+        volume_24h:
+          description: Volume for 24h
+          type: string
+        turnover_24h:
+          description: Turnover for 24h
+          type: string
+        open_interest:
+          description: Open interest size
+          type: string
+        open_interest_value:
+          description: Open interest value
+          type: string
+        funding_rate:
+          description: Funding rate
+          type: string
+        next_funding_time:
+          description: Next funding time (ms)
+          type: integer
+          format: int64
+        best_ask_size:
+          description: Best ask size
+          type: string
+        best_ask_price:
+          description: Best ask price
+          type: string
+        best_bid_size:
+          description: Best bid size
+          type: string
+        best_bid_price:
+          description: Best bid price
+          type: string
+      required:
+      - symbol
+      - addr
+      - last_price
+      - index_price
+      - mark_price
+      - prev_price_24h
+      - high_price_24h
+      - low_price_24h
+      - prev_price_1h
+      - volume_24h
+      - turnover_24h
+      - open_interest
+      - open_interest_value
+      - funding_rate
+      - next_funding_time
+      - best_ask_size
+      - best_ask_price
+      - best_bid_size
+      - best_bid_price
+    TimeInForce:
+      description: Time in Force instructions.
+      oneOf:
+      - description: Good Till Cancel
+        type: string
+        const: GTC
+      - description: Immediate or Cancel
+        type: string
+        const: IOC
+      - description: Fill or Kill
+        type: string
+        const: FOK
+      - description: Good Till Date
+        type: object
+        properties:
+          GTD:
+            type: integer
+            format: uint64
+            minimum: 0
+        required:
+        - GTD
+        additionalProperties: false
+      - description: Good For Day
+        type: string
+        const: Day
+    Topic:
+      type: string
+      description: Subscription topic string (e.g. 'ticker.BTC-USDC', 'orderbook.1.BTC-USDC', 'position').
+      pattern: ^(orderbook\.[^.]+\.[^.]+|trade\.[^.]+|ticker\.[^.]+|kline\.[^.]+\.[^.]+|all_liquidations\.[^.]+|order|position|execution|account_balance)$
+      examples:
+      - orderbook.1.BTC-USDC
+      - trade.BTC-USDC
+      - ticker.BTC-USDC
+      - kline.1m.BTC-USDC
+      - all_liquidations.BTC-USDC
+      - order
+      - position
+      - execution
+      - account_balance
+    TpSl:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/TpSlMode'
+        take_profit:
+          anyOf:
+          - $ref: '#/components/schemas/TpSlSpec'
+          - type: 'null'
+        stop_loss:
+          anyOf:
+          - $ref: '#/components/schemas/TpSlSpec'
+          - type: 'null'
+      required:
+      - mode
+    TpSlMode:
+      type: string
+      enum:
+      - Full
+      - Partial
+    TpSlSpec:
+      oneOf:
+      - type: object
+        properties:
+          market:
+            type: object
+            properties:
+              trigger_price:
+                type: string
+              trigger_by:
+                $ref: '#/components/schemas/TriggerBy'
+            required:
+            - trigger_price
+            - trigger_by
+        required:
+        - market
+        additionalProperties: false
+      - type: object
+        properties:
+          limit:
+            type: object
+            properties:
+              trigger_price:
+                type: string
+              limit_price:
+                type: string
+              trigger_by:
+                $ref: '#/components/schemas/TriggerBy'
+            required:
+            - trigger_price
+            - limit_price
+            - trigger_by
+        required:
+        - limit
+        additionalProperties: false
+    TriggerBy:
+      type: string
+      enum:
+      - LastPrice
+      - IndexPrice
+      - MarkPrice
+    TriggerDirection:
+      type: string
+      enum:
+      - Up
+      - Down
+channels:
+  public:
+    title: Public
+    description: The public channel is used for subscribing to market data.
+    address: /ws/public
+    messages:
+      SubscribeRequest:
+        $ref: '#/components/messages/SubscribeRequest'
+      UnsubscribeRequest:
+        $ref: '#/components/messages/UnsubscribeRequest'
+      PingRequest:
+        $ref: '#/components/messages/PingRequest'
+      Subscribed:
+        $ref: '#/components/messages/Subscribed'
+      Unsubscribed:
+        $ref: '#/components/messages/Unsubscribed'
+      Pong:
+        $ref: '#/components/messages/Pong'
+      Error:
+        $ref: '#/components/messages/Error'
+      Event:
+        $ref: '#/components/messages/Event'
+  private:
+    title: Private
+    description: The private channel is used for subscribing to user-specific data.
+    address: /ws/private
+    messages:
+      AuthRequest:
+        $ref: '#/components/messages/AuthRequest'
+      AuthResponse:
+        $ref: '#/components/messages/AuthResponse'
+      SubscribeRequest:
+        $ref: '#/components/messages/SubscribeRequest'
+      UnsubscribeRequest:
+        $ref: '#/components/messages/UnsubscribeRequest'
+      PingRequest:
+        $ref: '#/components/messages/PingRequest'
+      Subscribed:
+        $ref: '#/components/messages/Subscribed'
+      Unsubscribed:
+        $ref: '#/components/messages/Unsubscribed'
+      Pong:
+        $ref: '#/components/messages/Pong'
+      Error:
+        $ref: '#/components/messages/Error'
+      Event:
+        $ref: '#/components/messages/Event'
+operations:
+  sendSubscribe:
+    action: receive
+    channel:
+      $ref: '#/channels/public'
+    messages:
+    - $ref: '#/channels/public/messages/SubscribeRequest'
+  sendUnsubscribe:
+    action: receive
+    channel:
+      $ref: '#/channels/public'
+    messages:
+    - $ref: '#/channels/public/messages/UnsubscribeRequest'
+  sendPing:
+    action: receive
+    channel:
+      $ref: '#/channels/public'
+    messages:
+    - $ref: '#/channels/public/messages/PingRequest'
+  receiveSubscribed:
+    action: send
+    channel:
+      $ref: '#/channels/public'
+    messages:
+    - $ref: '#/channels/public/messages/Subscribed'
+  receiveUnsubscribed:
+    action: send
+    channel:
+      $ref: '#/channels/public'
+    messages:
+    - $ref: '#/channels/public/messages/Unsubscribed'
+  receivePong:
+    action: send
+    channel:
+      $ref: '#/channels/public'
+    messages:
+    - $ref: '#/channels/public/messages/Pong'
+  receiveError:
+    action: send
+    channel:
+      $ref: '#/channels/public'
+    messages:
+    - $ref: '#/channels/public/messages/Error'
+  receiveEvent:
+    action: send
+    channel:
+      $ref: '#/channels/public'
+    messages:
+    - $ref: '#/channels/public/messages/Event'
+  sendAuthPrivate:
+    action: receive
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/AuthRequest'
+  sendSubscribePrivate:
+    action: receive
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/SubscribeRequest'
+  sendUnsubscribePrivate:
+    action: receive
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/UnsubscribeRequest'
+  sendPingPrivate:
+    action: receive
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/PingRequest'
+  receiveAuthPrivate:
+    action: send
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/AuthResponse'
+  receiveSubscribedPrivate:
+    action: send
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/Subscribed'
+  receiveUnsubscribedPrivate:
+    action: send
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/Unsubscribed'
+  receivePongPrivate:
+    action: send
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/Pong'
+  receiveErrorPrivate:
+    action: send
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/Error'
+  receiveEventPrivate:
+    action: send
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/Event'
