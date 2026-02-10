@@ -21,7 +21,7 @@ info:
 
     ### Topics (strings)
     Topics are dot-separated strings. Examples:
-    - `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTC-USDC`)
+    - `orderbook.<depth>.<symbol>` (e.g., `orderbook.10.BTC-USDC`)
     - `trade.<symbol>` (e.g., `trade.BTC-USDC`)
     - `ticker.<symbol>` (e.g., `ticker.BTC-USDC`)
     - `kline.<interval>.<symbol>` (e.g., `kline.1m.BTC-USDC`)
@@ -1298,10 +1298,10 @@ components:
         const: Day
     Topic:
       type: string
-      description: Subscription topic string (e.g. 'ticker.BTC-USDC', 'orderbook.1.BTC-USDC', 'position').
+      description: Subscription topic string (e.g. 'ticker.BTC-USDC', 'orderbook.10.BTC-USDC', 'position').
       pattern: ^(orderbook\.[^.]+\.[^.]+|trade\.[^.]+|ticker\.[^.]+|kline\.[^.]+\.[^.]+|all_liquidations\.[^.]+|order|position|execution|account_balance)$
       examples:
-      - orderbook.1.BTC-USDC
+      - orderbook.10.BTC-USDC
       - trade.BTC-USDC
       - ticker.BTC-USDC
       - kline.1m.BTC-USDC
