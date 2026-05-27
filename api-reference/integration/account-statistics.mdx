@@ -1,0 +1,45 @@
+---
+title: "Account Statistics"
+---
+
+Use account statistics to fetch time-series trading metrics for a sub-account.
+
+## Endpoint
+
+```http
+GET /api/v1/account/statistics
+```
+
+Query parameters:
+
+| Parameter | Required | Notes |
+| --------- | -------- | ----- |
+| `sub_account_address` | No | Sub-account to query. Auth context may determine the accessible account set. |
+| `start_time` | No | Start timestamp in milliseconds. |
+| `end_time` | No | End timestamp in milliseconds. |
+| `step` | No | Aggregation step. See OpenAPI for accepted values. |
+| `limit` | No | Maximum rows to return. |
+| `sorting_order` | No | Sort direction. |
+
+## Example
+
+```bash
+curl "https://api.ekiden.fi/api/v1/account/statistics?sub_account_address=0xsubacct&start_time=1731541800000&end_time=1732146600000&step=1d" \
+  -H "Authorization: Bearer <jwt>"
+```
+
+Response body:
+
+```json
+{
+  "list": [
+    {
+      "timestamp": 1731541800000,
+      "volume": "125000.50",
+      "roi": "0.034"
+    }
+  ]
+}
+```
+
+Field coverage can expand as the backend adds statistics. Use the generated REST reference for the exact `AccountStatistics` schema.

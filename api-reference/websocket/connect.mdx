@@ -18,9 +18,9 @@ This page explains how to connect to Ekiden WebSocket streams, authenticate for 
     - WS Public: `wss://api.staging.ekiden.fi/ws/public`
     - WS Private: `wss://api.staging.ekiden.fi/ws/private`
 
-Choose your environment before connecting. Public feeds require no auth; private feeds require a bearer token from the matching REST environment.
+Choose your environment before connecting. Public feeds require no auth. Private feeds require authentication with either a bearer token or an API-key signature from the matching REST environment.
 
-<Note>No authentication is required for the public stream. Private stream requires bearer token auth.</Note>
+<Note>No authentication is required for the public stream. The private stream supports bearer-token auth and API-key signature auth.</Note>
 
 ## Quick Start (JavaScript)
 
@@ -41,7 +41,7 @@ ws.onmessage = (ev) => {
     if (msg.op === "subscribed") console.log("Subscribed:", msg.args);
     if (msg.op === "unsubscribed") console.log("Unsubscribed:", msg.args);
     if (msg.op === "error") console.warn("Error:", msg.message);
-    // Ping/pong timestamps are uint64 Unix nanoseconds in the schema; omit `ts` if your language can’t safely represent u64.
+    // Application ping/pong timestamps are Unix milliseconds.
     if (msg.op === "pong") console.log("Pong:", msg);
 
     // Handle events (market or user, depending on stream)
@@ -52,7 +52,7 @@ ws.onmessage = (ev) => {
 
 // Heartbeat every ~20s
 setInterval(() => {
-    // `ts` is optional; when provided it should be Unix nanoseconds (u64).
+    // `ts` is optional; when provided it should be Unix milliseconds.
     // Many clients simply omit it and use pong as a liveness check.
     ws.send(JSON.stringify({ op: "ping", req_id: "hb" }));
 }, 20_000);
@@ -60,12 +60,27 @@ setInterval(() => {
 
 ## Private Stream Authentication
 
-1) Obtain a bearer token via the REST Authorize endpoint (use the same environment as your WS connection).
+1) Obtain a bearer token via the REST Authorize endpoint or prepare an API-key signature (use the same environment as your WS connection).
 2) Connect to `wss://api.ekiden.fi/ws/private` (or staging equivalent).
-3) Send `AuthRequest` once connected.
+3) Send one authentication request once connected.
+
+Bearer-token auth:
 
 ```json
 { "op": "auth", "bearer": "<JWT>", "req_id": "200001" }
+```
+
+API-key auth:
+
+```json
+{
+    "op": "auth_api_key",
+    "api_key": "<public_key>",
+    "signature": "<signature>",
+    "timestamp_ms": 1731541800000,
+    "nonce": "<unique_nonce>",
+    "req_id": "200002"
+}
 ```
 
 Server response examples:
@@ -113,7 +128,7 @@ There are two kinds of heartbeats:
 1) Application-level ping/pong
     - Client sends `op=ping` with an optional `ts` to measure RTT.
     - Server replies with `op=pong` echoing `client_ts` and adding `server_ts`.
-    - Timestamps containing Unix nanoseconds (`u64`).
+    - `client_ts` and `server_ts` are Unix milliseconds.
 
 2) WebSocket-level ping/pong (control frames)
     - The server also sends standard WebSocket ping frames at intervals.
@@ -123,13 +138,13 @@ There are two kinds of heartbeats:
 Send an application-level ping periodically to measure RTT (optional):
 
 ```json
-{ "op": "ping", "ts": 1731541800000000000, "req_id": "100004" } // ts in Unix nanoseconds
+{ "op": "ping", "ts": 1731541800000, "req_id": "100004" } // ts in Unix milliseconds
 ```
 
 Pong response:
 
 ```json
-{ "op": "pong", "server_ts": 1731541800123000000, "client_ts": 1731541800000000000, "req_id": "100004" } // both in Unix nanoseconds
+{ "op": "pong", "server_ts": 1731541800123, "client_ts": 1731541800000, "req_id": "100004" } // both in Unix milliseconds
 ```
 
 <Warning>
@@ -157,6 +172,8 @@ Public stream topics (subscribe on `/ws/public`):
 - `ticker.<symbol>`
 - `kline.<interval>.<symbol>`
 - `all_liquidations.<symbol>`
+- `insurance_pool.<symbol>`
+- `adl_alert.<symbol>`
 
 Private stream topics (after auth on `/ws/private`):
 
@@ -168,8 +185,8 @@ Private stream topics (after auth on `/ws/private`):
 Regex patterns enforced server-side:
 
 ```
-^(orderbook\.[^.]+\.[^.]+|trade\.[^.]+|ticker\.[^.]+|kline\.[^.]+\.[^.]+|all_liquidations\.[^.]+)$  # public
-^(order|position|execution|account_balance)$                                # private
+^(orderbook\.[^.]+\.[^.]+|trade\.[^.]+|ticker\.[^.]+|kline\.[^.]+\.[^.]+|all_liquidations\.[^.]+|insurance_pool\.[^.]+|adl_alert\.[^.]+)$  # public
+^(order|position|execution|account_balance)$                                                                                              # private
 ```
 
 ## Unified Event Envelope
@@ -191,8 +208,11 @@ Orderbook events additionally include a `type` field (`snapshot` or `delta`).
 
 - `OrderBookSnapshot` (orderbook events also include `type: "snapshot" | "delta"`)
 - `PublicTrade[]`
+- `Liquidation[]`
+- `InsurancePoolSnapshot`
+- `AdlAlertSnapshot`
 - `TickerSnapshot`
 - `KlineSnapshot`
-- `Order[]`, `Execution[]`, `Position[]`, `AccountBalance` (private)
+- `Order[]`, `Execution[]`, `Position[]`, `AccountBalance[]` (private)
 
 Note: `server_ts_ms` in the event envelope is always milliseconds.

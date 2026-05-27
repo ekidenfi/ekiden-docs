@@ -14,7 +14,9 @@ info:
        - Production: `api.ekiden.fi`
        - Staging: `api.staging.ekiden.fi`
     2. Connect to the desired endpoint (`/ws/public` or `/ws/private`).
-    3. (Private only) Send an **Auth** request with `op=auth` and `bearer=<token>`.
+    3. (Private only) Authenticate using **one** of:
+       - JWT: send **Auth** with `op=auth` and `bearer=<token>`
+       - API key: send **AuthApiKey** with `op=auth_api_key` and a signed payload
     4. Send **Subscribe** (`op=subscribe`) with `args=[<topic>, ...]`.
     5. Receive **Subscribed** acknowledgement, then streaming **Event** messages.
     6. Use **Unsubscribe** (`op=unsubscribe`) to stop topics, or **Ping** (`op=ping`) to check liveness/RTT.
@@ -26,6 +28,8 @@ info:
     - `ticker.<symbol>` (e.g., `ticker.BTC-USDC`)
     - `kline.<interval>.<symbol>` (e.g., `kline.1m.BTC-USDC`)
     - `all_liquidations.<symbol>` (e.g., `all_liquidations.BTC-USDC`)
+    - `insurance_pool.<symbol>` (e.g., `insurance_pool.BTC-USDC`)
+    - `adl_alert.<symbol>` (e.g., `adl_alert.BTC-USDC`)
 
     Private topics (no symbol): `order`, `position`, `execution`, `account_balance`.
 
@@ -33,7 +37,8 @@ info:
     All messages are JSON objects that include an `op` field. Many request/response pairs also include an optional `req_id` that you can set to correlate responses.
 
     Client -> Server (examples)
-    - Auth: `{ "op": "auth", "bearer": "<token>", "req_id": "..." }`
+    - Auth (JWT): `{ "op": "auth", "bearer": "<token>", "req_id": "..." }`
+    - Auth (API key): `{ "op": "auth_api_key", "api_key": "<public_key>", "signature": "<signature>", "timestamp_ms": 1700000000000, "nonce": "...", "req_id": "..." }`
     - Subscribe: `{ "op": "subscribe", "args": ["ticker.BTC-USDC"], "req_id": "..." }`
     - Unsubscribe: `{ "op": "unsubscribe", "args": ["ticker.BTC-USDC"], "req_id": "..." }`
     - Ping: `{ "op": "ping", "ts": 123, "req_id": "..." }`
@@ -63,8 +68,6 @@ components:
       payload:
         type: object
         properties:
-          bearer:
-            type: string
           req_id:
             type:
             - string
@@ -72,15 +75,48 @@ components:
           op:
             type: string
             const: auth
+          bearer:
+            type: string
         required:
         - op
         - bearer
+    AuthApiKeyRequest:
+      title: AuthApiKey
+      description: Authenticate the connection on the private channel using an API key signature. Server responds with `AuthResponse`.
+      payload:
+        type: object
+        properties:
+          timestamp_ms:
+            type: integer
+            format: int64
+          api_key:
+            type: string
+          nonce:
+            type: string
+          op:
+            type: string
+            const: auth_api_key
+          signature:
+            type: string
+          req_id:
+            type:
+            - string
+            - 'null'
+        required:
+        - op
+        - api_key
+        - signature
+        - timestamp_ms
+        - nonce
     SubscribeRequest:
       title: Subscribe
       description: Subscribe to topics. Server will respond with a `Subscribed` message.
       payload:
         type: object
         properties:
+          op:
+            type: string
+            const: subscribe
           args:
             type: array
             items:
@@ -89,9 +125,6 @@ components:
             type:
             - string
             - 'null'
-          op:
-            type: string
-            const: subscribe
         required:
         - op
         - args
@@ -101,17 +134,17 @@ components:
       payload:
         type: object
         properties:
-          args:
-            type: array
-            items:
-              $ref: '#/components/schemas/Topic'
-          op:
-            type: string
-            const: unsubscribe
           req_id:
             type:
             - string
             - 'null'
+          op:
+            type: string
+            const: unsubscribe
+          args:
+            type: array
+            items:
+              $ref: '#/components/schemas/Topic'
         required:
         - op
         - args
@@ -121,6 +154,9 @@ components:
       payload:
         type: object
         properties:
+          op:
+            type: string
+            const: ping
           req_id:
             type:
             - string
@@ -129,12 +165,9 @@ components:
             type:
             - integer
             - 'null'
-            description: Client timestamp in Unix nanoseconds (ns since epoch)
-            format: uint64
+            description: Client timestamp in Unix milliseconds (ms since epoch)
             minimum: 0
-          op:
-            type: string
-            const: ping
+            format: uint64
         required:
         - op
     AuthResponse:
@@ -169,17 +202,17 @@ components:
       payload:
         type: object
         properties:
-          args:
-            type: array
-            items:
-              $ref: '#/components/schemas/Topic'
+          op:
+            type: string
+            const: subscribed
           req_id:
             type:
             - string
             - 'null'
-          op:
-            type: string
-            const: subscribed
+          args:
+            type: array
+            items:
+              $ref: '#/components/schemas/Topic'
         required:
         - op
         - args
@@ -189,13 +222,13 @@ components:
       payload:
         type: object
         properties:
-          op:
-            type: string
-            const: unsubscribed
           req_id:
             type:
             - string
             - 'null'
+          op:
+            type: string
+            const: unsubscribed
           args:
             type: array
             items:
@@ -209,6 +242,12 @@ components:
       payload:
         type: object
         properties:
+          client_ts:
+            type:
+            - integer
+            - 'null'
+            minimum: 0
+            format: uint64
           req_id:
             type:
             - string
@@ -216,15 +255,9 @@ components:
           op:
             type: string
             const: pong
-          client_ts:
-            type:
-            - integer
-            - 'null'
-            minimum: 0
-            format: uint64
           server_ts:
             type: integer
-            description: Server timestamp in Unix nanoseconds (ns since epoch)
+            description: Server timestamp in Unix milliseconds (ms since epoch)
             minimum: 0
             format: uint64
         required:
@@ -254,13 +287,13 @@ components:
       payload:
         type: object
         properties:
-          op:
-            type: string
-            const: event
           server_ts_ms:
             type: integer
             format: uint64
             minimum: 0
+          op:
+            type: string
+            const: event
         required:
         - op
         - server_ts_ms
@@ -290,41 +323,70 @@ components:
           - data
         - type: object
           properties:
+            topic:
+              $ref: '#/components/schemas/Topic'
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Liquidation'
+          required:
+          - topic
+          - data
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/InsurancePoolSnapshot'
+            topic:
+              $ref: '#/components/schemas/Topic'
+          required:
+          - topic
+          - data
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AdlAlertSnapshot'
+            topic:
+              $ref: '#/components/schemas/Topic'
+          required:
+          - topic
+          - data
+        - type: object
+          properties:
+            topic:
+              $ref: '#/components/schemas/Topic'
             data:
               $ref: '#/components/schemas/TickerSnapshot'
-            topic:
-              $ref: '#/components/schemas/Topic'
           required:
           - topic
           - data
         - type: object
           properties:
-            topic:
-              $ref: '#/components/schemas/Topic'
             data:
               $ref: '#/components/schemas/KlineSnapshot'
+            topic:
+              $ref: '#/components/schemas/Topic'
           required:
           - topic
           - data
         - type: object
           properties:
+            topic:
+              $ref: '#/components/schemas/Topic'
             data:
               type: array
               items:
                 $ref: '#/components/schemas/Order'
-            topic:
-              $ref: '#/components/schemas/Topic'
           required:
           - topic
           - data
         - type: object
           properties:
-            topic:
-              $ref: '#/components/schemas/Topic'
             data:
               type: array
               items:
                 $ref: '#/components/schemas/Execution'
+            topic:
+              $ref: '#/components/schemas/Topic'
           required:
           - topic
           - data
@@ -344,7 +406,9 @@ components:
             topic:
               $ref: '#/components/schemas/Topic'
             data:
-              $ref: '#/components/schemas/AccountBalance'
+              type: array
+              items:
+                $ref: '#/components/schemas/AccountBalance'
           required:
           - topic
           - data
@@ -383,10 +447,10 @@ components:
           description: Pre-occupied margin for order. Locked balance (USDC)
           type: string
         total_position_im:
-          description: Sum of initial margin of all positions + Pre-occupied liquidation fee.
+          description: Sum of initial margin of all positions.
           type: string
         total_position_mm:
-          description: Sum of maintenance margin for all positions.
+          description: Sum of maintenance margin for all positions, including estimated close fees.
           type: string
         unrealised_pnl:
           description: Unrealised P&L
@@ -411,6 +475,37 @@ components:
       - unrealised_pnl
       - unrealized_funding
       - realised_pnl_cum
+    AdlAlertSnapshot:
+      type: object
+      properties:
+        pool_id:
+          type: string
+        pool_group_id:
+          type: string
+        symbol:
+          type: string
+        adl_mode:
+          type: string
+        adl_trigger_reason:
+          type:
+          - string
+          - 'null'
+        latest_pnl_ratio:
+          type:
+          - string
+          - 'null'
+        equity:
+          type: string
+        updated_time:
+          type: integer
+          format: int64
+      required:
+      - pool_id
+      - pool_group_id
+      - symbol
+      - adl_mode
+      - equity
+      - updated_time
     AdlRankIndicator:
       description: Auto-deleverage rank indicator.
       type: string
@@ -623,6 +718,79 @@ components:
       - mark_price
       - index_price
       - seq
+    InsurancePoolInventoryPosition:
+      type: object
+      properties:
+        symbol:
+          type: string
+        side:
+          $ref: '#/components/schemas/Side'
+        size:
+          type: string
+        avg_entry_price:
+          type: string
+        unrealized_pnl:
+          type: string
+      required:
+      - symbol
+      - side
+      - size
+      - avg_entry_price
+      - unrealized_pnl
+    InsurancePoolSnapshot:
+      type: object
+      properties:
+        pool_id:
+          type: string
+        pool_group_id:
+          type: string
+        cash_balance:
+          type: string
+        realized_pnl_cum:
+          type: string
+        unrealized_pnl:
+          type: string
+        base_equity:
+          type: string
+        equity:
+          type: string
+        group_redistribution_in:
+          type: string
+        group_redistribution_out:
+          type: string
+        group_adl_obligation:
+          type: string
+        adl_mode:
+          type: string
+        adl_trigger_reason:
+          type:
+          - string
+          - 'null'
+        latest_pnl_ratio:
+          type:
+          - string
+          - 'null'
+        updated_time:
+          type: integer
+          format: int64
+        inventory:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsurancePoolInventoryPosition'
+      required:
+      - pool_id
+      - pool_group_id
+      - cash_balance
+      - realized_pnl_cum
+      - unrealized_pnl
+      - base_equity
+      - equity
+      - group_redistribution_in
+      - group_redistribution_out
+      - group_adl_obligation
+      - adl_mode
+      - updated_time
+      - inventory
     Interval:
       type: string
       enum:
@@ -669,6 +837,12 @@ components:
         v:
           description: Volume. the trading volume for the candle
           type: string
+        V:
+          description: Taker buy base asset volume. Binance `V` field.
+          type: string
+        Q:
+          description: Taker buy quote asset volume. Binance `Q` field.
+          type: string
         n:
           description: Trade count. The number of trades included in this candle
           type: string
@@ -681,7 +855,34 @@ components:
       - c
       - T
       - v
+      - V
+      - Q
       - n
+    Liquidation:
+      type: object
+      properties:
+        symbol:
+          type: string
+        side:
+          type: string
+        exec_size:
+          type: string
+        bust_price:
+          type: string
+        timestamp:
+          type: integer
+          format: uint64
+          minimum: 0
+        reason:
+          type:
+          - string
+          - 'null'
+      required:
+      - symbol
+      - side
+      - exec_size
+      - bust_price
+      - timestamp
     MarginMode:
       type: string
       enum:
@@ -1138,6 +1339,8 @@ components:
       - EcReduceOnlyNoPosition
       - EcReduceOnlyWouldIncreasePosition
       - EcReduceOnlyExceedsPosition
+      - EcReduceOnlyMode
+      - EcTradingHalted
       - EcCancelReplaceOrder
       - EcInvalidSymbolStatus
       - EcCancelForNoFullFill
@@ -1298,14 +1501,16 @@ components:
         const: Day
     Topic:
       type: string
-      description: Subscription topic string (e.g. 'ticker.BTC-USDC', 'orderbook.10.BTC-USDC', 'position').
-      pattern: ^(orderbook\.[^.]+\.[^.]+|trade\.[^.]+|ticker\.[^.]+|kline\.[^.]+\.[^.]+|all_liquidations\.[^.]+|order|position|execution|account_balance)$
+      description: Subscription topic string (e.g. 'ticker.BTC-USDC', 'orderbook.10.BTC-USDC', 'insurance_pool.BTC-USDC', 'position').
+      pattern: ^(orderbook\.[^.]+\.[^.]+|trade\.[^.]+|ticker\.[^.]+|kline\.[^.]+\.[^.]+|all_liquidations\.[^.]+|insurance_pool\.[^.]+|adl_alert\.[^.]+|order|position|execution|account_balance)$
       examples:
       - orderbook.10.BTC-USDC
       - trade.BTC-USDC
       - ticker.BTC-USDC
       - kline.1m.BTC-USDC
       - all_liquidations.BTC-USDC
+      - insurance_pool.BTC-USDC
+      - adl_alert.BTC-USDC
       - order
       - position
       - execution
@@ -1405,6 +1610,8 @@ channels:
     messages:
       AuthRequest:
         $ref: '#/components/messages/AuthRequest'
+      AuthApiKeyRequest:
+        $ref: '#/components/messages/AuthApiKeyRequest'
       AuthResponse:
         $ref: '#/components/messages/AuthResponse'
       SubscribeRequest:
@@ -1478,6 +1685,12 @@ operations:
       $ref: '#/channels/private'
     messages:
     - $ref: '#/channels/private/messages/AuthRequest'
+  sendAuthApiKeyPrivate:
+    action: receive
+    channel:
+      $ref: '#/channels/private'
+    messages:
+    - $ref: '#/channels/private/messages/AuthApiKeyRequest'
   sendSubscribePrivate:
     action: receive
     channel:

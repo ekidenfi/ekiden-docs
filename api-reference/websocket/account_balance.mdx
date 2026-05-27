@@ -25,7 +25,7 @@ Ack:
 
 ## Events
 
-Messages arrive with `op: "event"`, `topic: "account_balance"`, and `data` is an `AccountBalance` object.
+Messages arrive with `op: "event"`, `topic: "account_balance"`, and `data` is an array of `AccountBalance` objects.
 
 Example:
 
@@ -34,21 +34,23 @@ Example:
 	"op": "event",
 	"topic": "account_balance",
 	"server_ts_ms": 1731541800000,
-	"data": {
-		"sub_account_address": "0xsubacct...",
-		"account_type": "Trading",
-		"equity": "1000000",
-		"vault_balance": "1000000",
-		"margin_balance": "950000",
-		"available_balance": "925000",
-		"accrued_interest": "0",
-		"total_order_im": "25000",
-		"total_position_im": "50000",
-		"total_position_mm": "30000",
-		"unrealised_pnl": "1000",
-		"unrealized_funding": "-5",
-		"realised_pnl_cum": "12345"
-	}
+	"data": [
+		{
+			"sub_account_address": "0xsubacct...",
+			"account_type": "Trading",
+			"equity": "1000000",
+			"vault_balance": "1000000",
+			"margin_balance": "950000",
+			"available_balance": "925000",
+			"accrued_interest": "0",
+			"total_order_im": "25000",
+			"total_position_im": "50000",
+			"total_position_mm": "30000",
+			"unrealised_pnl": "1000",
+			"unrealized_funding": "-5",
+			"realised_pnl_cum": "12345"
+		}
+	]
 }
 ```
 
