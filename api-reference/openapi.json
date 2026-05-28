@@ -3481,7 +3481,7 @@
         "properties": {
           "await_outcome": {
             "type": "boolean",
-            "description": "If true, gateway waits up to a server-defined timeout (currently 3s)\nfor final matching/trading outcomes and maps them into `exit_info`.\n\nIf false (default), `exit_info` reports edge outcomes\n(validation + publish ack)."
+            "description": "If true, gateway waits up to a server-defined timeout (currently 3s)\nfor final engine outcomes and maps them into `exit_info`.\n\nIf false (default), `exit_info` reports edge outcomes\n(validation + publish ack)."
           },
           "request": {
             "type": "array",
@@ -3529,7 +3529,7 @@
         "properties": {
           "await_outcome": {
             "type": "boolean",
-            "description": "If true, gateway waits up to a server-defined timeout (currently 3s)\nfor final matching/trading outcomes and maps them into `exit_info`.\n\nIf false (default), `exit_info` reports edge outcomes\n(validation + publish ack)."
+            "description": "If true, gateway waits up to a server-defined timeout (currently 3s)\nfor final engine outcomes and maps them into `exit_info`.\n\nIf false (default), `exit_info` reports edge outcomes\n(validation + publish ack)."
           },
           "request": {
             "type": "array",
@@ -3577,7 +3577,7 @@
         "properties": {
           "await_outcome": {
             "type": "boolean",
-            "description": "If true, gateway waits up to a server-defined timeout (currently 3s)\nfor final matching/trading outcomes and maps them into `exit_info`.\n\nIf false (default), `exit_info` reports edge outcomes\n(validation + publish ack)."
+            "description": "If true, gateway waits up to a server-defined timeout (currently 3s)\nfor final engine outcomes and maps them into `exit_info`.\n\nIf false (default), `exit_info` reports edge outcomes\n(validation + publish ack)."
           },
           "request": {
             "type": "array",
