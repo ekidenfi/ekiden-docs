@@ -23,8 +23,9 @@
             "pages": [
               "index",
               "architecture",
-              "Fees",
-              "VIP-program"
+              "fees",
+              "vip-program",
+              "points-program"
             ]
           }
         ]
@@ -64,7 +65,8 @@
           {
             "group": "Market Data",
             "pages": [
-              "api-reference/integration/market-data"
+              "api-reference/integration/market-data",
+              "api-reference/integration/risk-feeds"
             ]
           },
           {
@@ -86,7 +88,16 @@
             "group": "Account & Portfolio",
             "pages": [
               "api-reference/integration/account-data",
+              "api-reference/integration/account-statistics",
+              "api-reference/integration/referrals-and-rewards",
+              "api-reference/integration/leaderboards-and-competitions",
               "api-reference/integration/pnl-margin-fr"
+            ]
+          },
+          {
+            "group": "Access Controls",
+            "pages": [
+              "api-reference/integration/root-whitelist"
             ]
           },
           {
@@ -109,7 +120,10 @@
                   "api-reference/websocket/orderbook",
                   "api-reference/websocket/kline",
                   "api-reference/websocket/trade",
-                  "api-reference/websocket/ticker"
+                  "api-reference/websocket/ticker",
+                  "api-reference/websocket/all_liquidations",
+                  "api-reference/websocket/insurance_pool",
+                  "api-reference/websocket/adl_alert"
                 ]
               },
               {
@@ -123,7 +137,7 @@
               }
             ],
             "asyncapi": {
-              "source": "https://raw.githubusercontent.com/ekidenfi/ekiden-docs/main/api-reference/websocket/asyncapi.yaml"
+              "source": "/api-reference/websocket/asyncapi.yaml"
             }
           }
         ]

@@ -1,0 +1,75 @@
+---
+title: "Referrals & Rewards"
+---
+
+Referral and rewards endpoints expose the user's referral code, optional referrer binding, XP balance, weekly reward summaries, and recent ledger entries.
+
+These are authenticated user endpoints. Use bearer auth or API-key auth as described in [Onboarding & Auth](./onboarding-auth).
+
+## Referral Summary
+
+```http
+GET /api/v1/user/referral
+```
+
+Returns the current user's referral code, referrer if one is bound, and downline count.
+
+```json
+{
+  "referral_code": "EKIDEN123",
+  "referrer_code": "PARTNER42",
+  "referrer_user_id": "user_abc",
+  "downline_count": 12
+}
+```
+
+## Bind a Referrer
+
+```http
+POST /api/v1/user/referral
+Content-Type: application/json
+
+{ "referral_code": "PARTNER42" }
+```
+
+The response is the updated referral summary.
+
+Referral binding should be treated as a one-time account attribution operation. Do not build flows that repeatedly rebind users unless the backend explicitly allows it.
+
+## Rewards Summary
+
+```http
+GET /api/v1/user/rewards?limit=50
+```
+
+Returns the current XP balance, current weekly summary, historical weekly summaries, and recent ledger entries.
+
+```json
+{
+  "xp_balance": 125000,
+  "current_week": {
+    "week_start": 1731283200000,
+    "week_end": 1731888000000,
+    "own_ps": "90000",
+    "bonus_ps": "15000",
+    "final_ps": "105000",
+    "xp": "105000",
+    "finalized": false
+  },
+  "history": [],
+  "ledger": []
+}
+```
+
+Exact field names are defined in the generated OpenAPI schemas: `RewardSummaryResponse`, `RewardWeekSummary`, and `PointsLedgerEntry`.
+
+## XP Sources
+
+The active backend model is `rewards_xp_mvp_v1`:
+
+- Weekly XP pool allocated pro rata by power score.
+- Power score uses eligible volume, ROI, and drawdown factor.
+- Referral bonuses apply across three levels: 15%, 10%, and 5%.
+- Ledger entries record grants, allocations, adjustments, and clawbacks.
+
+See [Points Program](../../points-program) for campaign and KOL policy.

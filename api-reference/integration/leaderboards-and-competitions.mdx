@@ -1,0 +1,90 @@
+---
+title: "Leaderboards & Competitions"
+---
+
+Leaderboards expose ranked account performance and XP fields. Competitions expose campaign-specific scoring, projected XP, rankings, and placement.
+
+## User Leaderboard
+
+```http
+GET /api/v1/user/leaderboard?timeframe=7d&limit=50&offset=0
+```
+
+Required query parameters:
+
+| Parameter | Notes |
+| --------- | ----- |
+| `timeframe` | Ranking window. See OpenAPI for accepted enum values. |
+
+Optional query parameters:
+
+| Parameter | Notes |
+| --------- | ----- |
+| `limit` | Page size. |
+| `offset` | Pagination offset. |
+
+Rows include:
+
+- `sub_account_address`
+- `place`
+- `ranked`
+- `volume`
+- `pnl`
+- `roi`
+- `account_value`
+- `trading_xp`
+- `referral_xp`
+- `total_xp`
+
+## User Placement
+
+```http
+GET /api/v1/user/leaderboard/placement?timeframe=7d
+```
+
+Use `sub_account` to request placement for a specific sub-account:
+
+```http
+GET /api/v1/user/leaderboard/placement?timeframe=7d&sub_account=0xsubacct
+```
+
+The response returns one leaderboard row per visible sub-account, or one row when `sub_account` is supplied. Unranked entries use `ranked: false`.
+
+## Public Competitions
+
+Public competition endpoints do not require user auth:
+
+```http
+GET /api/v1/competitions
+GET /api/v1/competitions/{competition_slug}
+GET /api/v1/competitions/{competition_slug}/leaderboard
+```
+
+Use these for public landing pages, competition discovery, and read-only leaderboards.
+
+## Authenticated Competition Views
+
+Authenticated user endpoints use competition IDs:
+
+```http
+GET /api/v1/user/competitions
+GET /api/v1/user/competitions/{competition_id}/leaderboard
+GET /api/v1/user/competitions/{competition_id}/placement
+```
+
+Competition leaderboard rows include:
+
+- `sub_account_address`
+- `rank`
+- `score`
+- `metric_value`
+- `active_days`
+- `eligible`
+- `ineligible_reason`
+- `projected_xp`
+
+`projected_xp` is display-only live projection from current eligible leaderboard scores. Final XP allocation should come from the rewards ledger.
+
+## Status Filtering
+
+List endpoints accept an optional `status` filter. Use the generated OpenAPI reference for the accepted competition statuses and response schemas.

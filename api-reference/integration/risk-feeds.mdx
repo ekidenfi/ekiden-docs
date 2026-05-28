@@ -1,0 +1,80 @@
+---
+title: "Insurance Pool & ADL"
+---
+
+Insurance pool and ADL endpoints expose public risk-system state. Use them alongside the matching WebSocket topics when building dashboards or monitoring tools.
+
+## Insurance Pool Snapshot
+
+```http
+GET /api/v1/market/insurance-pool?symbol=BTC-USDC
+```
+
+Returns current insurance pool snapshots.
+
+Important fields:
+
+- `pool_id`
+- `pool_group_id`
+- `cash_balance`
+- `realized_pnl_cum`
+- `unrealized_pnl`
+- `base_equity`
+- `equity`
+- `group_redistribution_in`
+- `group_redistribution_out`
+- `group_adl_obligation`
+- `adl_mode`
+- `adl_trigger_reason`
+- `latest_pnl_ratio`
+- `updated_time`
+- `inventory`
+
+## Insurance Pool History
+
+```http
+GET /api/v1/market/insurance-pool/history?symbol=BTC-USDC&start_time=1731541800000&end_time=1732146600000&limit=100
+```
+
+History query parameters:
+
+| Parameter | Notes |
+| --------- | ----- |
+| `symbol` | Optional market symbol filter. |
+| `start_time` | Optional start timestamp in milliseconds. |
+| `end_time` | Optional end timestamp in milliseconds. |
+| `limit` | Optional row limit. |
+
+## ADL Alert Snapshot
+
+```http
+GET /api/v1/market/adl-alert?symbol=BTC-USDC
+```
+
+Returns current ADL alert snapshots.
+
+Important fields:
+
+- `pool_id`
+- `pool_group_id`
+- `symbol`
+- `adl_mode`
+- `adl_trigger_reason`
+- `latest_pnl_ratio`
+- `equity`
+- `updated_time`
+
+## ADL Alert History
+
+```http
+GET /api/v1/market/adl-alert/history?symbol=BTC-USDC&start_time=1731541800000&end_time=1732146600000&limit=100
+```
+
+## WebSocket Topics
+
+For live updates, subscribe to:
+
+- `insurance_pool.<symbol>`
+- `adl_alert.<symbol>`
+
+See [Insurance Pool WebSocket](../websocket/insurance_pool) and [ADL Alert WebSocket](../websocket/adl_alert).

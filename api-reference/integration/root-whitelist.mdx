@@ -1,0 +1,52 @@
+---
+title: "Root Whitelist"
+---
+
+Root whitelist endpoints control whether a root account can authorize and onboard when whitelist enforcement is enabled.
+
+## Check Whitelist Status
+
+```http
+GET /api/v1/authorize/whitelist/check?root_address=0x...
+```
+
+You can also check by public key:
+
+```http
+GET /api/v1/authorize/whitelist/check?root_public_key=0x...
+```
+
+Provide exactly one of `root_address` or `root_public_key`.
+
+Response:
+
+```json
+{
+  "root_address": "0x...",
+  "whitelisted": true
+}
+```
+
+When whitelist enforcement is disabled, the backend treats roots as effectively whitelisted.
+
+## Add or Remove Entries
+
+Administrative endpoints use root whitelist basic auth:
+
+```http
+PUT /api/v1/authorize/whitelist/{root_address}
+DELETE /api/v1/authorize/whitelist/{root_address}
+```
+
+These endpoints are operational controls, not normal end-user integration endpoints. Do not expose them in client applications.
+
+## Root Account Lookup
+
+Authenticated users can fetch their root account:
+
+```http
+GET /api/v1/user/root-account
+Authorization: Bearer <jwt>
+```
+
+This is useful when a frontend or SDK needs to display the root address associated with the authenticated user.
