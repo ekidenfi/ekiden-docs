@@ -10,7 +10,7 @@ Ekiden's architecture provides speed, transparency, and resilience through a hyb
 
 The Client Layer is the entry point for all user interactions. Users engage with the platform through:
 
-- **Non-Custodial Aptos Wallet** – Users maintain full control of their assets.
+- **Non-Custodial Canton Wallet** – Users maintain full control of their assets.
 - **Ekiden CLOB dApp** – Interface to submit orders and view the order book.
 - **Ekiden API** – Programmatic trading access for algorithmic strategies.
 - **Submit Orders** – Market and limit order support.
@@ -26,7 +26,7 @@ Handles all off-chain operations for high-speed trading.
 
 ## 3. Smart Contract Layer
 
-Runs on Aptos to ensure decentralized settlement and state integrity.
+Runs on Canton to ensure onchain settlement and state integrity.
 
 - **Orderbook Verifier** – Validates trades using Merkle proofs.
 - **Clearinghouse** – Manages collateral and finalizes trades.
@@ -39,6 +39,6 @@ Runs on Aptos to ensure decentralized settlement and state integrity.
 Ekiden’s architecture combines:
 
 - **Off-chain speed** – Fast matching, low latency, and scalable infrastructure.
-- **On-chain integrity** – Transparent and trustless anchoring on Aptos.
+- **On-chain integrity** and Privacy anchored on Canton.
 
 This hybrid model delivers the performance of centralized exchanges with the security and control of DeFi platforms.
