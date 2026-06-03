@@ -163,6 +163,24 @@
       ]
     }
   },
+  "redirects": [
+    {
+      "source": "/Fees",
+      "destination": "/fees"
+    },
+    {
+      "source": "/VIP-program",
+      "destination": "/vip-program"
+    },
+    {
+      "source": "/Vip-program",
+      "destination": "/vip-program"
+    },
+    {
+      "source": "/Points-program",
+      "destination": "/points-program"
+    }
+  ],
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
