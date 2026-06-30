@@ -11,8 +11,8 @@ This document outlines Ekiden's API design conventions and standards. These ensu
 Ekiden provides separate base URLs for each environment:
 
 - **Mainnet**: `(Coming Soon)`
-- **Testnet Beta**: [https://api.ekiden.fi/api/v1](https://api.ekiden.fi/api/v1)
-- **Testnet Staging**: [https://api.staging.ekiden.fi/api/v1](https://api.staging.ekiden.fi/api/v1)
+- **Testnet Beta**: [https://api.cnt.ekiden.fi/api/v1](https://api.cnt.ekiden.fi/api/v1)
+- **Devnet**: [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1)
 
 > All API calls must use **HTTPS**.
 
@@ -31,12 +31,12 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 
 ## 3. RESTful Design
 
-| Method   | Description                             |
-| -------- | --------------------------------------- |
-| `GET`    | Fetch resources (e.g., market data)     |
-| `POST`   | Create resources (e.g., place an order) |
-| `DELETE` | Cancel or remove resources              |
-| `PATCH`  | Update partial resources                |
+| Method | Description |
+| --- | --- |
+| `GET` | Fetch resources (e.g., market data) |
+| `POST` | Create resources (e.g., place an order) |
+| `DELETE` | Cancel or remove resources |
+| `PATCH` | Update partial resources |
 
 - Resources are nouns, pluralized when appropriate
   - Example: `/v1/trade/orders`, `/v1/trade/executions`
@@ -49,13 +49,13 @@ Endpoints:
 
 - Mainnet: `(Coming Soon)`
 - Testnet Beta:
-  - Public data: `wss://api.ekiden.fi/ws/public`
-  - Private data: `wss://api.ekiden.fi/ws/private`
-- Testnet Staging:
-  - Public data: `wss://api.staging.ekiden.fi/ws/public`
-  - Private data: `wss://api.staging.ekiden.fi/ws/private`
+  - Public data: `wss://api.cnt.ekiden.fi/ws/public`
+  - Private data: `wss://api.cnt.ekiden.fi/ws/private`
+- Devnet:
+  - Public data: `wss://api.canton.ekiden.fi/ws/public`
+  - Private data: `wss://api.canton.ekiden.fi/ws/private`
 
-Messages use an `op` field with snake_case values. Optional `req_id` lets you correlate requests/responses.
+Messages use an `op` field with snake\_case values. Optional `req_id` lets you correlate requests/responses.
 
 ### Topics
 
@@ -136,9 +136,9 @@ Private REST and private WebSocket use a short-lived JWT issued by the gateway, 
 
 ### JWT Authentication
 
-1) Request a token via `POST /api/v1/authorize` by signing the message:
+1. Request a token via `POST /api/v1/authorize` by signing the message:
 
-```
+```text
 AUTHORIZE|{timestamp_ms}|{nonce}
 ```
 
@@ -159,7 +159,7 @@ Response:
 { "token": "<jwt>", "user_id": "<user_id>" }
 ```
 
-2) Use the token with Bearer auth for private endpoints:
+2. Use the token with Bearer auth for private endpoints:
 
 ```http
 Authorization: Bearer <jwt>
@@ -195,7 +195,7 @@ We use explicit units depending on the field name and context:
 - `timestamp` (REST resources like orders, fills, positions): Unix seconds since epoch (int). Example: `1718000000`.
 - `timestamp_ms` (REST authorize flow, API Key headers): Unix milliseconds since epoch (int). Example: `1718000000000`.
 - `server_ts_ms` (WebSocket event envelope): Unix milliseconds since epoch (int).
-- `ts` (WebSocket ticker snapshots and ping/pong client_ts/server_ts):
+- `ts` (WebSocket ticker snapshots and ping/pong client\_ts/server\_ts):
   - For ticker `ts`: Unix milliseconds since epoch (int). Example: `1718000000000`.
   - For WS ping/pong `client_ts`/`server_ts`: Unix milliseconds since epoch (int). Example: `1718000000000`.
 
@@ -217,7 +217,7 @@ When an ISO 8601 string appears (e.g., funding endpoints), it is explicitly docu
 ### Common Error Codes
 
 | Code | Meaning |
-| ---- | ------- |
+| --- | --- |
 | `BAD_REQUEST` | Invalid request parameters |
 | `UNAUTHORIZED` | Authentication failed or token expired |
 | `FORBIDDEN` | Insufficient permissions (scopes) |
