@@ -59,7 +59,7 @@ Messages use an `op` field with snake\_case values. Optional `req_id` lets you c
 ### Topics
 
 - Public (Market-scoped):
-  - `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTCUSDC`)
+  - `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTC-USDC`)
   - `trade.<symbol>`
   - `ticker.<symbol>`
   - `kline.<interval>.<symbol>`
@@ -76,7 +76,7 @@ Client → Server
 ```json
 {
   "op": "subscribe",
-  "args": ["orderbook.1.BTCUSDC", "ticker.BTCUSDC"],
+  "args": ["orderbook.1.BTC-USDC", "ticker.BTC-USDC"],
   "req_id": "optional-id"
 }
 ```
@@ -86,7 +86,7 @@ Server → Client
 ```json
 {
   "op": "subscribed",
-  "args": ["orderbook.1.BTCUSDC", "ticker.BTCUSDC"],
+  "args": ["orderbook.1.BTC-USDC", "ticker.BTC-USDC"],
   "req_id": "optional-id"
 }
 ```
@@ -96,7 +96,7 @@ Server → Client
 ```json
 {
   "op": "unsubscribe",
-  "args": ["orderbook.1.BTCUSDC"]
+  "args": ["orderbook.1.BTC-USDC"]
 }
 ```
 
@@ -105,7 +105,7 @@ Server → Client
 ```json
 {
   "op": "event",
-  "topic": "ticker.BTCUSDC",
+  "topic": "ticker.BTC-USDC",
   "server_ts_ms": 1731541800000,
   "data": { /* snapshot or update payload */ }
 }
