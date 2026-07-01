@@ -17,9 +17,11 @@
     "tabs": [
       {
         "tab": "Guides",
-        "groups": [
+        "pages": [
+          "untitled-page",
+          "trade",
           {
-            "group": "Get Started",
+            "group": "Platform",
             "pages": [
               "index",
               "architecture",
