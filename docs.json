@@ -141,6 +141,12 @@
             }
           }
         ]
+      },
+      {
+        "tab": "How To Use",
+        "pages": [
+          "get-started"
+        ]
       }
     ],
     "global": {

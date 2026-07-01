@@ -23,7 +23,7 @@ Ekiden provides separate base URLs for each environment:
 We use URI-based versioning:
 
 - **Format**: `/v1/`
-- **Example**: `GET /v1/market/instruments`
+- **Example**: `GET /v1/market/tickers`
 
 Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 
@@ -34,12 +34,11 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 | Method | Description |
 | --- | --- |
 | `GET` | Fetch resources (e.g., market data) |
-| `POST` | Create resources (e.g., place an order) |
+| `POST` | Create resources or perform actions (e.g., place or amend an order) |
 | `DELETE` | Cancel or remove resources |
-| `PATCH` | Update partial resources |
+| `PUT` | Replace or update resources where applicable (e.g., whitelist management) |
 
-- Resources are nouns, pluralized when appropriate
-  - Example: `/v1/trade/orders`, `/v1/trade/executions`
+- Endpoints are organized by resource
 
 ---
 
