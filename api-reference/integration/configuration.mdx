@@ -1,20 +1,36 @@
 ---
 title: "Configuration"
-description: "This section lists the production and staging endpoint URLs for REST, WebSocket, and GraphQL connections, helping you configure your client for seamless integration with Ekiden’s services."
+description: "This section lists the available endpoint URLs for REST and WebSocket, helping you configure your client for seamless integration with Ekiden’s services."
 ---
 
 ## Production
 
-- **REST (Gateway)**: https://api.ekiden.fi/api/v1
-- **SDK WebSocket Public**: wss://api.ekiden.fi/ws/public
-- **SDK WebSocket Private**: wss://api.ekiden.fi/ws/private
-- **GraphQL HTTP**: https://hasura.ekiden.fi/v1/graphql
-- **GraphQL WS**: wss://hasura.ekiden.fi/v1/graphql
+Coming soon.
 
-## Staging
+{/*
+  TODO(CONFIG): Production/Mainnet is not available yet. Restore and update these endpoints after Mainnet launch.
 
-- **REST (Gateway)**: https://api.staging.ekiden.fi/api/v1
-- **SDK WebSocket Public**: wss://api.staging.ekiden.fi/ws/public
-- **SDK WebSocket Private**: wss://api.staging.ekiden.fi/ws/private
-- **GraphQL HTTP**: https://hasura.staging.ekiden.fi/v1/graphql
-- **GraphQL WS**: wss://hasura.staging.ekiden.fi/v1/graphql
+  - **REST (Gateway)**: [https://api.ekiden.fi/api/v1](https://api.ekiden.fi/api/v1)
+  - **SDK WebSocket Public**: wss://api.ekiden.fi/ws/public
+  - **SDK WebSocket Private**: wss://api.ekiden.fi/ws/private
+  - **GraphQL HTTP**: [https://hasura.ekiden.fi/v1/graphql](https://hasura.ekiden.fi/v1/graphql)
+  - **GraphQL WS**: wss://hasura.ekiden.fi/v1/graphql
+  */}
+
+## Testnet Beta
+
+Public beta environment running on Canton testnet.
+
+- **REST (Gateway)**: [https://api.cnt.ekiden.fi/api/v1](https://api.cnt.ekiden.fi/api/v1)
+- **SDK WebSocket Public**: `wss://api.cnt.ekiden.fi/ws/public`
+- **SDK WebSocket Private**: `wss://api.cnt.ekiden.fi/ws/private`
+
+## Devnet
+
+Internal development environment running on Canton testnet.
+
+- **REST (Gateway)**: [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1)
+- **SDK WebSocket Public**: `wss://api.canton.ekiden.fi/ws/public`
+- **SDK WebSocket Private**: `wss://api.canton.ekiden.fi/ws/private`
+
+{/* TODO(CONFIG): Confirm whether GraphQL HTTP and GraphQL WebSocket endpoints are currently supported and, if so, add the correct endpoints for Testnet Beta and Devnet. */}
