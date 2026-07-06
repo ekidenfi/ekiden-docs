@@ -1,27 +1,28 @@
 ---
-description: "This page explains how to initialize the Ekiden SDK in TypeScript, Python, and Rust. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading)."
 title: "Client Initialization"
+description: "This page explains how to initialize the Ekiden SDK in TypeScript, Python, and Rust. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading)."
 ---
 
 ## Supported Environments
 
 Ekiden supports the following environments:
 
-| Environment | Network Key | REST URL                             | WebSocket URL                  |
-| ----------- | ----------- | ------------------------------------ | ------------------------------ |
-| Testnet     | testnet     | https://api.ekiden.fi/api/v1         | wss://api.ekiden.fi/ws         |
+| Environment | Network Key | REST URL | WebSocket URL |
+| --- | --- | --- | --- |
+| Testnet Beta | testnet | [https://api.cnt.ekiden.fi/api/v1](https://api.cnt.ekiden.fi/api/v1) | wss://api.cnt.ekiden.fi/ws |
+| Devnet | testnet | [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1) | wss://api.canton.ekiden.fi/ws |
 
 Use the network parameter during client initialization to select your target environment.
 
 ## Initialization Parameters
 
-| Parameter     | Description                          | Required              | Default |
-| ------------- | ------------------------------------ | --------------------- | ------- |
-| network       | mainnet or testnet                   | No                    | mainnet |
-| api_key       | For private endpoints                | Yes (if API key auth) | —       |
-| private_key   | Alternative for signature-based auth | Yes (if no API key)   | —       |
-| subaccount_id | Optional subaccount ID               | No                    | 0       |
-| use_websocket | Enable WS connections                | No                    | true    |
+| Parameter | Description | Required | Default |
+| --- | --- | --- | --- |
+| network | mainnet or testnet | No | mainnet |
+| api\_key | For private endpoints | Yes (if API key auth) | — |
+| private\_key | Alternative for signature-based auth | Yes (if no API key) | — |
+| subaccount\_id | Optional subaccount ID | No | 0 |
+| use\_websocket | Enable WS connections | No | true |
 
 ## Examples
 
@@ -55,7 +56,6 @@ const { token } = await ekiden.authorize({
   timestamp_ms: nowMs,
   nonce: nonceB64Url
 });
-
 ```
 
 ### Rust
@@ -72,3 +72,5 @@ async fn main() {
         .unwrap();
 }
 ```
+
+{/* TODO(SDK): Verify and update the client initialization parameters against the current TypeScript SDK. The documented parameters and defaults may not match the current EkidenClient configuration. */}
