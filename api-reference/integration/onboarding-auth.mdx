@@ -12,12 +12,12 @@ Construct the message and sign it with your Ed25519 key:
 
 Message format:
 
-```
+```text
 AUTHORIZE|{timestamp_ms}|{nonce}
 ```
 
 - `timestamp_ms`: Unix time in milliseconds
-- `nonce`: random, unique per request (replay-protected per public_key)
+- `nonce`: random, unique per request (replay-protected per public\_key)
 
 Example body:
 
@@ -86,6 +86,7 @@ Successful response:
 Gateway supports API-key auth headers for programmatic access without obtaining a JWT first.
 
 Headers:
+
 - `X-API-KEY`: Your API public key
 - `X-SIGNATURE`: Ed25519 signature over `EKIDEN_API|{method}|{uri}|{timestamp_ms}|{nonce}`
 - `X-TIMESTAMP-MS`: Unix milliseconds
@@ -110,7 +111,7 @@ Private endpoints under `/api/v1/user/*` and certain actions require this header
 
 Connect to the private WS endpoint and authenticate, then subscribe to private topics:
 
-1. Connect: `wss://api.ekiden.fi/ws/private` (or staging)
+1. Connect: `wss://api.cnt.ekiden.fi/ws/private`
 2. Authenticate:
 
 Client → Server
@@ -147,7 +148,7 @@ Public topics like `orderbook.1.BTCUSDC`, `trade.BTCUSDC`, `ticker.BTCUSDC` are 
 Request token:
 
 ```bash
-curl -X POST "https://api.ekiden.fi/api/v1/authorize" \
+curl -X POST "https://api.cnt.ekiden.fi/api/v1/authorize" \
     -H "Content-Type: application/json" \
     -d '{
         "public_key": "0x...",
@@ -161,13 +162,13 @@ Call a private REST endpoint:
 
 ```bash
 curl -H "Authorization: Bearer <jwt>" \
-    "https://api.ekiden.fi/api/v1/user/portfolio"
+    "https://api.cnt.ekiden.fi/api/v1/user/portfolio"
 ```
 
 ---
 
 ## Troubleshooting
 
-- 400 on /authorize: check signature, timestamp_ms freshness, and nonce uniqueness.
+- 400 on /authorize: check signature, timestamp\_ms freshness, and nonce uniqueness.
 - 401 on private REST or WS auth: token expired or invalid.
 - WS: authenticate before subscribing to private topics on `/ws/private`.
