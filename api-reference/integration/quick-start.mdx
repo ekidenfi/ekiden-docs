@@ -2,45 +2,48 @@
 title: "Quick Start"
 ---
 
-Import and initialize the client, authorize via wallet signature and make a test call:
+This guide is being updated for the current Canton-based integration flow.
 
-```ts
-import { Ed25519Account, Ed25519PrivateKey } from "@aptos-labs/ts-sdk";
+{/* Import and initialize the client, authorize via wallet signature and make a test call:
 
-import { EkidenClient, TESTNET } from "@ekiden/ts-sdk";
+  ```ts
+  import { Ed25519Account, Ed25519PrivateKey } from "@aptos-labs/ts-sdk";
 
-const ekiden = new EkidenClient(TESTNET);
+  import { EkidenClient, TESTNET } from "@ekiden/ts-sdk";
 
-const privateKey = new Ed25519PrivateKey(ENV.PRIVATE_KEY);
-const account = new Ed25519Account({ privateKey });
+  const ekiden = new EkidenClient(TESTNET);
 
-const publicKey = account.publicKey.toString();
+  const privateKey = new Ed25519PrivateKey(ENV.PRIVATE_KEY);
+  const account = new Ed25519Account({ privateKey });
 
-const nowMs = Date.now();
-const nonce = crypto.getRandomValues(new Uint8Array(16))
+  const publicKey = account.publicKey.toString();
+
+  const nowMs = Date.now();
+  const nonce = crypto.getRandomValues(new Uint8Array(16))
   .reduce((acc, b) => acc + String.fromCharCode(b), "");
-const nonceB64Url = btoa(nonce).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
-const signed = `AUTHORIZE|${nowMs}|${nonceB64Url}`;
-const messageBytes = new TextEncoder().encode(signed);
-const signature = account.sign(messageBytes).toString();
+  const nonceB64Url = btoa(nonce).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+  const signed = `AUTHORIZE|${nowMs}|${nonceB64Url}`;
+  const messageBytes = new TextEncoder().encode(signed);
+  const signature = account.sign(messageBytes).toString();
 
 
-// Authorize (get JWT)
-const { token } = await ekiden.authorize({
+  // Authorize (get JWT)
+  const { token } = await ekiden.authorize({
   signature,
   public_key: publicKey,
   timestamp_ms: nowMs,
   nonce: nonceB64Url
-});
+  });
 
-// Fetch user orders
-const orders = await ekiden.getUserOrders({ market_addr: "0x..." });
+  // Fetch user orders
+  const orders = await ekiden.getUserOrders({ market_addr: "0x..." });
 
-// Fetch user vaults
-const vaults = await ekiden.getUserVaults();
+  // Fetch user vaults
+  const vaults = await ekiden.getUserVaults();
 
-// Fetch user positions
-const positions = await ekiden.getUserPositions();
-```
+  // Fetch user positions
+  const positions = await ekiden.getUserPositions();
+  ```
+  */}
 
 {/* TODO(SDK): Rewrite this Quick Start for the current Canton integration. The example still uses the Aptos SDK, Aptos Ed25519 account/private-key authentication, an outdated package name, and SDK methods that do not match the current TypeScript SDK API. */}

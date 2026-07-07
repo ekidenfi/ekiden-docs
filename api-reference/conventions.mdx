@@ -135,18 +135,20 @@ Private REST and private WebSocket use a short-lived JWT issued by the gateway, 
 
 ### JWT Authentication
 
-1. Request a token via `POST /api/v1/authorize` by signing the message:
+1. Request a token via `POST /api/v1/authorize`
 
-```text
-AUTHORIZE|{timestamp_ms}|{nonce}
-```
+{/*  by signing the message:
 
-with Ed25519. Body:
+  ```text
+  AUTHORIZE|{timestamp_ms}|{nonce}
+  ```
+
+  with Ed25519. Body: \ */}
 
 ```json
 {
-  "public_key": "0x...",
-  "signature": "0x...",
+  "public_key": "<Canton Party ID>",
+  "signature": "",
   "timestamp_ms": 1731541800000,
   "nonce": "random-unique-string"
 }
