@@ -1,0 +1,110 @@
+---
+title: "Leverage"
+---
+
+## Overview
+
+Ekiden supports isolated leverage settings per market. This allows users to control risk independently for each trading pair. Adjusting leverage changes how much margin is allocated to your open position in a given market. Increasing leverage frees up margin but increases liquidation risk, while lowering leverage adds margin and decreases risk.
+
+## Endpoint
+
+`POST /api/v1/user/intent`
+
+Adjust the leverage multiplier for a specific market. This endpoint applies only to the specified market and cancels any open orders associated with it.
+
+ActionStatus values used across intent processing:
+
+- 0 = Pending — intent accepted and awaiting commitment
+- 1 = Success — intent committed successfully
+- 2 = Rejected — intent failed; see error message when available
+
+If you need to wait for a definitive result, use `POST /api/v1/user/intent/commit`, which blocks until the intent is committed (Success) or rejected and returns the `status` (0/1/2) and optional `error_message`.
+
+### Headers
+
+```text
+Authorization: Bearer {API_KEY}
+Content-Type: application/json
+```
+
+## Request Parameters
+
+| Parameter | Type | Description | Required |
+| --- | --- | --- | --- |
+| market | string | Market symbol (e.g. BTC-PERP) | Yes |
+| leverage | integer | New leverage (e.g. 10 for 10x) | Yes |
+| subAccount | string | Optional subaccount identifier | No |
+
+## Example Request
+
+```json
+{
+    "payload": {
+        "type": "leverage_assign",
+        "market_addr": "",
+        "leverage": 8
+    },
+    "nonce": 1755001718461,
+    "signature": ""
+}
+```
+
+## Example
+
+```ts
+    const nonce = Date.now();
+
+    const payload = {
+      type: "leverage_assign",
+      market_addr: marketStore.activeMarket.addr,
+      leverage,
+    } satisfies ActionPayload;
+
+    const hex = buildOrderPayload({
+      payload,
+      nonce,
+    });
+
+    const signature = accountStore.subAccount.sign(hex).toString();
+
+    const params = {
+      payload,
+      nonce,
+      signature,
+    } satisfies SendIntentParams;
+
+    let response: SendIntentResponse;
+
+    response = await ekiden.sendIntent(params);
+```
+
+## Response
+
+```json
+{
+  "success": true,
+  "market": "BTC-PERP",
+  "newLeverage": 10,
+  "oldLeverage": 5,
+  "message": "Leverage updated successfully. All open orders were cancelled."
+}
+```
+
+## Error Example
+
+```json
+{
+  "success": false,
+  "error": "Leverage 25x exceeds the maximum allowed for BTC-PERP (20x)."
+}
+```
+
+## Notes
+
+- Leverage is isolated per market
+- Min = 1x, Max = varies by market
+- Open orders are cancelled when leverage is changed
+- Changing leverage affects margin ratio and liquidation price
+- Cannot increase leverage if margin requirements would be violated
+
+---
