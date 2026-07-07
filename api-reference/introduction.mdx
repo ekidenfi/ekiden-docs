@@ -3,62 +3,26 @@ title: "Introduction"
 description: "Learn how Ekiden combines low-latency off-chain trading with Canton-based on-chain workflows."
 ---
 
-# Introduction
+The Ekiden API provides a unified, high-throughput REST interface that connects both to the off-chain central limit order book (CLOB), where matching and execution take place, and to the on-chain settlement layer on Canton. While most interactions happen off-chain, traders also perform on-chain actions via Canton nodes using the Rust SDK - all through a single integrated API.
 
-The Ekiden API provides low-latency access to Ekiden’s trading infrastructure, combining an off-chain central limit order book (CLOB) with Canton-based on-chain workflows.
+All trading actions require digital signature authentication. Orders are matched off-chain for speed but are cryptographically verified and settled on-chain using Merkle proofs.
 
-Orders are submitted, matched, and executed through Ekiden’s off-chain trading infrastructure. This allows traders and applications to place and manage orders without requiring a wallet interaction for every trading operation.
+### **Connectivity & Integration**
 
-Canton is used for on-chain workflows such as user registration, trading account creation, and funding operations. These workflows are separate from latency-sensitive order submission and execution.
+Ekiden’s API is built for low-latency, high-throughput trading infrastructure:
 
-## Connectivity & Integration
+- **REST** endpoints handle order execution, cancellation, market data, and account management.
+- **WebSocket** streams provide real-time updates, including trade events, order book changes, and fills.
 
-Ekiden provides multiple interfaces for trading and integration:
+SDKs are available in multiple languages to streamline integration. Each SDK includes usage examples, setup instructions, and real-world integration patterns:
 
-<CardGroup cols={3}>
-  <Card title="REST API" icon="code">
-    Manage orders, access account and market data, and perform other request-response operations.
-  </Card>
+- `ekiden-sdk-typescript`: A full-featured SDK for Node.js and browser environments.
+- `ekiden-sdk-rust`: Designed for high-performance, low-latency applications.
 
-  <Card title="WebSocket Streams" icon="wave-pulse">
-    Receive real-time updates for market data, order book changes, orders, fills, and account events.
-  </Card>
+### **Institutional Support**
 
-  <Card title="Canton Workflows" icon="link">
-    Perform on-chain workflows for user registration, trading account creation, and funding operations.
-  </Card>
-</CardGroup>
+For advanced needs such as colocated execution, higher rate limits, or custom infrastructure, Ekiden offers private connectivity and priority support. For access and assistance, just reach out to our team directly on Discord.
 
-<Info>
-  Ekiden keeps latency-sensitive trading operations off-chain while using Canton for workflows that require on-chain state changes.
-</Info>
+### **Next Steps**
 
-## Next Steps
-
-Continue with the following sections to configure your integration, authenticate with the API, set up accounts, fund a trading account, and connect to real-time market and account updates.
-
-{/* 
-  The Ekiden API provides a unified, high-throughput REST interface that connects both to the off-chain central limit order book (CLOB), where matching and execution take place, and to the on-chain settlement layer on Canton. While most interactions happen off-chain, traders also perform on-chain actions via Canton nodes using the Rust SDK - all through a single integrated API. 
-
-  All trading actions require digital signature authentication. Orders are matched off-chain for speed but are cryptographically verified and settled on-chain using Merkle proofs.
-
-  ### **Connectivity & Integration**
-
-  Ekiden’s API is built for low-latency, high-throughput trading infrastructure:
-
-  - **REST** endpoints handle order execution, cancellation, market data, and account management.
-  - **WebSocket** streams provide real-time updates, including trade events, order book changes, and fills.
-
-  SDKs are available in multiple languages to streamline integration. Each SDK includes usage examples, setup instructions, and real-world integration patterns:
-
-  - `ekiden-sdk-typescript`: A full-featured SDK for Node.js and browser environments.
-  - `ekiden-sdk-rust`: Designed for high-performance, low-latency applications.
-
-  ### **Institutional Support**
-
-  For advanced needs such as colocated execution, higher rate limits, or custom infrastructure, Ekiden offers private connectivity and priority support. For access and assistance, just reach out to our team directly on Discord.
-
-  ### **Next Steps**
-
-  The following sections provide comprehensive API specifications, endpoint documentation, and integration examples to help you onboard quickly and confidently.
-  */}
+The following sections provide comprehensive API specifications, endpoint documentation, and integration examples to help you onboard quickly and confidently.
