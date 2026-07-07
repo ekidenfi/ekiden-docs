@@ -5,14 +5,13 @@ title: "Market Data"
 ### **Sources**
 
 - REST: see API Reference for `/api/v1/market/*` endpoints (kline, recent-trades, tickers, funding-rate)
-- GraphQL (snapshots/queries): https://hasura.ekiden.fi/v1/graphql
 - WebSocket (real-time):
-	- Public: `wss://api.ekiden.fi/ws/public` (or staging)
-	- Private: `wss://api.ekiden.fi/ws/private` (requires JWT auth)
+  - Public: `wss://api.cnt.ekiden.fi/ws/public`
+  - Private: `wss://api.cnt.ekiden.fi/ws/private` (requires JWT auth)
 
 ### **Common Subscriptions**
 
-- Orderbook snapshots and deltas: `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTCUSDC`)
+- Orderbook snapshots and deltas: `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTC-USDCx`)
 - Trades (aggregated): `trade.<symbol>`
 - Ticker snapshots: `ticker.<symbol>`
 - Klines (candlesticks): `kline.<interval>.<symbol>`
