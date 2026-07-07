@@ -1,43 +1,34 @@
 ---
-title: "Onboarding Signature & API Auth"
+title: "API Authentication"
 ---
 
 This guide shows how to obtain a JWT and use it for authenticated REST and WebSocket access.
 
 ---
 
-## 1) Sign the authorize message
+## 1) Obtain a JWT
 
-Construct the message and sign it with your Ed25519 key:
+Request a token from the authorization endpoint:
 
-Message format:
-
-```text
-AUTHORIZE|{timestamp_ms}|{nonce}
+```http
+POST /api/v1/authorize
+Content-Type: application/json
 ```
-
-- `timestamp_ms`: Unix time in milliseconds
-- `nonce`: random, unique per request (replay-protected per public\_key)
 
 Example body:
 
 ```json
 {
-    "public_key": "0xa9d81da788977638194c857b918f12ff2233c7a86e82b44705761b2d02426f6d",
-    "signature": "0xf5ec808e52d014f5...",
-    "timestamp_ms": 1731541800000,
-    "nonce": "b7d1c2e8f5a94f3db2f8c6a9d1e4"
+  "public_key": "<Canton Party ID>",
+  "signature": "",
+  "timestamp_ms": 1731541800000,
+  "nonce": "random-unique-string"
 }
 ```
 
-POST it to the gateway:
-
-```http
-POST /api/v1/authorize
-Content-Type: application/json
-
-{ "public_key": "0x...", "signature": "0x...", "timestamp_ms": 1731541800000, "nonce": "..." }
-```
+- `public_key`: Canton Party ID associated with the user
+- `timestamp_ms`: Unix time in milliseconds
+- `nonce`: Unique value generated for the authorization request
 
 Successful response:
 
@@ -49,39 +40,40 @@ Token validity: 7 days from issuance.
 
 ---
 
-## 2) Session Delegation Auth
+{/*
+  ## 2) Session Delegation Auth
 
-Gateway supports session delegation auth where a root account delegates permissions to a session key.
+  Gateway supports session delegation auth where a root account delegates permissions to a session key.
 
-POST to `/api/v1/authorize/session`:
+  POST to `/api/v1/authorize/session`:
 
-```http
-POST /api/v1/authorize/session
-Content-Type: application/json
+  ```http
+  POST /api/v1/authorize/session
+  Content-Type: application/json
 
-{
+  {
   "delegation": {
-    "root_public_key": "0x...",
-    "session_public_key": "0x...",
-    "expires_at": 1731541800,
-    "scopes": ["Full"],
-    "signature": "0x..."
+  "root_public_key": "0x...",
+  "session_public_key": "0x...",
+  "expires_at": 1731541800,
+  "scopes": ["Full"],
+  "signature": "0x..."
   },
   "signature": "0x...",
   "timestamp_ms": 1731541800000,
   "nonce": "..."
-}
-```
+  }
+  ```
 
-Successful response:
+  Successful response:
 
-```json
-{ "token": "<jwt>", "user_id": "<user_id>" }
-```
+  ```json
+  { "token": "<jwt>", "user_id": "<user_id>" }
+  ```
+  ---
+  */}
 
----
-
-## 3) API Key Auth
+## 2) API Key Auth
 
 Gateway supports API-key auth headers for programmatic access without obtaining a JWT first.
 
@@ -94,7 +86,7 @@ Headers:
 
 ---
 
-## 4) Use the token for REST
+## 3) Use the token for REST
 
 Include the token as a Bearer in the Authorization header:
 
@@ -107,7 +99,7 @@ Private endpoints under `/api/v1/user/*` and certain actions require this header
 
 ---
 
-## 5) Use the token for private WebSocket
+## 4) Use the token for private WebSocket
 
 Connect to the private WS endpoint and authenticate, then subscribe to private topics:
 
@@ -151,8 +143,8 @@ Request token:
 curl -X POST "https://api.cnt.ekiden.fi/api/v1/authorize" \
     -H "Content-Type: application/json" \
     -d '{
-        "public_key": "0x...",
-        "signature": "0x...",
+        "public_key": "<Canton Party ID>",
+        "signature": "",
         "timestamp_ms": 1731541800000,
         "nonce": "b7d1c2e8f5a94f3db2f8c6a9d1e4"
     }'
@@ -169,6 +161,11 @@ curl -H "Authorization: Bearer <jwt>" \
 
 ## Troubleshooting
 
-- 400 on /authorize: check signature, timestamp\_ms freshness, and nonce uniqueness.
+- 400 on /authorize: check the request payload, timestamp\_ms freshness, and nonce validity.
 - 401 on private REST or WS auth: token expired or invalid.
 - WS: authenticate before subscribing to private topics on `/ws/private`.
+
+{/* TODO(BACKEND): Confirm whether Session Delegation Auth is supported
+  in the current Canton integration.
+  The endpoint is not present in the current OpenAPI specification.
+  */}
