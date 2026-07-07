@@ -1,6 +1,6 @@
 ---
 title: "Client Initialization"
-description: "This page explains how to initialize the Ekiden SDK in TypeScript, Python, and Rust. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading)."
+description: "This page explains how to initialize the Ekiden SDK in TypeScript and Rust. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading)."
 ---
 
 ## Supported Environments
@@ -24,53 +24,55 @@ Use the network parameter during client initialization to select your target env
 | subaccount\_id | Optional subaccount ID | No | 0 |
 | use\_websocket | Enable WS connections | No | true |
 
-## Examples
+{/*
+  ## Examples
 
-### TypeScript
+  ### TypeScript
 
-```ts
-import { Ed25519Account, Ed25519PrivateKey } from "@aptos-labs/ts-sdk";
+  ```ts
+  import { Ed25519Account, Ed25519PrivateKey } from "@aptos-labs/ts-sdk";
 
-import { EkidenClient, TESTNET } from "@ekiden/ts-sdk";
+  import { EkidenClient, TESTNET } from "@ekiden/ts-sdk";
 
-const ekiden = new EkidenClient(TESTNET);
+  const ekiden = new EkidenClient(TESTNET);
 
-const privateKey = new Ed25519PrivateKey(ENV.PRIVATE_KEY);
-const account = new Ed25519Account({ privateKey });
+  const privateKey = new Ed25519PrivateKey(ENV.PRIVATE_KEY);
+  const account = new Ed25519Account({ privateKey });
 
-const publicKey = account.publicKey.toString();
+  const publicKey = account.publicKey.toString();
 
-const nowMs = Date.now();
-const nonce = crypto.getRandomValues(new Uint8Array(16))
+  const nowMs = Date.now();
+  const nonce = crypto.getRandomValues(new Uint8Array(16))
   .reduce((acc, b) => acc + String.fromCharCode(b), "");
-const nonceB64Url = btoa(nonce).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
-const signed = `AUTHORIZE|${nowMs}|${nonceB64Url}`;
-const messageBytes = new TextEncoder().encode(signed);
-const signature = account.sign(messageBytes).toString();
+  const nonceB64Url = btoa(nonce).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+  const signed = `AUTHORIZE|${nowMs}|${nonceB64Url}`;
+  const messageBytes = new TextEncoder().encode(signed);
+  const signature = account.sign(messageBytes).toString();
 
 
-// Authorize (get JWT)
-const { token } = await ekiden.authorize({
+  // Authorize (get JWT)
+  const { token } = await ekiden.authorize({
   signature,
   public_key: publicKey,
   timestamp_ms: nowMs,
   nonce: nonceB64Url
-});
-```
+  });
+  ```
 
-### Rust
+  ### Rust
 
-```rust
-use ekiden_sdk::{ClientBuilder, Network};
+  ```rust
+  use ekiden_sdk::{ClientBuilder, Network};
 
-#[tokio::main]
-async fn main() {
-    let client = ClientBuilder::new(Network::Mainnet)
-        .with_subaccount(0)
-        .enable_websocket(true)
-        .build()
-        .unwrap();
-}
-```
+  #[tokio::main]
+  async fn main() {
+  let client = ClientBuilder::new(Network::Mainnet)
+      .with_subaccount(0)
+      .enable_websocket(true)
+      .build()
+      .unwrap();
+  }
+  ```
+  */}
 
 {/* TODO(SDK): Verify and update the client initialization parameters against the current TypeScript SDK. The documented parameters and defaults may not match the current EkidenClient configuration. */}
