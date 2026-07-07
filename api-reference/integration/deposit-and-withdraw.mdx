@@ -10,63 +10,67 @@ Ekiden uses a smart contract-based margin bank to custody collateral for trading
 
 Ekiden supports the following tokens as margin collateral:
 
-- USDC.
+- USDCx.
 - More coming soon.
 
-Check the /tokens endpoint or documentation for the most current list.
+Check the documentation for the most current list of supported collateral assets.
 
 ## Depositing Tokens
 
 ### Steps
 
 - Ensure Wallet Connection to the correct network
-- Call Deposit Endpoint or SDK Method
 
-### REST
+Deposit and withdrawal integrations for Canton are being finalized. Updated integration instructions and SDK examples will be added once available.
 
-**Get Deposits**
+{/*
+  - Call Deposit Endpoint or SDK Method
 
-```ts
-GET /api/v1/deposits
-```
+  ### REST
 
-**Get Withdrawals**
+  **Get Deposits**
 
-```typescript
-GET /api/v1/withdraws
-```
+  ```ts
+  GET /api/v1/deposits
+  ```
 
-### SDK Examples
+  **Get Withdrawals**
 
-**Deposit**
+  ```typescript
+  GET /api/v1/withdraws
+  ```
 
-```typescript
-import {
+  ### SDK Examples
+
+  **Deposit**
+
+  ```typescript
+  import {
   Aptos,
   AptosConfig,
   Ed25519Account,
   Ed25519PrivateKey,
   Network,
-} from "@aptos-labs/ts-sdk";
+  } from "@aptos-labs/ts-sdk";
 
-import "dotenv/config";
+  import "dotenv/config";
 
-import { EkidenClient, TESTNET } from "../dist/index.js";
+  import { EkidenClient, TESTNET } from "../dist/index.js";
 
-const TESTNET_USDC =
+  const TESTNET_USDC =
   "0x9967e130f7419f791c240acc17dde966ec84ad41652e2e87083ee613f460d019";
 
-const TESTNET_VAULT_ADDRESS =
+  const TESTNET_VAULT_ADDRESS =
   "0x9e53ba9771421bddb0ba8722cde10b8c6a933dba8557075610698a95b8a82ec6";
 
-const config = {
+  const config = {
   privateKey: process.env["PK"], // Replace with your private key
   vaultAddress: TESTNET_VAULT_ADDRESS,
   assetMetadata: TESTNET_USDC,
   amount: BigInt(1000000), // 1 USDC (1e6)
-};
+  };
 
-async function depositExample() {
+  async function depositExample() {
   const ekiden = new EkidenClient({
     baseURL: TESTNET.baseURL,
   });
@@ -122,40 +126,40 @@ async function depositExample() {
   await aptos.waitForTransaction({ transactionHash: submitted.hash });
 
   console.log(`Deposit transaction submitted: ${submitted.hash}`);
-}
+  }
 
-depositExample();
-```
+  depositExample();
+  ```
 
-**Withdraw**
+  **Withdraw**
 
-```typescript
-import {
+  ```typescript
+  import {
   Aptos,
   AptosConfig,
   Ed25519Account,
   Ed25519PrivateKey,
   Network,
-} from "@aptos-labs/ts-sdk";
+  } from "@aptos-labs/ts-sdk";
 
-import "dotenv/config";
+  import "dotenv/config";
 
-import { EkidenClient, TESTNET } from "../dist/index.js";
+  import { EkidenClient, TESTNET } from "../dist/index.js";
 
-const TESTNET_USDC =
+  const TESTNET_USDC =
   "0x9967e130f7419f791c240acc17dde966ec84ad41652e2e87083ee613f460d019";
 
-const TESTNET_VAULT_ADDRESS =
+  const TESTNET_VAULT_ADDRESS =
   "0x9e53ba9771421bddb0ba8722cde10b8c6a933dba8557075610698a95b8a82ec6";
 
-const config = {
+  const config = {
   privateKey: process.env["PK"], // Replace with your private key
   vaultAddress: TESTNET_VAULT_ADDRESS,
   assetMetadata: TESTNET_USDC,
   amount: BigInt(1000000), // 1 USDC (1e6)
-};
+  };
 
-async function depositExample() {
+  async function depositExample() {
   const ekiden = new EkidenClient({
     baseURL: TESTNET.baseURL,
   });
@@ -211,7 +215,10 @@ async function depositExample() {
   await aptos.waitForTransaction({ transactionHash: submitted.hash });
 
   console.log(`Deposit transaction submitted: ${submitted.hash}`);
-}
+  }
 
-depositExample();
-```
+  depositExample();
+  ```
+  */}
+
+{/* TODO(SDK): Replace the legacy Aptos deposit and withdrawal flows with the current Canton integration once the SDK implementation is available. */}
