@@ -20,7 +20,7 @@ title: "TP/SL, Triggers, and Reduce-Only"
 ```json
 {
   "sub_account_address": "0x6160e0768af12ec30112972801aaa8287b42f15a2485ef68cd184a3eeec9dc49",
-  "symbol": "BTC-USDCx",
+  "symbol": "CC-USDCx",
   "side": "Buy",
   "order_type": "Market",
   "qty": "8.32089394",
@@ -73,31 +73,54 @@ title: "TP/SL, Triggers, and Reduce-Only"
 
 ### Examples
 
-- Attach FULL bracket to a BUY entry:
+- Attach Full TP/SL using market execution:
 
 ```json
 {
-  "mode": "FULL",
-  "take_profit": { "trigger_price": 105000000000, "order_type": "MARKET" },
-  "stop_loss": { "trigger_price": 98000000000, "order_type": "LIMIT", "limit_price": 98000000000 }
+  "mode": "Full",
+  "take_profit": {
+    "market": {
+      "trigger_price": "0.151785799",
+      "trigger_by": "LastPrice"
+    }
+  },
+  "stop_loss": {
+    "market": {
+      "trigger_price": "0.124188381",
+      "trigger_by": "LastPrice"
+    }
+  }
 }
 ```
 
-- Attach PARTIAL bracket to a BUY LIMIT entry:
+- Attach Partial TP/SL using limit execution:
 
 ```json
 {
-  "mode": "PARTIAL",
-  "take_profit": { "trigger_price": 110000000000, "order_type": "LIMIT", "limit_price": 110000000000 },
-  "stop_loss": { "trigger_price": 95000000000, "order_type": "MARKET" }
+  "mode": "Partial",
+  "take_profit": {
+    "limit": {
+      "limit_price": "0.15",
+      "trigger_price": "0.15",
+      "trigger_by": "LastPrice"
+    }
+  },
+  "stop_loss": {
+    "limit": {
+      "limit_price": "0.12",
+      "trigger_price": "0.12",
+      "trigger_by": "LastPrice"
+    }
+  }
 }
 ```
 
 ### Notes and constraints
 
-- For LIMIT legs, `limit_price` is required; invalid legs are ignored.
-- Triggered orders use `time_in_force: IOC`.
-- All prices and sizes are scaled integers; see market `base_decimals` and `quote_decimals`.
+- Market TP/SL configurations require `trigger_by` and `trigger_price`.
+- Limit TP/SL configurations require `limit_price`, `trigger_by`, and `trigger_price`.
+- `trigger_by` supports `"LastPrice"`, `"IndexPrice"`, and `"MarkPrice"`.
+- `limit_price` and `trigger_price` are represented as strings.
 
 ### WebSocket examples
 
