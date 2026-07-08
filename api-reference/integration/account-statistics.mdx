@@ -13,7 +13,7 @@ GET /api/v1/account/statistics
 Query parameters:
 
 | Parameter | Required | Notes |
-| --------- | -------- | ----- |
+| --- | --- | --- |
 | `sub_account_address` | No | Sub-account to query. Auth context may determine the accessible account set. |
 | `start_time` | No | Start timestamp in milliseconds. |
 | `end_time` | No | End timestamp in milliseconds. |
@@ -24,7 +24,7 @@ Query parameters:
 ## Example
 
 ```bash
-curl "https://api.ekiden.fi/api/v1/account/statistics?sub_account_address=0xsubacct&start_time=1731541800000&end_time=1732146600000&step=1d" \
+curl "https://api.cnt.ekiden.fi/api/v1/account/statistics?sub_account_address=0xsubacct&start_time=1731541800000&end_time=1732146600000&step=1d" \
   -H "Authorization: Bearer <jwt>"
 ```
 
