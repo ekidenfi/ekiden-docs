@@ -7,7 +7,7 @@ Insurance pool and ADL endpoints expose public risk-system state. Use them along
 ## Insurance Pool Snapshot
 
 ```http
-GET /api/v1/market/insurance-pool?symbol=BTC-USDC
+GET /api/v1/market/insurance-pool?symbol=BTC-USDCx
 ```
 
 Returns current insurance pool snapshots.
@@ -39,7 +39,7 @@ GET /api/v1/market/insurance-pool/history?symbol=BTC-USDC&start_time=17315418000
 History query parameters:
 
 | Parameter | Notes |
-| --------- | ----- |
+| --- | --- |
 | `symbol` | Optional market symbol filter. |
 | `start_time` | Optional start timestamp in milliseconds. |
 | `end_time` | Optional end timestamp in milliseconds. |
