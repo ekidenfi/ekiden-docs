@@ -29,7 +29,7 @@ This document explains how market makers can authenticate and integrate with the
 
 ## **2.  Authentication Flow**
 
-Authentication is performed via a one-shot signature with anti‑replay protection. Clients sign the message `AUTHORIZE|{timestamp_ms}|{nonce}` using their Ed25519 private key and send the signature, public key, timestamp\_ms, and nonce to `/api/v1/authorize`. On success, the API returns a JWT bearer token.
+Authentication is performed via the `/api/v1/authorize` endpoint. Clients provide their `partyId`, and on successful authorization, the API returns a JWT bearer token that can be used to access authenticated endpoints.
 
 ### **Endpoint**
 
@@ -37,7 +37,7 @@ Authentication is performed via a one-shot signature with anti‑replay protecti
 POST /api/v1/authorize
 ```
 
-**Summary:** Verify signature over `AUTHORIZE|timestamp_ms|nonce` and issue a JWT.
+**Summary:** Authorize a user using their Canton Party ID and issue a JWT bearer token.
 
 **Tags:** Auth
 
@@ -49,26 +49,28 @@ POST /api/v1/authorize
 
 ```json
 {
-  "public_key": "<ed25519-public-key>",
-  "signature": "<sig-over-AUTHORIZE|timestamp_ms|nonce>",
-  "timestamp_ms": 1736962800000,
-  "nonce": "zHjQm0gkz9a2iV7xJ2y3-w"
+  "public_key": "<Canton Party ID>",
+  "signature": "",
+  "timestamp_ms": 1731541800000,
+  "nonce": "random-unique-string"
 }
 ```
 
-- public\_key: Client’s Ed25519 public key (encoding per your SDK; commonly base64 or hex).
-- signature: Signature over the UTF‑8 string `AUTHORIZE|{timestamp_ms}|{nonce}`.
-- timestamp\_ms: Unix time in milliseconds; must be within ±120s of server.
-- nonce: Base64URL string (8–64 chars); must be unique per request.
+- public\_key: Canton Party ID associated with the user.
+- timestamp\_ms: Unix time in milliseconds.
+- nonce: Unique value generated for the authorization request.
 
-> The server verifies with signature::verify\_msg(b"AUTHORIZE|{timestamp_ms}|{nonce}", signature, public\_key), enforces the time window and nonce rules, and rejects replays. It also computes a user address from the public key. If the user does not exist, it is created.
+> The server uses the provided Canton Party ID to identify and authorize the user. On successful authorization, the API returns a JWT bearer token and the associated user ID.
 
 ### **Responses**
 
 - **200 OK** – AuthorizeResponse
 
 ```text
-{ "token": "<jwt-bearer-token>" }
+{
+  "token": "<jwt>",
+  "user_id": "<user_id>"
+}
 ```
 
 - **400 Bad Request** – invalid signature or public key
@@ -80,10 +82,10 @@ POST /api/v1/authorize
 curl -X POST "http://<host>:3010/api/v1/authorize" \
   -H "Content-Type: application/json" \
   -d '{
-    "public_key": "<YOUR_ED25519_PUBKEY>",
-    "signature": "<SIG_OVER_AUTHORIZE|timestamp_ms|nonce>",
+    "public_key": "<CANTON_PARTY_ID>",
+    "signature": "",
     "timestamp_ms": <NOW_MS>,
-    "nonce": "<BASE64URL_NONCE>"
+    "nonce": "<UNIQUE_NONCE>"
   }'
 ```
 
@@ -109,24 +111,30 @@ The OpenAPI spec declares a bearer\_auth security scheme, and all protected rout
 
 ## **4.  REST API Surface**
 
-All resource routers are mounted under /api/v1:
+All REST API endpoints are available under the `/api/v1` base path.
 
-- GET/POST/… /api/v1/orders – Order management (exact routes in Swagger)
-- GET/… /api/v1/fills – Fill information
-- GET/… /api/v1/user – User/account endpoints
-- GET/POST/… /api/v1/deposits – Deposit endpoints
-- GET/POST/… /api/v1/withdraws – Withdraw endpoints
+The API includes the following main endpoint groups:
+
+- `/api/v1/market/*` – Public market data, including tickers, order book, klines, recent trades, funding history, and risk data
+- `/api/v1/order/*` – Order placement, amendment, cancellation, and order history
+- `/api/v1/execution/*` – Trade execution history
+- `/api/v1/position/*` – Position data, leverage configuration, closed PnL, and trading stops
+- `/api/v1/account/*` – Account balances, funding, and account statistics
+- `/api/v1/user/*` – User account data, subaccounts, API keys, referrals, rewards, and related user-specific resources
+
+Refer to the OpenAPI specification for the complete list of available endpoints, request parameters, and response schemas.
 
 > Authoritative contract:
 
 ### **Example – Authenticated request**
 
-```text
-curl -X GET "http://<host>:3010/api/v1/fills?limit=100" \\
-  -H "Authorization: Bearer $TOKEN"
+```bash
+curl -X GET "http://<host>:3010//api/v1/position/list" \
+  -H "Authorization: Bearer $TOKEN" \
+  --data-urlencode "sub_account_address=<SUB_ACCOUNT_ADDRESS>"
 ```
 
-> Tip: If you see 401 Unauthorized, refresh your token via /api/v1/authorize.
+> Tip: A `401 Unauthorized` response may indicate missing, invalid, or expired authentication credentials. Obtain a new token via `/api/v1/authorize` if needed.
 
 ---
 
