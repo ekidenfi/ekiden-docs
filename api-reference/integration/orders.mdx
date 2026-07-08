@@ -168,7 +168,7 @@ Batch order placement returns per-request result information in `exit_info`, inc
   See full schema in OpenAPI for `OrderResponse`.
   */}
 
-### Triggers and Brackets
+### Triggers and TP/SL
 
 - **Order field: `trigger`**
   - Makes the order conditional.
@@ -176,12 +176,11 @@ Batch order placement returns per-request result information in `exit_info`, inc
     - `trigger_by`: `"LastPrice"`, `"IndexPrice"`, or `"MarkPrice"` — the price source used to activate the order.
     - `trigger_direction`: `"Up"` or `"Down"` — the trigger direction.
     - `trigger_price`: The price level at which the order is activated.
-- **Bracket field: `bracket`**
-  - Attach Take Profit / Stop Loss to an entry.
-  - Structure:
-    - `mode`: `FULL` or `PARTIAL`.
-    - `take_profit` / `stop_loss`: `{ trigger_price, order_type: MARKET|LIMIT, limit_price? }` (`limit_price` required for LIMIT).
-  - Execution semantics: reduce-only, IOC. MARKET legs are converted to LIMIT IOC with a slippage guard band.
+- **Order field: `tpsl`**
+- Attaches Take Profit and/or Stop Loss settings to an entry order.
+- Structure:
+  - `mode`: `"Full"` or `"Partial"`.
+  - `take_profit` / `stop_loss`: Optional TP/SL settings that support `market` or `limit` order types.
 - **Reduce-only**
   - Use `reduce_only: true` to prevent increasing exposure. Triggered bracket legs always enforce reduce-only.
 
