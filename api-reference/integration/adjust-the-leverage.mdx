@@ -4,26 +4,24 @@ title: "Leverage"
 
 ## Overview
 
-Ekiden supports isolated leverage settings per market. This allows users to control risk independently for each trading pair. Adjusting leverage changes how much margin is allocated to your open position in a given market. Increasing leverage frees up margin but increases liquidation risk, while lowering leverage adds margin and decreases risk.
+Ekiden supports leverage settings per market, allowing users to control leverage independently for each trading pair. Adjusting leverage changes how much margin is allocated to an open position in a given market. Increasing leverage reduces the required margin but increases liquidation risk, while lowering leverage increases the required margin and reduces liquidation risk.
 
 ## Endpoint
 
-`POST /api/v1/user/intent`
+`POST /api/v1/position/set-leverage`
 
-Adjust the leverage multiplier for a specific market. This endpoint applies only to the specified market and cancels any open orders associated with it.
+Sets leverage for a specific symbol and sub-account.
 
-ActionStatus values used across intent processing:
+The request body includes:
 
-- 0 = Pending — intent accepted and awaiting commitment
-- 1 = Success — intent committed successfully
-- 2 = Rejected — intent failed; see error message when available
-
-If you need to wait for a definitive result, use `POST /api/v1/user/intent/commit`, which blocks until the intent is committed (Success) or rejected and returns the `status` (0/1/2) and optional `error_message`.
+- `leverage`: Leverage value to set.
+- `sub_account_address`: Sub-account address.
+- `symbol`: Market symbol.
 
 ### Headers
 
 ```text
-Authorization: Bearer {API_KEY}
+Authorization: Bearer <JWT>
 Content-Type: application/json
 ```
 
@@ -31,27 +29,24 @@ Content-Type: application/json
 
 | Parameter | Type | Description | Required |
 | --- | --- | --- | --- |
-| market | string | Market symbol (e.g. BTC-PERP) | Yes |
-| leverage | integer | New leverage (e.g. 10 for 10x) | Yes |
-| subAccount | string | Optional subaccount identifier | No |
+| `leverage` | string | Leverage value to set (e.g. `"10"` for 10x) | Yes |
+| `sub_account_address` | string | Sub-account address | Yes |
+| `symbol` | string | Market symbol (e.g. `"CC-USDCx"`) | Yes |
 
 ## Example Request
 
 ```json
 {
-    "payload": {
-        "type": "leverage_assign",
-        "market_addr": "",
-        "leverage": 8
-    },
-    "nonce": 1755001718461,
-    "signature": ""
+  "leverage": "8",
+  "sub_account_address": "0x6160e0768af12ec30112972801aaa8287b42f15a2485ef68cd184a3eeec9dc49",
+  "symbol": "BTC-USDCx"
 }
 ```
 
-## Example
+{/*
+  ## Example
 
-```ts
+  ```ts
     const nonce = Date.now();
 
     const payload = {
@@ -76,35 +71,35 @@ Content-Type: application/json
     let response: SendIntentResponse;
 
     response = await ekiden.sendIntent(params);
-```
+  ```
+  */}
+
+{/* TODO(SDK): Replace the legacy intent-based leverage example with a current Canton-compatible SDK example once available. */}
 
 ## Response
 
 ```json
 {
   "success": true,
-  "market": "BTC-PERP",
-  "newLeverage": 10,
-  "oldLeverage": 5,
-  "message": "Leverage updated successfully. All open orders were cancelled."
+  "time": 1783479390120
 }
 ```
 
-## Error Example
+{/*
+  ## Error Example
 
-```json
-{
+  ```json
+  {
   "success": false,
   "error": "Leverage 25x exceeds the maximum allowed for BTC-PERP (20x)."
-}
-```
+  }
+  ```
+  */}
 
 ## Notes
 
-- Leverage is isolated per market
-- Min = 1x, Max = varies by market
-- Open orders are cancelled when leverage is changed
-- Changing leverage affects margin ratio and liquidation price
-- Cannot increase leverage if margin requirements would be violated
+- Leverage is configured per symbol.
+- Minimum and maximum leverage limits may vary by market.
+- Changing leverage may affect margin requirements and liquidation price.
 
 ---
