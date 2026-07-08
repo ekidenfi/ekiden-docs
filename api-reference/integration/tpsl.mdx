@@ -4,71 +4,72 @@ title: "TP/SL, Triggers, and Reduce-Only"
 
 ### Overview
 
-- **Bracket (TP/SL)**: Attach Take Profit and/or Stop Loss to an entry or position. The legs form an OCO group (one-cancels-the-other).
+- **TP/SL**: Attach Take Profit and/or Stop Loss settings to an entry order using the `tpsl` object.
 - **Modes**:
-  - **FULL**: Bracket attaches at the position level for the full absolute position size; legs are reduce-only and typically execute IOC.
-  - **PARTIAL**: Bracket attaches per fill of an entry order. Each taker/maker fill creates its own OCO legs sized to that fill; any resting remainder can later create legs when filled as maker.
-- **Trigger**: Each leg specifies a `trigger_price` and a direction is derived from the side and price relation. Activation occurs on boundary equality.
-- **Reduce-only**: Triggered legs never increase exposure. Size is clamped to the current position size; if no exposure to reduce, the leg is acknowledged and OCO is cancelled or re-armed.
-- **Slippage guard**: MARKET-type legs are converted to LIMIT IOC with a guard band (`SLIPPAGE_GUARD_BPS`, default 200 bps = 2%) anchored to the trigger or current mark.
+  - **Full**: Configures TP/SL in full mode.
+  - **Partial**: Configures TP/SL in partial mode.
+- **TP/SL order types**: `take_profit` and `stop_loss` support `market` or `limit` configurations.
+- **Trigger**: Conditional orders use a `trigger` object with:
+  - `trigger_by`: `"LastPrice"`, `"IndexPrice"`, or `"MarkPrice"`.
+  - `trigger_direction`: `"Up"` or `"Down"`.
+  - `trigger_price`: The price level that activates the order.
+- **Reduce-only**: Use `reduce_only: true` to prevent an order from increasing position exposure.
 
-### Request shape (order_create)
+### Request shape (`POST /api/v1/order/place`)
 
 ```json
 {
-  "payload": {
-    "type": "order_create",
-    "orders": [
-      {
-        "market_addr": "0x...",
-        "side": "buy",
-        "price": 100000000000,
-        "size": 100000000,          // base units (scaled)
-        "leverage": 10,
-        "type": "limit",
-        "is_cross": false,
-        "time_in_force": "GTC",
-        "bracket": {
-          "mode": "FULL",          // or "PARTIAL"
-          "take_profit": {          // optional
-            "trigger_price": 105000000000,
-            "order_type": "MARKET" // or "LIMIT"
-            // "limit_price": 105000000000 // required when order_type == LIMIT
-          },
-          "stop_loss": {            // optional
-            "trigger_price": 98000000000,
-            "order_type": "LIMIT",
-            "limit_price": 98000000000
-          }
-        },
-        // Optional conditional entry (independent of bracket):
-        // "trigger_price": 100000000000,
-        // Optional reduce-only entry:
-        // "reduce_only": true
+  "sub_account_address": "0x6160e0768af12ec30112972801aaa8287b42f15a2485ef68cd184a3eeec9dc49",
+  "symbol": "BTC-USDCx",
+  "side": "Buy",
+  "order_type": "Market",
+  "qty": "8.32089394",
+  "price": "0",
+  "margin_mode": "Cross",
+  "time_in_force": "IOC",
+  "post_only": false,
+  "reduce_only": false,
+  "close_on_trigger": false,
+  "tpsl": {
+    "mode": "Full",
+    "take_profit": {
+      "market": {
+        "trigger_price": "0.151785799",
+        "trigger_by": "LastPrice"
       }
-    ]
-  },
-  "nonce": 1,
-  "signature": "0x..."
+    },
+    "stop_loss": {
+      "market": {
+        "trigger_price": "0.124188381",
+        "trigger_by": "LastPrice"
+      }
+    }
+  }
 }
 ```
 
 ### Behavior details
 
-- **OCO lifecycle**
-  - When one leg executes, its sibling is cancelled by the trigger service upon acknowledgement.
-  - Equality activates: Up-leg triggers when mark crosses up to `trigger_price`; Down-leg triggers when mark crosses down to `trigger_price`.
-- **FULL mode**
-  - Bracket legs resize as the position size changes; cancelling/closing the position cancels the OCO group.
-  - Legs are executed as reduce-only IOC. MARKET legs are converted to LIMIT IOC with guard: `guard_price = trigger_price ± (trigger_price * GUARD_BPS / 10_000)`.
-- **PARTIAL mode**
-  - Each fill (taker or maker) creates a distinct OCO group sized to that fill. All trigger IDs are unique across fills.
-- **Reduce-only clamping**
-  - If current position size is smaller than the leg size, execution clamps to the closable amount. If zero, the service cancels the group (or re-arms based on exposure).
+- **Conditional orders**
+  - The `trigger` object defines the price source (`trigger_by`), trigger direction (`trigger_direction`), and activation price (`trigger_price`).
+- **Full mode**
+  - Configured using `tpsl.mode: "Full"`.
+  - Take Profit and Stop Loss settings are defined through `take_profit` and `stop_loss`.
+- **Partial mode**
+  - Configured using `tpsl.mode: "Partial"`.
+  - Take Profit and Stop Loss settings are defined through `take_profit` and `stop_loss`.
+- **TP/SL triggers**
+  - Take Profit and Stop Loss configurations specify their trigger settings within the selected `market` or `limit` configuration.
+- **Reduce-only**
+  - Use `reduce_only: true` to prevent an order from increasing position exposure.
 
-### Environment and guard configuration
+{/*
+  ### Environment and guard configuration
 
-- Env var: `SLIPPAGE_GUARD_BPS` (default 200 = 2%).
+  - Env var: `SLIPPAGE_GUARD_BPS` (default 200 = 2%). 
+  */}
+
+{/* TODO(BACKEND): Confirm whether `SLIPPAGE_GUARD_BPS` is still used in the current Canton backend and whether the default value remains 200 bps (2%). */}
 
 ### Examples
 
