@@ -12,7 +12,7 @@ Ekiden provides separate base URLs for each environment:
 
 - **Mainnet**: `(Coming Soon)`
 - **Testnet Beta**: [https://api.cnt.ekiden.fi/api/v1](https://api.cnt.ekiden.fi/api/v1)
-- **Devnet**: [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1)
+- **Staging**: [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1)
 
 > All API calls must use **HTTPS**.
 
@@ -38,7 +38,7 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 | `DELETE` | Cancel or remove resources |
 | `PUT` | Replace or update resources where applicable (e.g., whitelist management) |
 
-- Endpoints are organized by resource
+- Endpoints are organized by resource.
 
 ---
 
@@ -50,7 +50,7 @@ Endpoints:
 - Testnet Beta:
   - Public data: `wss://api.cnt.ekiden.fi/ws/public`
   - Private data: `wss://api.cnt.ekiden.fi/ws/private`
-- Devnet:
+- Staging:
   - Public data: `wss://api.canton.ekiden.fi/ws/public`
   - Private data: `wss://api.canton.ekiden.fi/ws/private`
 
@@ -59,7 +59,7 @@ Messages use an `op` field with snake\_case values. Optional `req_id` lets you c
 ### Topics
 
 - Public (Market-scoped):
-  - `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTC-USDC`)
+  - `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTC-USDCx`)
   - `trade.<symbol>`
   - `ticker.<symbol>`
   - `kline.<interval>.<symbol>`
@@ -76,7 +76,7 @@ Client → Server
 ```json
 {
   "op": "subscribe",
-  "args": ["orderbook.1.BTC-USDC", "ticker.BTC-USDC"],
+  "args": ["orderbook.1.BTC-USDCx", "ticker.BTC-USDCx"],
   "req_id": "optional-id"
 }
 ```
@@ -86,7 +86,7 @@ Server → Client
 ```json
 {
   "op": "subscribed",
-  "args": ["orderbook.1.BTC-USDC", "ticker.BTC-USDC"],
+  "args": ["orderbook.1.BTC-USDCx", "ticker.BTC-USDCx"],
   "req_id": "optional-id"
 }
 ```
@@ -96,7 +96,7 @@ Server → Client
 ```json
 {
   "op": "unsubscribe",
-  "args": ["orderbook.1.BTC-USDC"]
+  "args": ["orderbook.1.BTC-USDCx"]
 }
 ```
 
@@ -105,7 +105,7 @@ Server → Client
 ```json
 {
   "op": "event",
-  "topic": "ticker.BTC-USDC",
+  "topic": "ticker.BTC-USDCx",
   "server_ts_ms": 1731541800000,
   "data": { /* snapshot or update payload */ }
 }
@@ -254,7 +254,7 @@ Offset-style pagination with page counters:
 - Query params: `page` (default 1), `per_page` (default 20)
 
 ```http
-GET /api/v1/trade/executions?symbol=BTCUSDC&page=1&per_page=20
+GET /api/v1/trade/executions?symbol=BTC-USDCx&page=1&per_page=20
 ```
 
 Responses generally return arrays for list endpoints (see schema in the API reference).
