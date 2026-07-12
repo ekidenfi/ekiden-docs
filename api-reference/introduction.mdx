@@ -2,9 +2,11 @@
 title: "Introduction"
 ---
 
-The Ekiden API provides a unified, high-throughput REST interface that connects both to the off-chain central limit order book (CLOB), where matching and execution take place, and to the on-chain settlement layer on Canton. While most interactions happen off-chain, traders also perform on-chain actions via Canton nodes using the Rust SDK - all through a single integrated API.
+The Ekiden API provides REST endpoints and WebSocket streams for interacting with both the off-chain central limit order book (CLOB), where matching and execution take place, and the on-chain settlement layer on Canton. While most interactions happen off-chain, some workflows also involve on-chain actions on Canton.
 
-All trading actions require digital signature authentication. Orders are matched off-chain for speed but are cryptographically verified and settled on-chain using Merkle proofs.
+{/* While most interactions happen off-chain, traders also perform on-chain actions via Canton nodes using the Rust SDK - all through a single integrated API. */}
+
+All trading actions require digital signature authentication. Orders are matched off-chain for speed, but are cryptographically verified and settled on-chain using Merkle proofs.
 
 ### **Connectivity & Integration**
 
@@ -13,15 +15,18 @@ Ekiden’s API is built for low-latency, high-throughput trading infrastructure:
 - **REST** endpoints handle order execution, cancellation, market data, and account management.
 - **WebSocket** streams provide real-time updates, including trade events, order book changes, and fills.
 
-SDKs are available in multiple languages to streamline integration. Each SDK includes usage examples, setup instructions, and real-world integration patterns:
+An official TypeScript SDK is planned for a future release to simplify integration with the Ekiden API.
 
-- `ekiden-sdk-typescript`: A full-featured SDK for Node.js and browser environments.
-- `ekiden-sdk-rust`: Designed for high-performance, low-latency applications.
+{/* SDKs are available in multiple languages to streamline integration. Each SDK includes usage examples, setup instructions, and real-world integration patterns:
+
+  - `ekiden-sdk-typescript`: A full-featured SDK for Node.js and browser environments. */}
 
 ### **Institutional Support**
 
-For advanced needs such as colocated execution, higher rate limits, or custom infrastructure, Ekiden offers private connectivity and priority support. For access and assistance, just reach out to our team directly on Discord.
+For advanced needs such as colocated execution, higher rate limits, or custom infrastructure, Ekiden offers private connectivity and priority support. For access and assistance, reach out to our team directly on Discord.
 
 ### **Next Steps**
 
 The following sections provide comprehensive API specifications, endpoint documentation, and integration examples to help you onboard quickly and confidently.
+
+{/*  TODO(api): Document the official TypeScript SDK after the first public release.  */}
