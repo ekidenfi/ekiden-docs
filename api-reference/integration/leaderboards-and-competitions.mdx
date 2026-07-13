@@ -2,28 +2,23 @@
 title: "Leaderboards & Competitions"
 ---
 
-Leaderboards expose ranked account performance and XP fields. Competitions expose campaign-specific scoring, projected XP, rankings, and placement.
+Leaderboards provide ranked trading sub-accounts together with trading performance metrics and XP statistics. Competition endpoints provide public competition information, leaderboards, and authenticated competition views.
 
 ## User Leaderboard
 
 ```http
-GET /api/v1/user/leaderboard?timeframe=7d&limit=50&offset=0
+GET /api/v1/user/leaderboard
 ```
 
-Required query parameters:
+Query parameters:
 
-| Parameter | Notes |
-| --------- | ----- |
-| `timeframe` | Ranking window. See OpenAPI for accepted enum values. |
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| `timeframe` | Yes | Ranking window. Supported values: `today`, `7d`, `30d`, `all`. |
+| `limit` | No | Page size. |
+| `offset` | No | Pagination offset. |
 
-Optional query parameters:
-
-| Parameter | Notes |
-| --------- | ----- |
-| `limit` | Page size. |
-| `offset` | Pagination offset. |
-
-Rows include:
+Each leaderboard row includes:
 
 - `sub_account_address`
 - `place`
@@ -36,35 +31,125 @@ Rows include:
 - `referral_xp`
 - `total_xp`
 
+Pagination metadata is returned in the `meta` object.
+
 ## User Placement
 
 ```http
-GET /api/v1/user/leaderboard/placement?timeframe=7d
+GET /api/v1/user/leaderboard/placement
 ```
 
-Use `sub_account` to request placement for a specific sub-account:
+Query parameters:
 
-```http
-GET /api/v1/user/leaderboard/placement?timeframe=7d&sub_account=0xsubacct
-```
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| `timeframe` | Yes | Ranking window. Supported values: `today`, `7d`, `30d`, `all`. |
+| `sub_account` | No | Returns placement for the specified trading sub-account. If omitted, placement is returned for each trading sub-account. |
 
-The response returns one leaderboard row per visible sub-account, or one row when `sub_account` is supplied. Unranked entries use `ranked: false`.
+Each placement entry includes:
+
+- `sub_account_address`
+- `place`
+- `ranked`
+- `volume`
+- `pnl`
+- `roi`
+- `account_value`
+- `trading_xp`
+- `referral_xp`
+- `total_xp`
 
 ## Public Competitions
 
-Public competition endpoints do not require user auth:
+### List Competitions
 
 ```http
 GET /api/v1/competitions
+```
+
+Returns the list of public competitions.
+
+Query parameters:
+
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| `status` | No | Filters competitions by status. See OpenAPI for accepted values. |
+
+Each competition includes:
+
+- `id`
+- `slug`
+- `title`
+- `description_md`
+- `status`
+- `start_time_ms`
+- `end_time_ms`
+- `prize_usdc`
+- `metric`
+- `symbol`
+
+See the generated OpenAPI schema for the complete response structure.
+
+### Competition Details
+
+```http
 GET /api/v1/competitions/{competition_slug}
+```
+
+Returns the details for a single public competition.
+
+Path parameters:
+
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| `competition_slug` | Yes | Competition slug. |
+
+Returns metadata and configuration for a single public competition.
+
+See the generated OpenAPI schema for the complete response structure.
+
+### Competition Leaderboard
+
+```http
 GET /api/v1/competitions/{competition_slug}/leaderboard
 ```
 
-Use these for public landing pages, competition discovery, and read-only leaderboards.
+Path parameters:
 
-## Authenticated Competition Views
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| `competition_slug` | Yes | Competition slug. |
 
-Authenticated user endpoints use competition IDs:
+Query parameters:
+
+| Parameter | Required | Notes |
+| --- | --- | --- |
+| `limit` | No | Page size. |
+| `offset` | No | Pagination offset. |
+| `sub_account` | No | Returns the specified trading sub-account only. |
+
+The response includes:
+
+- `competition`
+- `data`
+- `meta`
+
+Each leaderboard entry includes:
+
+- `sub_account_address`
+- `rank`
+- `score`
+- `metric_value`
+- `active_days`
+- `eligible`
+- `ineligible_reason`
+- `projected_xp`
+
+Pagination metadata is returned in the `meta` object.
+
+## Authenticated Competition Endpoints
+
+The following endpoints require authentication and operate on competition IDs rather than slugs.
 
 ```http
 GET /api/v1/user/competitions
@@ -83,8 +168,4 @@ Competition leaderboard rows include:
 - `ineligible_reason`
 - `projected_xp`
 
-`projected_xp` is display-only live projection from current eligible leaderboard scores. Final XP allocation should come from the rewards ledger.
-
-## Status Filtering
-
-List endpoints accept an optional `status` filter. Use the generated OpenAPI reference for the accepted competition statuses and response schemas.
+`projected_xp` is a live display-only projection based on the current eligible leaderboard scores. Final XP allocation is recorded in the rewards ledger.
