@@ -1,6 +1,6 @@
 ---
 title: "Client Initialization"
-description: "This page explains how to initialize the Ekiden SDK in TypeScript and Rust. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading)."
+description: "This page explains how to initialize the Ekiden SDK in TypeScript. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading)."
 ---
 
 ## Supported Environments
@@ -10,19 +10,21 @@ Ekiden supports the following environments:
 | Environment | Network Key | REST URL | WebSocket URL |
 | --- | --- | --- | --- |
 | Testnet Beta | testnet | [https://api.cnt.ekiden.fi/api/v1](https://api.cnt.ekiden.fi/api/v1) | wss://api.cnt.ekiden.fi/ws |
-| Devnet | testnet | [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1) | wss://api.canton.ekiden.fi/ws |
+| Staging | testnet | [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1) | wss://api.canton.ekiden.fi/ws |
 
-Use the network parameter during client initialization to select your target environment.
+{/*
+  Use the network parameter during client initialization to select your target environment.
 
-## Initialization Parameters
+  ## Initialization Parameters
 
-| Parameter | Description | Required | Default |
-| --- | --- | --- | --- |
-| network | mainnet or testnet | No | mainnet |
-| api\_key | For private endpoints | Yes (if API key auth) | — |
-| private\_key | Alternative for signature-based auth | Yes (if no API key) | — |
-| subaccount\_id | Optional subaccount ID | No | 0 |
-| use\_websocket | Enable WS connections | No | true |
+  | Parameter | Description | Required | Default |
+  | --- | --- | --- | --- |
+  | network | mainnet or testnet | No | mainnet |
+  | api\_key | For private endpoints | Yes (if API key auth) | — |
+  | private\_key | Alternative for signature-based auth | Yes (if no API key) | — |
+  | subaccount\_id | Optional subaccount ID | No | 0 |
+  | use\_websocket | Enable WS connections | No | true |
+  */}
 
 {/*
   ## Examples
@@ -67,10 +69,10 @@ Use the network parameter during client initialization to select your target env
   #[tokio::main]
   async fn main() {
   let client = ClientBuilder::new(Network::Mainnet)
-      .with_subaccount(0)
-      .enable_websocket(true)
-      .build()
-      .unwrap();
+  .with_subaccount(0)
+  .enable_websocket(true)
+  .build()
+  .unwrap();
   }
   ```
   */}
