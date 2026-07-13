@@ -4,7 +4,7 @@ title: "Deposit & Withdraw Funds"
 
 ## Overview
 
-Ekiden uses a smart contract-based margin bank to custody collateral for trading. Users can deposit USDC to the margin bank and withdraw available (free) collateral at any time. All deposits and withdrawals are on-chain but occur on Canton.
+Ekiden uses a smart contract-based margin bank to custody collateral for trading. Users can deposit USDCx to the margin bank and withdraw available (free) collateral at any time. All deposits and withdrawals are on-chain but occur on Canton.
 
 ## Supported Tokens
 
@@ -72,7 +72,7 @@ Deposit and withdrawal integrations for Canton are being finalized. Updated inte
 
   async function depositExample() {
   const ekiden = new EkidenClient({
-    baseURL: TESTNET.baseURL,
+  baseURL: TESTNET.baseURL,
   });
   const aptosConfig = new AptosConfig({ network: Network.TESTNET });
   const aptos = new Aptos(aptosConfig);
@@ -83,45 +83,45 @@ Deposit and withdrawal integrations for Canton are being finalized. Updated inte
   console.log(1, account.accountAddress.toString());
 
   const bal = await aptos.getAccountAPTAmount({
-    accountAddress: account.accountAddress.toString(),
+  accountAddress: account.accountAddress.toString(),
   });
   console.log("APT (octas):", bal, "≈ APT:", Number(bal) / 1e8);
 
   const transactionPayload = ekiden.vault.depositIntoUser({
-    vaultAddress: config.vaultAddress,
-    assetMetadata: config.assetMetadata,
-    amount: config.amount,
+  vaultAddress: config.vaultAddress,
+  assetMetadata: config.assetMetadata,
+  amount: config.amount,
   });
 
   const { gas_estimate } = await aptos.getGasPriceEstimation();
 
   const draft = await aptos.transaction.build.simple({
-    sender: account.accountAddress,
-    data: transactionPayload,
-    options: { gasUnitPrice: gas_estimate },
+  sender: account.accountAddress,
+  data: transactionPayload,
+  options: { gasUnitPrice: gas_estimate },
   });
 
   const [sim] = await aptos.transaction.simulate.simple({
-    signerPublicKey: account.publicKey,
-    transaction: draft,
+  signerPublicKey: account.publicKey,
+  transaction: draft,
   });
 
   const gasUsed = BigInt(sim.gas_used ?? 20000);
   const maxGasAmount = gasUsed + 5000n;
 
   const tx = await aptos.transaction.build.simple({
-    sender: account.accountAddress,
-    data: transactionPayload,
-    options: {
-      gasUnitPrice: gas_estimate,
-      maxGasAmount, // bigint!
-    },
+  sender: account.accountAddress,
+  data: transactionPayload,
+  options: {
+    gasUnitPrice: gas_estimate,
+    maxGasAmount, // bigint!
+  },
   });
 
   const auth = aptos.transaction.sign({ signer: account, transaction: tx });
   const submitted = await aptos.transaction.submit.simple({
-    transaction: tx,
-    senderAuthenticator: auth,
+  transaction: tx,
+  senderAuthenticator: auth,
   });
   await aptos.waitForTransaction({ transactionHash: submitted.hash });
 
@@ -161,7 +161,7 @@ Deposit and withdrawal integrations for Canton are being finalized. Updated inte
 
   async function depositExample() {
   const ekiden = new EkidenClient({
-    baseURL: TESTNET.baseURL,
+  baseURL: TESTNET.baseURL,
   });
   const aptosConfig = new AptosConfig({ network: Network.TESTNET });
   const aptos = new Aptos(aptosConfig);
@@ -172,45 +172,45 @@ Deposit and withdrawal integrations for Canton are being finalized. Updated inte
   console.log(1, account.accountAddress.toString());
 
   const bal = await aptos.getAccountAPTAmount({
-    accountAddress: account.accountAddress.toString(),
+  accountAddress: account.accountAddress.toString(),
   });
   console.log("APT (octas):", bal, "≈ APT:", Number(bal) / 1e8);
 
   const transactionPayload = ekiden.vault.depositIntoUser({
-    vaultAddress: config.vaultAddress,
-    assetMetadata: config.assetMetadata,
-    amount: config.amount,
+  vaultAddress: config.vaultAddress,
+  assetMetadata: config.assetMetadata,
+  amount: config.amount,
   });
 
   const { gas_estimate } = await aptos.getGasPriceEstimation();
 
   const draft = await aptos.transaction.build.simple({
-    sender: account.accountAddress,
-    data: transactionPayload,
-    options: { gasUnitPrice: gas_estimate },
+  sender: account.accountAddress,
+  data: transactionPayload,
+  options: { gasUnitPrice: gas_estimate },
   });
 
   const [sim] = await aptos.transaction.simulate.simple({
-    signerPublicKey: account.publicKey,
-    transaction: draft,
+  signerPublicKey: account.publicKey,
+  transaction: draft,
   });
 
   const gasUsed = BigInt(sim.gas_used ?? 20000);
   const maxGasAmount = gasUsed + 5000n;
 
   const tx = await aptos.transaction.build.simple({
-    sender: account.accountAddress,
-    data: transactionPayload,
-    options: {
-      gasUnitPrice: gas_estimate,
-      maxGasAmount, // bigint!
-    },
+  sender: account.accountAddress,
+  data: transactionPayload,
+  options: {
+    gasUnitPrice: gas_estimate,
+    maxGasAmount, // bigint!
+  },
   });
 
   const auth = aptos.transaction.sign({ signer: account, transaction: tx });
   const submitted = await aptos.transaction.submit.simple({
-    transaction: tx,
-    senderAuthenticator: auth,
+  transaction: tx,
+  senderAuthenticator: auth,
   });
   await aptos.waitForTransaction({ transactionHash: submitted.hash });
 
