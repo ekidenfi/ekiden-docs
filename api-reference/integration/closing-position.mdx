@@ -4,8 +4,8 @@ title: "Closing Positions"
 
 ### **REST**
 
-- Send reduce-only order equal to position size.
-- Or send a market order in the opposite direction.
+- Submit a reduce-only order for the current position size.
+- Alternatively, submit an opposite-side market order. Use `reduce_only: true` if you want to ensure the order only reduces or closes the existing position.
 
 ### Position fields to watch
 
