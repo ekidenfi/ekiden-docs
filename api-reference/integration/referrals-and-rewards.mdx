@@ -2,7 +2,7 @@
 title: "Referrals & Rewards"
 ---
 
-Referral and rewards endpoints expose the user's referral code, optional referrer binding, XP balance, weekly reward summaries, and recent ledger entries.
+Referral and rewards endpoints provide access to referral information, XP rewards, weekly summaries, and reward history.
 
 These are authenticated user endpoints. Use bearer auth or API-key auth as described in [Onboarding & Auth](./api-reference/integration/onboarding-auth).
 
@@ -12,7 +12,14 @@ These are authenticated user endpoints. Use bearer auth or API-key auth as descr
 GET /api/v1/user/referral
 ```
 
-Returns the current user's referral code, referrer if one is bound, and downline count.
+Returns the current user's referral information.
+
+The response includes:
+
+- `referral_code`
+- `referrer_code`
+- `referrer_user_id`
+- `downline_count`
 
 ```json
 {
@@ -34,15 +41,22 @@ Content-Type: application/json
 
 The response is the updated referral summary.
 
-Referral binding should be treated as a one-time account attribution operation. Do not build flows that repeatedly rebind users unless the backend explicitly allows it.
+Do not build flows that repeatedly rebind users unless the backend explicitly allows it.
 
 ## Rewards Summary
 
 ```http
-GET /api/v1/user/rewards?limit=50
+GET /api/v1/user/rewards
 ```
 
-Returns the current XP balance, current weekly summary, historical weekly summaries, and recent ledger entries.
+Returns the current XP balance, current weekly summary, historical weekly summaries, and recent reward ledger entries.
+
+The response includes:
+
+- `xp_balance`
+- `current_week`
+- `history`
+- `ledger`
 
 ```json
 {
@@ -61,15 +75,4 @@ Returns the current XP balance, current weekly summary, historical weekly summar
 }
 ```
 
-Exact field names are defined in the generated OpenAPI schemas: `RewardSummaryResponse`, `RewardWeekSummary`, and `PointsLedgerEntry`.
-
-## XP Sources
-
-The active backend model is `rewards_xp_mvp_v1`:
-
-- Weekly XP pool allocated pro rata by power score.
-- Power score uses eligible volume, ROI, and drawdown factor.
-- Referral bonuses apply across three levels: 15%, 10%, and 5%.
-- Ledger entries record grants, allocations, adjustments, and clawbacks.
-
-See [Points Program](../../points-program) for campaign and KOL policy.
+See the generated OpenAPI schema (`RewardSummaryResponse`) for the complete response structure.
