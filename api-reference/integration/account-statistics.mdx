@@ -15,8 +15,8 @@ Query parameters:
 | Parameter | Required | Notes |
 | --- | --- | --- |
 | `sub_account_address` | No | Sub-account to query. Auth context may determine the accessible account set. |
-| `start_time` | No | Start timestamp in milliseconds. |
-| `end_time` | No | End timestamp in milliseconds. |
+| `start_time` | No | Start time. See the OpenAPI schema for the expected format. |
+| `end_time` | No | End time time. See the OpenAPI schema for the expected format. |
 | `step` | No | Aggregation step. See OpenAPI for accepted values. |
 | `limit` | No | Maximum rows to return. |
 | `sorting_order` | No | Sort direction. |
@@ -24,22 +24,18 @@ Query parameters:
 ## Example
 
 ```bash
-curl "https://api.cnt.ekiden.fi/api/v1/account/statistics?sub_account_address=0xsubacct&start_time=1731541800000&end_time=1732146600000&step=1d" \
-  -H "Authorization: Bearer <jwt>"
+curl -H "Authorization: Bearer <jwt>" \
+"https://api.cnt.ekiden.fi/api/v1/account/statistics?sub_account_address=<sub_account_address>"
 ```
 
-Response body:
+## Response
 
-```json
-{
-  "list": [
-    {
-      "timestamp": 1731541800000,
-      "volume": "125000.50",
-      "roi": "0.034"
-    }
-  ]
-}
-```
+- `timestamp`
+- `sub_account_address`
+- `equity`
+- `realised_pnl_cum`
+- `unrealised_pnl`
+- `volume`
+- `roi`
 
 Field coverage can expand as the backend adds statistics. Use the generated REST reference for the exact `AccountStatistics` schema.
