@@ -113,7 +113,7 @@
             "openapi": "/api-reference/openapi.json"
           },
           {
-            "group": "Websocket API",
+            "group": "Websocket",
             "pages": [
               "api-reference/websocket/connect",
               {
@@ -137,10 +137,7 @@
                   "api-reference/websocket/account_balance"
                 ]
               }
-            ],
-            "asyncapi": {
-              "source": "/api-reference/websocket/asyncapi.yaml"
-            }
+            ]
           }
         ]
       }
