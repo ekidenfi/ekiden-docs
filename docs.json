@@ -141,7 +141,9 @@
           },
           {
             "group": "WebSocket Guide",
-            "pages": []
+            "pages": [
+              "overview"
+            ]
           },
           {
             "group": "ASYNCAPI Websoket API",
