@@ -113,6 +113,10 @@
             "openapi": "/api-reference/openapi.json"
           },
           {
+            "group": "Websoket API",
+            "pages": []
+          },
+          {
             "group": "Websocket",
             "pages": [
               "api-reference/websocket/connect",
