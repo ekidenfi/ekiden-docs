@@ -113,7 +113,7 @@
             "openapi": "/api-reference/openapi.json"
           },
           {
-            "group": "Websoket API",
+            "group": "ASYNCAPI Websoket API",
             "asyncapi": "api-reference/websocket/asyncapi.json"
           },
           {
