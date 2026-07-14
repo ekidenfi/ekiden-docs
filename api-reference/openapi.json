@@ -10,21 +10,13 @@
   },
   "servers": [
     {
-      "url": "https://api.ekiden.fi/",
-      "description": "Production"
+      "url": "https://api.cnt.ekiden.fi/",
+      "description": "Testnet"
     },
     {
-      "url": "https://api.staging.ekiden.fi/",
+      "url": "https://api.canton.ekiden.fi/",
       "description": "Staging"
     },
-    {
-      "url": "https://api.dev.ekiden.fi/",
-      "description": "Development"
-    },
-    {
-      "url": "http://localhost:4020/",
-      "description": "Local"
-    }
   ],
   "paths": {
     "/api/v1/account/balance": {
@@ -239,36 +231,6 @@
         ]
       }
     },
-    "/api/v1/account/withdraw-from-trading": {
-      "post": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Withdraw from Trading",
-        "description": "Initiate a withdrawal from a Trading vault to the Funding vault.",
-        "operationId": "withdraw_from_trading",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WithdrawFromTradingRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Withdrawal initiated"
-          }
-        },
-        "security": [
-          {
-            "bearer_auth": []
-          }
-        ]
-      }
-    },
     "/api/v1/authorize": {
       "post": {
         "tags": [
@@ -282,38 +244,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AuthorizeRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully authorized and token generated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthorizeResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/authorize/session": {
-      "post": {
-        "tags": [
-          "User"
-        ],
-        "summary": "Authorize Session",
-        "description": "Authorize a session key via delegation",
-        "operationId": "authorize_session",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SessionAuthRequest"
               }
             }
           },
@@ -2822,7 +2752,7 @@
           "Leaderboard"
         ],
         "summary": "Get Leaderboard",
-        "description": "Returns a paginated leaderboard of subaccounts ranked by unrealised PnL for the given timeframe. Timeframe is required and relative to now (today, 7d, 30d, or all). Default limit 10, max 100; default offset 0.",
+        "description": "Returns a paginated leaderboard of subaccounts ranked by PnL for the given timeframe. Timeframe is required and relative to now (today, 7d, 30d, or all). Default limit 10, max 100; default offset 0.",
         "operationId": "get_leaderboard",
         "parameters": [
           {
@@ -4417,7 +4347,7 @@
           },
           "symbol": {
             "$ref": "#/components/schemas/Symbol",
-            "description": "Symbol name, e.g. BTCUSDC"
+            "description": "Symbol name, e.g. BTC-USDCx"
           }
         }
       },
@@ -5248,7 +5178,7 @@
           },
           "pnl": {
             "type": "string",
-            "description": "Unrealised PnL in quote units."
+            "description": "PnL in quote units for the selected ranking window."
           },
           "ranked": {
             "type": "boolean",
@@ -5851,10 +5781,7 @@
           "qty",
           "price",
           "margin_mode",
-          "time_in_force",
-          "post_only",
-          "reduce_only",
-          "close_on_trigger"
+          "time_in_force"
         ],
         "properties": {
           "close_on_trigger": {
@@ -6560,63 +6487,6 @@
           "admin"
         ]
       },
-      "SessionAuthRequest": {
-        "type": "object",
-        "description": "A request to authenticate using a Session Key.",
-        "required": [
-          "delegation",
-          "nonce",
-          "timestamp_ms",
-          "session_signature"
-        ],
-        "properties": {
-          "delegation": {
-            "$ref": "#/components/schemas/SessionDelegation"
-          },
-          "nonce": {
-            "type": "string"
-          },
-          "session_signature": {
-            "type": "string"
-          },
-          "timestamp_ms": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "SessionDelegation": {
-        "type": "object",
-        "description": "A delegation of authority from a Root Key to a Session Key.",
-        "required": [
-          "root_public_key",
-          "session_public_key",
-          "scopes",
-          "expires_at",
-          "root_signature"
-        ],
-        "properties": {
-          "expires_at": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "root_public_key": {
-            "type": "string"
-          },
-          "root_signature": {
-            "type": "string"
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Scope"
-            }
-          },
-          "session_public_key": {
-            "type": "string"
-          }
-        }
-      },
       "SetLeverageRequest": {
         "type": "object",
         "description": "Request to set leverage.",
@@ -6791,14 +6661,13 @@
       },
       "Symbol": {
         "type": "string",
-        "example": "BTCUSDC"
+        "example": "BTC-USDCx"
       },
       "SystemInfo": {
         "type": "object",
         "required": [
           "build_id",
           "aptos_network",
-          "perpetual_addr",
           "quote_asset_metadata",
           "runtime_manifest_generation",
           "runtime_manifest_phase"
@@ -6809,10 +6678,18 @@
           },
           "build_id": {
             "type": "string",
-            "description": "Build identifier for the running backend (e.g. git commit SHA).\n\nThis is used for milestone acceptance verification without disclosing source code."
+            "description": "Build identifier for the running backend (e.g. git commit SHA).\n\nIdentifies the deployed build for release/version verification without disclosing source code."
+          },
+          "package_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Deployed Ekiden Daml package id. Set on Canton backends only."
           },
           "perpetual_addr": {
-            "type": "string"
+            "type": "string",
+            "description": "Aptos perpetual contract address. Omitted on Canton backends."
           },
           "quote_asset_metadata": {
             "type": "string"
@@ -7100,44 +6977,6 @@
       "UserId": {
         "type": "string",
         "format": "uuid"
-      },
-      "WithdrawFromTradingRequest": {
-        "type": "object",
-        "required": [
-          "amount",
-          "addr_from",
-          "addr_to",
-          "asset_metadata",
-          "nonce",
-          "signature",
-          "withdraw_available"
-        ],
-        "properties": {
-          "addr_from": {
-            "type": "string"
-          },
-          "addr_to": {
-            "type": "string"
-          },
-          "amount": {
-            "type": "string",
-            "example": "100.0"
-          },
-          "asset_metadata": {
-            "type": "string"
-          },
-          "nonce": {
-            "type": "integer",
-            "format": "int64",
-            "minimum": 0
-          },
-          "signature": {
-            "type": "string"
-          },
-          "withdraw_available": {
-            "type": "boolean"
-          }
-        }
       }
     },
     "securitySchemes": {
