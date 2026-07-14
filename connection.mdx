@@ -1,0 +1,41 @@
+---
+title: "Connection"
+description: "Connect to the Ekiden WebSocket API."
+---
+
+The Ekiden WebSocket API provides separate endpoints for public market data and private account events.
+
+## Environments
+
+| Environment | Public Endpoint | Private Endpoint |
+| --- | --- | --- |
+| **Staging** | `wss://api.canton.ekiden.fi/ws/public` | `wss://api.canton.ekiden.fi/ws/private` |
+| **Testnet** | `wss://api.cnt.ekiden.fi/ws/public` | `wss://api.cnt.ekiden.fi/ws/private` |
+
+> **Note**
+>
+> Always use REST and WebSocket endpoints from the same environment. Authentication credentials issued by one environment cannot be used with another.
+
+## Public Endpoint
+
+The public endpoint provides unauthenticated access to real-time market data.
+
+## Private Endpoint
+
+The private endpoint provides access to authenticated account events and requires successful authentication before subscribing to private topics.
+
+Authentication is supported using either a **JWT access token** or an **API key**.
+
+See the **Authentication** guide for details.
+
+## Connection Lifecycle
+
+A typical WebSocket session consists of the following steps:
+
+1. Connect to the appropriate endpoint.
+2. Authenticate (private endpoint only).
+3. Subscribe to one or more topics.
+4. Receive and process real-time events.
+5. Maintain the connection using Ping/Pong messages.
+
+Detailed channel definitions, message schemas, and payload formats are available in the **WebSocket Reference**.

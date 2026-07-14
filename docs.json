@@ -142,7 +142,8 @@
           {
             "group": "WebSocket Guide",
             "pages": [
-              "overview"
+              "overview",
+              "connection"
             ]
           },
           {
