@@ -146,7 +146,7 @@
             ]
           },
           {
-            "group": "ASYNCAPI Websoket API",
+            "group": "Websoket Reference (AsyncAPI)",
             "asyncapi": "api-reference/websocket/asyncapi.json"
           }
         ]
