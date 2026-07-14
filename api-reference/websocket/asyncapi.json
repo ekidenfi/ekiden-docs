@@ -1,0 +1,2367 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Ekiden WebSocket API",
+    "version": "1.0.0",
+    "description": "Real-time market data and private account streams.\n\n## Base URL\n\n| Environment | Host |\n| --- | --- |\n| Production | `wss://api.ekiden.fi` |\n| Staging | `wss://api.staging.ekiden.fi` |\n\n| Channel | Path | Auth |\n| --- | --- | --- |\n| Public | `/ws/public` | Not required |\n| Private | `/ws/private` | Required before private topics |\n\n## Quick start\n\n| Step | Action |\n| --- | --- |\n| 1 | Connect to `/ws/public` or `/ws/private` |\n| 2 | **Private only:** authenticate (JWT or API key) |\n| 3 | Send `subscribe` with topic list |\n| 4 | Handle `subscribed`, then stream `event` messages |\n| 5 | Use `unsubscribe` to stop topics; `ping` / `pong` for keepalive |\n\n## Authentication (private channel)\n\nUse **one** method immediately after connecting to `/ws/private`.\n\n### JWT\n\n| Field | Value |\n| --- | --- |\n| `op` | `auth` |\n| `bearer` | Your JWT access token |\n| `req_id` | Optional correlation id |\n\n```json\n{\"op\":\"auth\",\"bearer\":\"<token>\",\"req_id\":\"1\"}\n```\n\n### API key\n\n> WebSocket API keys use a **different** signing string than REST.\n\n| Step | Detail |\n| --- | --- |\n| 1 | Pick `timestamp_ms` (Unix ms) and a unique `nonce` |\n| 2 | Canonical message (UTF-8, pipes, no trailing newline): `EKIDEN_WS\\|AUTH\\|{timestamp_ms}\\|{nonce}` |\n| 3 | Ed25519-sign with your key's private key |\n| 4 | Send `auth_api_key` on `/ws/private` |\n\n```json\n{\n  \"op\": \"auth_api_key\",\n  \"api_key\": \"0x...\",\n  \"signature\": \"0x...\",\n  \"timestamp_ms\": 1700000000000,\n  \"nonce\": \"unique-nonce\",\n  \"req_id\": \"1\"\n}\n```\n\n| Rule | Limit |\n| --- | --- |\n| Clock skew | ±30 s from server time |\n| Nonce | One use per API key |\n| Scopes | Key must allow requested private topics |\n\n## Topics\n\nDot-separated strings passed in `subscribe` / `unsubscribe` `args`.\n\n### Public topics\n\n| Topic pattern | Example | Stream |\n| --- | --- | --- |\n| `orderbook.{depth}.{symbol}` | `orderbook.10.BTC-USDC` | Order book snapshots / deltas |\n| `trade.{symbol}` | `trade.BTC-USDC` | Public trades |\n| `ticker.{symbol}` | `ticker.BTC-USDC` | 24h ticker |\n| `kline.{interval}.{symbol}` | `kline.1m.BTC-USDC` | Candlesticks |\n| `all_liquidations.{symbol}` | `all_liquidations.BTC-USDC` | Liquidation feed |\n| `insurance_pool.{symbol}` | `insurance_pool.BTC-USDC` | Insurance pool |\n| `adl_alert.{symbol}` | `adl_alert.BTC-USDC` | ADL alerts |\n\n### Private topics\n\n| Topic | Stream |\n| --- | --- |\n| `order` | Order updates |\n| `position` | Position updates |\n| `execution` | Fill / execution events |\n| `account_balance` | Balance updates |\n\n## Message reference\n\nEvery frame is JSON with an `op` field. Optional `req_id` correlates request/response pairs.\n\n### Client → server\n\n| `op` | Purpose |\n| --- | --- |\n| `auth` | JWT authentication |\n| `auth_api_key` | API key authentication |\n| `subscribe` | Start topic streams |\n| `unsubscribe` | Stop topic streams |\n| `ping` | Keepalive / RTT (`ts` echoed in `pong`) |\n\n```json\n{\"op\":\"subscribe\",\"args\":[\"ticker.BTC-USDC\"],\"req_id\":\"2\"}\n```\n\n### Server → client\n\n| `op` | Purpose |\n| --- | --- |\n| `auth` | Auth result |\n| `subscribed` | Subscription ack |\n| `unsubscribed` | Unsubscribe ack |\n| `pong` | Ping response |\n| `error` | Error (`message` + optional `req_id`) |\n| `event` | Stream payload |\n\n### Event envelope\n\n```json\n{\n  \"op\": \"event\",\n  \"server_ts_ms\": 1700000000000,\n  \"topic\": \"ticker.BTC-USDC\",\n  \"data\": { }\n}\n```\n\nOrder book events may also include a `type` field (snapshot vs delta). See **components → messages → Event** for payload schemas.\n"
+  },
+  "servers": {
+    "production": {
+      "host": "api.ekiden.fi",
+      "protocol": "wss",
+      "description": "Production WebSocket endpoint"
+    },
+    "staging": {
+      "host": "api.staging.ekiden.fi",
+      "protocol": "wss",
+      "description": "Staging WebSocket endpoint for testing"
+    }
+  },
+  "components": {
+    "messages": {
+      "AuthRequest": {
+        "title": "Auth",
+        "description": "Authenticate with a JWT bearer token.\n\n| Field | Required |\n| --- | --- |\n| `bearer` | Yes |\n| `req_id` | No |",
+        "payload": {
+          "properties": {
+            "bearer": {
+              "type": "string"
+            },
+            "op": {
+              "const": "auth",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "bearer"
+          ],
+          "type": "object"
+        }
+      },
+      "AuthApiKeyRequest": {
+        "title": "AuthApiKey",
+        "description": "Authenticate with an API key (Ed25519).\n\n**Sign:** `EKIDEN_WS|AUTH|{timestamp_ms}|{nonce}`\n\n| Field | Required |\n| --- | --- |\n| `api_key` | Yes |\n| `signature` | Yes |\n| `timestamp_ms` | Yes |\n| `nonce` | Yes |\n| `req_id` | No |",
+        "payload": {
+          "properties": {
+            "api_key": {
+              "type": "string"
+            },
+            "nonce": {
+              "type": "string"
+            },
+            "op": {
+              "const": "auth_api_key",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "signature": {
+              "type": "string"
+            },
+            "timestamp_ms": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "op",
+            "api_key",
+            "signature",
+            "timestamp_ms",
+            "nonce"
+          ],
+          "type": "object"
+        }
+      },
+      "SubscribeRequest": {
+        "title": "Subscribe",
+        "description": "Subscribe to one or more topics.\n\n```json\n{\"op\":\"subscribe\",\"args\":[\"ticker.BTC-USDC\"]}\n```",
+        "payload": {
+          "properties": {
+            "args": {
+              "items": {
+                "$ref": "#/components/schemas/Topic"
+              },
+              "type": "array"
+            },
+            "op": {
+              "const": "subscribe",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "args"
+          ],
+          "type": "object"
+        }
+      },
+      "UnsubscribeRequest": {
+        "title": "Unsubscribe",
+        "description": "Unsubscribe from topics. Mirrors `subscribe` args.",
+        "payload": {
+          "properties": {
+            "args": {
+              "items": {
+                "$ref": "#/components/schemas/Topic"
+              },
+              "type": "array"
+            },
+            "op": {
+              "const": "unsubscribe",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "args"
+          ],
+          "type": "object"
+        }
+      },
+      "PingRequest": {
+        "title": "Ping",
+        "description": "Keepalive probe. Server echoes `ts` in `pong`.",
+        "payload": {
+          "properties": {
+            "op": {
+              "const": "ping",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "ts": {
+              "description": "Client timestamp in Unix milliseconds (ms since epoch)",
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op"
+          ],
+          "type": "object"
+        }
+      },
+      "AuthResponse": {
+        "title": "Auth",
+        "description": "Auth success/failure response.",
+        "payload": {
+          "properties": {
+            "message": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "op": {
+              "const": "auth",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "success": {
+              "type": "boolean"
+            },
+            "user_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "success"
+          ],
+          "type": "object"
+        }
+      },
+      "Subscribed": {
+        "title": "Subscribed",
+        "description": "Subscription acknowledgement listing active topics.",
+        "payload": {
+          "properties": {
+            "args": {
+              "items": {
+                "$ref": "#/components/schemas/Topic"
+              },
+              "type": "array"
+            },
+            "op": {
+              "const": "subscribed",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "args"
+          ],
+          "type": "object"
+        }
+      },
+      "Unsubscribed": {
+        "title": "Unsubscribed",
+        "description": "Unsubscribe acknowledgement.",
+        "payload": {
+          "properties": {
+            "args": {
+              "items": {
+                "$ref": "#/components/schemas/Topic"
+              },
+              "type": "array"
+            },
+            "op": {
+              "const": "unsubscribed",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "args"
+          ],
+          "type": "object"
+        }
+      },
+      "Pong": {
+        "title": "Pong",
+        "description": "Ping response. Echoes client `ts` when provided.",
+        "payload": {
+          "properties": {
+            "client_ts": {
+              "format": "uint64",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "op": {
+              "const": "pong",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "server_ts": {
+              "description": "Server timestamp in Unix milliseconds (ms since epoch)",
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "op",
+            "server_ts"
+          ],
+          "type": "object"
+        }
+      },
+      "Error": {
+        "title": "Error",
+        "description": "Error frame with human-readable `message`. May include `req_id`.",
+        "payload": {
+          "properties": {
+            "message": {
+              "type": "string"
+            },
+            "op": {
+              "const": "error",
+              "type": "string"
+            },
+            "req_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "message"
+          ],
+          "type": "object"
+        }
+      },
+      "Event": {
+        "title": "Event",
+        "description": "Streaming payload for a subscribed topic.\n\nIncludes `server_ts_ms`, `topic`, and `data`.",
+        "payload": {
+          "anyOf": [
+            {
+              "properties": {
+                "data": {
+                  "$ref": "#/components/schemas/OrderBookSnapshot"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                },
+                "type": {
+                  "$ref": "#/components/schemas/OrderbookUpdateType"
+                }
+              },
+              "required": [
+                "topic",
+                "type",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "items": {
+                    "$ref": "#/components/schemas/PublicTrade"
+                  },
+                  "type": "array"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "items": {
+                    "$ref": "#/components/schemas/Liquidation"
+                  },
+                  "type": "array"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "$ref": "#/components/schemas/InsurancePoolSnapshot"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "$ref": "#/components/schemas/AdlAlertSnapshot"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "$ref": "#/components/schemas/TickerSnapshot"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "$ref": "#/components/schemas/KlineSnapshot"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "items": {
+                    "$ref": "#/components/schemas/Order"
+                  },
+                  "type": "array"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "items": {
+                    "$ref": "#/components/schemas/Execution"
+                  },
+                  "type": "array"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "items": {
+                    "$ref": "#/components/schemas/Position"
+                  },
+                  "type": "array"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "data": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccountBalance"
+                  },
+                  "type": "array"
+                },
+                "topic": {
+                  "$ref": "#/components/schemas/Topic"
+                }
+              },
+              "required": [
+                "topic",
+                "data"
+              ],
+              "type": "object"
+            }
+          ],
+          "properties": {
+            "op": {
+              "const": "event",
+              "type": "string"
+            },
+            "server_ts_ms": {
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "op",
+            "server_ts_ms"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    "schemas": {
+      "AccountBalance": {
+        "description": "Account-wide wallet and margin metrics.",
+        "properties": {
+          "account_type": {
+            "description": "Account type (e.g. Funding, Trading)",
+            "type": "string"
+          },
+          "accrued_interest": {
+            "description": "Accrued interest",
+            "type": "string"
+          },
+          "available_balance": {
+            "description": "The amount of an asset that can be used to open USDC Perpetual positions (USDC)",
+            "type": "string"
+          },
+          "equity": {
+            "description": "Equity under the account without considering the collateral value ratio (calculated in USDC).\nEquity = Vault Balance + Perp & Futures Unrealized P&L + Unrealized Funding",
+            "type": "string"
+          },
+          "margin_balance": {
+            "description": "Amount that can be used as margin under the account\nafter considering the collateral value ratio (calculated in USDC)\nTotal Vault Balance + Perp Unrealized P&L",
+            "type": "string"
+          },
+          "realised_pnl_cum": {
+            "description": "Cumulative Realised P&L",
+            "type": "string"
+          },
+          "sub_account_address": {
+            "description": "Sub-Account address (the owner of the technical vault)",
+            "type": "string"
+          },
+          "total_order_im": {
+            "description": "Pre-occupied margin for order. Locked balance (USDC)",
+            "type": "string"
+          },
+          "total_position_im": {
+            "description": "Sum of initial margin of all positions.",
+            "type": "string"
+          },
+          "total_position_mm": {
+            "description": "Sum of maintenance margin for all positions, including estimated close fees.",
+            "type": "string"
+          },
+          "unrealised_pnl": {
+            "description": "Unrealised P&L",
+            "type": "string"
+          },
+          "unrealized_funding": {
+            "description": "Aggregated unrealized funding across all positions (USDC)",
+            "type": "string"
+          },
+          "vault_balance": {
+            "description": "Vault Balance (USDC)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sub_account_address",
+          "account_type",
+          "equity",
+          "vault_balance",
+          "margin_balance",
+          "available_balance",
+          "accrued_interest",
+          "total_order_im",
+          "total_position_im",
+          "total_position_mm",
+          "unrealised_pnl",
+          "unrealized_funding",
+          "realised_pnl_cum"
+        ],
+        "type": "object"
+      },
+      "AdlAlertSnapshot": {
+        "properties": {
+          "adl_mode": {
+            "type": "string"
+          },
+          "adl_trigger_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "equity": {
+            "type": "string"
+          },
+          "latest_pnl_ratio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pool_group_id": {
+            "type": "string"
+          },
+          "pool_id": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "updated_time": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pool_id",
+          "pool_group_id",
+          "symbol",
+          "adl_mode",
+          "equity",
+          "updated_time"
+        ],
+        "type": "object"
+      },
+      "AdlRankIndicator": {
+        "description": "Auto-deleverage rank indicator.",
+        "enum": [
+          "Zero",
+          "One",
+          "Two",
+          "Three",
+          "Four",
+          "Five"
+        ],
+        "type": "string"
+      },
+      "CancelType": {
+        "description": "Reason/Source of the order cancellation.",
+        "enum": [
+          "CancelByUser",
+          "CancelByAdmin",
+          "CancelBySystem",
+          "CancelByReduceOnly",
+          "CancelByPrepareLiq",
+          "CancelAllBeforeLiq",
+          "CancelByPrepareAdl",
+          "CancelAllBeforeAdl",
+          "CancelBySettle",
+          "CancelByTpSlTsClear",
+          "CancelBySmp",
+          "CancelByDcp",
+          "CancelByRebalance",
+          "CancelByOcoTpCanceledBySlTriggered",
+          "CancelByOcoSlCanceledByTpTriggered"
+        ],
+        "type": "string"
+      },
+      "ConditionalOrder": {
+        "properties": {
+          "trigger_by": {
+            "$ref": "#/components/schemas/TriggerBy",
+            "description": "Last Price, Mark Price, or Index Price."
+          },
+          "trigger_direction": {
+            "$ref": "#/components/schemas/TriggerDirection",
+            "description": "Up or Down."
+          },
+          "trigger_price": {
+            "description": "The price level that activates the order.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trigger_price",
+          "trigger_direction",
+          "trigger_by"
+        ],
+        "type": "object"
+      },
+      "CreateType": {
+        "enum": [
+          "CreateByUser",
+          "CreateByFutureSpread",
+          "CreateByAdminClosing",
+          "CreateBySettle",
+          "CreateByStopOrder",
+          "CreateByTakeProfit",
+          "CreateByPartialTakeProfit",
+          "CreateByStopLoss",
+          "CreateByPartialStopLoss",
+          "CreateByTrailingStop",
+          "CreateByTrailingProfit",
+          "CreateByLiq",
+          "CreateByTakeOverPassThrough",
+          "CreateByAdlPassThrough",
+          "CreateByBlockPassThrough",
+          "CreateByBlockTradeMovePositionPassThrough",
+          "CreateByClosing",
+          "CreateByFGridBot",
+          "CloseByFGridBot",
+          "CreateByTWAP",
+          "CreateByTVSignal",
+          "CreateByMmRateClose",
+          "CreateByMartingaleBot",
+          "CloseByMartingaleBot",
+          "CreateByIceBerg",
+          "CreateByArbitrage",
+          "CreateByDdh",
+          "CreateByBboOrder"
+        ],
+        "type": "string"
+      },
+      "ExecType": {
+        "description": "Execution type for trade history entries.",
+        "oneOf": [
+          {
+            "const": "Trade",
+            "description": "Regular trade execution.",
+            "type": "string"
+          },
+          {
+            "const": "AdlTrade",
+            "description": "Auto-deleveraging.",
+            "type": "string"
+          },
+          {
+            "const": "Funding",
+            "description": "Funding fee.",
+            "type": "string"
+          },
+          {
+            "const": "BustTrade",
+            "description": "Takeover liquidation.",
+            "type": "string"
+          },
+          {
+            "const": "Delivery",
+            "description": "USDC futures delivery; position closed by contract delisted.",
+            "type": "string"
+          },
+          {
+            "const": "Settle",
+            "description": "Inverse futures settlement; position closed due to delisting.",
+            "type": "string"
+          },
+          {
+            "const": "BlockTrade",
+            "description": "Block trade.",
+            "type": "string"
+          },
+          {
+            "const": "MovePosition",
+            "description": "Move position.",
+            "type": "string"
+          },
+          {
+            "const": "FutureSpread",
+            "description": "Spread leg execution.",
+            "type": "string"
+          }
+        ]
+      },
+      "Execution": {
+        "description": "Single execution (trade fill) record.",
+        "properties": {
+          "closed_size": {
+            "description": "Closed position size",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "create_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreateType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Order create type"
+          },
+          "exec_id": {
+            "description": "Execution ID",
+            "format": "uuid",
+            "type": "string"
+          },
+          "exec_price": {
+            "description": "Execution price",
+            "type": "string"
+          },
+          "exec_qty": {
+            "description": "Execution quantity",
+            "type": "string"
+          },
+          "exec_time": {
+            "description": "Executed timestamp (ms)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "exec_type": {
+            "$ref": "#/components/schemas/ExecType",
+            "description": "Execution type (e.g. Trade, Adl, Bust)"
+          },
+          "exec_value": {
+            "description": "Executed value (price * qty)",
+            "type": "string"
+          },
+          "fee_rate": {
+            "description": "Trading fee rate",
+            "type": "string"
+          },
+          "index_price": {
+            "description": "Index price at execution",
+            "type": "string"
+          },
+          "is_maker": {
+            "description": "Is maker order. true: maker, false: taker",
+            "type": "boolean"
+          },
+          "leaves_qty": {
+            "description": "Remaining quantity not yet executed after this fill",
+            "type": "string"
+          },
+          "mark_price": {
+            "description": "Mark price at execution",
+            "type": "string"
+          },
+          "order_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "order_link_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "order_price": {
+            "description": "Original order price",
+            "type": "string"
+          },
+          "order_qty": {
+            "description": "Original order quantity",
+            "type": "string"
+          },
+          "order_type": {
+            "$ref": "#/components/schemas/OrderType",
+            "description": "Order type. Market or Limit"
+          },
+          "seq": {
+            "description": "Cross sequence, used to associate each fill and each position update\n* The seq will be the same when conclude multiple transactions at the same time\n* Different symbols may have the same seq, please use seq + symbol to check unique",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "side": {
+            "$ref": "#/components/schemas/Side",
+            "description": "Side. Buy or Sell"
+          },
+          "stop_order_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StopOrderType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stop order type if this was a stop order"
+          },
+          "sub_account_address": {
+            "type": "string"
+          },
+          "symbol": {
+            "description": "Symbol name, e.g. BTCUSDC",
+            "type": "string"
+          }
+        },
+        "required": [
+          "exec_id",
+          "symbol",
+          "order_id",
+          "side",
+          "sub_account_address",
+          "order_price",
+          "order_qty",
+          "leaves_qty",
+          "order_type",
+          "exec_price",
+          "exec_qty",
+          "exec_value",
+          "exec_type",
+          "exec_time",
+          "is_maker",
+          "fee_rate",
+          "mark_price",
+          "index_price",
+          "seq"
+        ],
+        "type": "object"
+      },
+      "InsurancePoolInventoryPosition": {
+        "properties": {
+          "avg_entry_price": {
+            "type": "string"
+          },
+          "side": {
+            "$ref": "#/components/schemas/Side"
+          },
+          "size": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "unrealized_pnl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "side",
+          "size",
+          "avg_entry_price",
+          "unrealized_pnl"
+        ],
+        "type": "object"
+      },
+      "InsurancePoolSnapshot": {
+        "properties": {
+          "adl_mode": {
+            "type": "string"
+          },
+          "adl_trigger_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base_equity": {
+            "type": "string"
+          },
+          "cash_balance": {
+            "type": "string"
+          },
+          "equity": {
+            "type": "string"
+          },
+          "group_adl_obligation": {
+            "type": "string"
+          },
+          "group_redistribution_in": {
+            "type": "string"
+          },
+          "group_redistribution_out": {
+            "type": "string"
+          },
+          "inventory": {
+            "items": {
+              "$ref": "#/components/schemas/InsurancePoolInventoryPosition"
+            },
+            "type": "array"
+          },
+          "latest_pnl_ratio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pool_group_id": {
+            "type": "string"
+          },
+          "pool_id": {
+            "type": "string"
+          },
+          "realized_pnl_cum": {
+            "type": "string"
+          },
+          "unrealized_pnl": {
+            "type": "string"
+          },
+          "updated_time": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pool_id",
+          "pool_group_id",
+          "cash_balance",
+          "realized_pnl_cum",
+          "unrealized_pnl",
+          "base_equity",
+          "equity",
+          "group_redistribution_in",
+          "group_redistribution_out",
+          "group_adl_obligation",
+          "adl_mode",
+          "updated_time",
+          "inventory"
+        ],
+        "type": "object"
+      },
+      "Interval": {
+        "enum": [
+          "1m",
+          "3m",
+          "5m",
+          "15m",
+          "30m",
+          "1h",
+          "2h",
+          "4h",
+          "6h",
+          "12h",
+          "1d",
+          "3d",
+          "1w",
+          "1M"
+        ],
+        "type": "string"
+      },
+      "KlineSnapshot": {
+        "properties": {
+          "Q": {
+            "description": "Taker buy quote asset volume. Binance `Q` field.",
+            "type": "string"
+          },
+          "T": {
+            "description": "Candle close time (ms).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "V": {
+            "description": "Taker buy base asset volume. Binance `V` field.",
+            "type": "string"
+          },
+          "c": {
+            "description": "Close - the price of the last trade in this candle (closing price).",
+            "type": "string"
+          },
+          "h": {
+            "description": "High - the highest trade price within this interval.",
+            "type": "string"
+          },
+          "i": {
+            "$ref": "#/components/schemas/Interval",
+            "description": "Candle interval - timeframe."
+          },
+          "l": {
+            "description": "Low - the minimum trade price within this interval.",
+            "type": "string"
+          },
+          "n": {
+            "description": "Trade count. The number of trades included in this candle",
+            "type": "string"
+          },
+          "o": {
+            "description": "Open - the price of the first trade in this candle (opening price).",
+            "type": "string"
+          },
+          "t": {
+            "description": "Candle open time (ms).",
+            "format": "int64",
+            "type": "integer"
+          },
+          "v": {
+            "description": "Volume. the trading volume for the candle",
+            "type": "string"
+          }
+        },
+        "required": [
+          "t",
+          "i",
+          "o",
+          "h",
+          "l",
+          "c",
+          "T",
+          "v",
+          "V",
+          "Q",
+          "n"
+        ],
+        "type": "object"
+      },
+      "Liquidation": {
+        "properties": {
+          "bust_price": {
+            "type": "string"
+          },
+          "exec_size": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "side": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "symbol",
+          "side",
+          "exec_size",
+          "bust_price",
+          "timestamp"
+        ],
+        "type": "object"
+      },
+      "MarginMode": {
+        "enum": [
+          "Cross",
+          "Isolated"
+        ],
+        "type": "string"
+      },
+      "Order": {
+        "description": "Summary information about an order.",
+        "properties": {
+          "avg_price": {
+            "description": "Average price at which part (or all) of the order has been executed (i.e. filled)",
+            "type": "string"
+          },
+          "cancel_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CancelType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "close_on_trigger": {
+            "type": "boolean"
+          },
+          "closed_pnl": {
+            "description": "Closed profit and loss for each close position order.\nValid only in order WebSocket",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "create_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreateType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_time": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "cum_exec_fee": {
+            "description": "Cumulative executed trading fee: the total fees charged so far for the executed portion of this order",
+            "type": "string"
+          },
+          "cum_exec_qty": {
+            "description": "Cumulative executed quantity: total amount of the order\nthat has already been filled/executed so far",
+            "type": "string"
+          },
+          "cum_exec_value": {
+            "description": "Cumulative executed value: the total value corresponding to the part of\nthe order that has already been filled. Basically: how much worth in total has been executed so far",
+            "type": "string"
+          },
+          "expire_time": {
+            "default": null,
+            "description": "Expiration time for orders with a time-in-force of Good-Til-Date (GTD)",
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "last_price_on_created": {
+            "description": "Last price at the time the order was created",
+            "type": "string"
+          },
+          "leaves_qty": {
+            "description": "Remaining quantity from the order that has not yet been executed",
+            "type": "string"
+          },
+          "leaves_value": {
+            "description": "Estimated value of the remaining quantity (leavesQty)\nthat remains unfilled. Basically: how much the unfilled portion is “worth”",
+            "type": "string"
+          },
+          "margin_mode": {
+            "$ref": "#/components/schemas/MarginMode"
+          },
+          "order_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "order_link_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "order_status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "order_type": {
+            "$ref": "#/components/schemas/OrderType",
+            "description": "Order type. Market, Limit. For TP/SL orders, is the order type after the order was triggered"
+          },
+          "post_only": {
+            "type": "boolean"
+          },
+          "price": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "string"
+          },
+          "reduce_only": {
+            "type": "boolean"
+          },
+          "reject_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RejectReason"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "side": {
+            "$ref": "#/components/schemas/Side"
+          },
+          "stop_order_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StopOrderType"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stop order type. For example, Stop Market or Stop Limit."
+          },
+          "sub_account_address": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "time_in_force": {
+            "$ref": "#/components/schemas/TimeInForce"
+          },
+          "tpsl": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TpSl"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Take Profit / Stop Loss details if set"
+          },
+          "trigger": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConditionalOrder"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Conditional order details if this is a conditional order"
+          },
+          "updated_time": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "order_id",
+          "symbol",
+          "sub_account_address",
+          "price",
+          "qty",
+          "side",
+          "margin_mode",
+          "order_status",
+          "avg_price",
+          "leaves_qty",
+          "leaves_value",
+          "cum_exec_qty",
+          "cum_exec_value",
+          "cum_exec_fee",
+          "time_in_force",
+          "order_type",
+          "last_price_on_created",
+          "post_only",
+          "reduce_only",
+          "close_on_trigger",
+          "created_time",
+          "updated_time"
+        ],
+        "type": "object"
+      },
+      "OrderBookLevel": {
+        "description": "Order book level consisting of price and size.",
+        "maxItems": 2,
+        "minItems": 2,
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "type": "array"
+      },
+      "OrderBookSnapshot": {
+        "description": "Order book Snapshot at a specific point in time.",
+        "properties": {
+          "a": {
+            "description": "Ask levels",
+            "items": {
+              "$ref": "#/components/schemas/OrderBookLevel"
+            },
+            "type": "array"
+          },
+          "b": {
+            "description": "Bid levels",
+            "items": {
+              "$ref": "#/components/schemas/OrderBookLevel"
+            },
+            "type": "array"
+          },
+          "mts": {
+            "description": "The timestamp from the matching engine when this orderbook data is produced.\nIt can be correlated with T from public trade channel",
+            "format": "int64",
+            "type": "integer"
+          },
+          "s": {
+            "description": "Symbol name",
+            "type": "string"
+          },
+          "seq": {
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "ts": {
+            "description": "The timestamp (ms) that the system generates the data",
+            "format": "int64",
+            "type": "integer"
+          },
+          "u": {
+            "description": "Update ID, is always in sequence",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "s",
+          "ts",
+          "b",
+          "a",
+          "u",
+          "seq",
+          "mts"
+        ],
+        "type": "object"
+      },
+      "OrderStatus": {
+        "oneOf": [
+          {
+            "enum": [
+              "New",
+              "PartiallyFilled",
+              "Untriggered",
+              "Rejected",
+              "PartiallyFilledCanceled",
+              "Filled",
+              "Canceled",
+              "Triggered",
+              "Deactivated",
+              "Expired"
+            ],
+            "type": "string"
+          },
+          {
+            "const": "CancelRequested",
+            "description": "Cancel requested by user/admin/system, pending matching confirmation.",
+            "type": "string"
+          }
+        ]
+      },
+      "OrderType": {
+        "description": "Order type: Limit, Market.",
+        "enum": [
+          "Limit",
+          "Market"
+        ],
+        "type": "string"
+      },
+      "OrderbookUpdateType": {
+        "enum": [
+          "snapshot",
+          "delta"
+        ],
+        "type": "string"
+      },
+      "Position": {
+        "description": "Position information.\n\n* risk_id: numeric identifier of the current risk tier your position is on for that symbol.\n* risk_limit_value: the maximum position value allowed under that tier (the tier’s limit). If your position value grows beyond this, the tier steps up (higher requirements).\n\nDetails:\n* Meaning: Bybit enforces “risk limit tiers” to cap position value and scale maintenance margin. The tier is referenced by riskId, and its cap is riskLimitValue.\n* Effects: Higher tiers allow larger positions but increase maintenance margin and may constrain leverage.\n* Portfolio margin note: In portfolio margin mode, both fields are not meaningful and are returned as 0 (docs: “risk limit rules are invalid”).",
+        "properties": {
+          "adl_rank_indicator": {
+            "$ref": "#/components/schemas/AdlRankIndicator",
+            "description": "Auto-deleverage rank indicator."
+          },
+          "avg_price": {
+            "description": "Average entry price.",
+            "type": "string"
+          },
+          "bust_price": {
+            "description": "Bankruptcy price",
+            "type": "string"
+          },
+          "created_time": {
+            "description": "Timestamp of the first time a position was created on this symbol (ms)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "cum_funding": {
+            "description": "Net realized funding PnL accumulated for this position (receive positive, pay negative).",
+            "type": "string"
+          },
+          "is_reduce_only": {
+            "type": "boolean"
+          },
+          "leverage": {
+            "description": "Position leverage",
+            "type": "string"
+          },
+          "leverage_sys_updated_time": {
+            "default": null,
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "liq_price": {
+            "description": "Position liquidation price",
+            "type": "string"
+          },
+          "margin_mode": {
+            "$ref": "#/components/schemas/MarginMode",
+            "description": "Is position cross margin or isolated margin"
+          },
+          "mark_price": {
+            "description": "Mark price",
+            "type": "string"
+          },
+          "mmr_sys_update_time": {
+            "default": null,
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "position_balance": {
+            "description": "Position margin",
+            "type": "string"
+          },
+          "position_im": {
+            "description": "Initial margin",
+            "type": "string"
+          },
+          "position_im_by_mp": {
+            "description": "Initial margin calculated by mark price",
+            "type": "string"
+          },
+          "position_mm": {
+            "description": "Maintenance margin",
+            "type": "string"
+          },
+          "position_mm_by_mp": {
+            "description": "Maintenance margin calculated by mark price",
+            "type": "string"
+          },
+          "position_status": {
+            "$ref": "#/components/schemas/PositionStatus",
+            "description": "Position status. Normal, Liq, Adl"
+          },
+          "position_value": {
+            "description": "Position value",
+            "type": "string"
+          },
+          "realized_pnl_cum": {
+            "description": "Sum of all historical Current Realized PnLs (and the latest one).",
+            "type": "string"
+          },
+          "realized_pnl_cur": {
+            "description": "Sum of Fill Realized PnL for position of this symbol/side\nsince this position was created last time",
+            "type": "string"
+          },
+          "risk_id": {
+            "description": "Risk tier ID",
+            "format": "uint8",
+            "maximum": 255,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "risk_limit_value": {
+            "description": "Risk limit value",
+            "type": "string"
+          },
+          "seq": {
+            "description": "Cross sequence, used to associate each fill and each position update\n* Different symbols may have the same seq, please use seq + symbol to check unique",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "side": {
+            "$ref": "#/components/schemas/Side",
+            "description": "Position side. Buy: long, Sell: short"
+          },
+          "size": {
+            "description": "Position size, always positive",
+            "type": "string"
+          },
+          "stop_loss": {
+            "description": "Stop loss price",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sub_account_address": {
+            "type": "string"
+          },
+          "symbol": {
+            "description": "Symbol name",
+            "type": "string"
+          },
+          "take_profit": {
+            "description": "Take profit price",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trailing_stop": {
+            "description": "Trailing stop (The distance from market price)",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unrealized_funding": {
+            "description": "Net unsettled funding PnL for this position (receive positive, pay negative).",
+            "type": "string"
+          },
+          "unrealized_pnl": {
+            "description": "How much USDC an account will receive (or pay if negative)\nif the position is closed at the current MarkPrice",
+            "type": "string"
+          },
+          "updated_time": {
+            "description": "Position data updated timestamp (ms)",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "risk_id",
+          "risk_limit_value",
+          "symbol",
+          "sub_account_address",
+          "side",
+          "size",
+          "avg_price",
+          "position_value",
+          "margin_mode",
+          "position_balance",
+          "position_status",
+          "leverage",
+          "mark_price",
+          "liq_price",
+          "bust_price",
+          "position_im",
+          "position_im_by_mp",
+          "position_mm",
+          "position_mm_by_mp",
+          "unrealized_pnl",
+          "unrealized_funding",
+          "realized_pnl_cur",
+          "realized_pnl_cum",
+          "cum_funding",
+          "adl_rank_indicator",
+          "is_reduce_only",
+          "created_time",
+          "updated_time",
+          "seq"
+        ],
+        "type": "object"
+      },
+      "PositionStatus": {
+        "enum": [
+          "Normal",
+          "Liq",
+          "Adl"
+        ],
+        "type": "string"
+      },
+      "PublicTrade": {
+        "description": "A single trade entry from the public trade stream.",
+        "properties": {
+          "S": {
+            "$ref": "#/components/schemas/Side",
+            "description": "Side of taker."
+          },
+          "T": {
+            "description": "The timestamp (ms) that the order is filled.",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "i": {
+            "description": "Trade ID.",
+            "type": "string"
+          },
+          "p": {
+            "description": "Trade price.",
+            "type": "string"
+          },
+          "s": {
+            "description": "Symbol name.",
+            "type": "string"
+          },
+          "seq": {
+            "description": "Cross sequence.",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "v": {
+            "description": "Trade size.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "i",
+          "s",
+          "S",
+          "v",
+          "p",
+          "seq",
+          "T"
+        ],
+        "type": "object"
+      },
+      "RejectReason": {
+        "enum": [
+          "EcNoError",
+          "EcOthers",
+          "EcInsufficientFunds",
+          "EcUnknownMessageType",
+          "EcMissingClOrdId",
+          "EcMissingOrigClOrdId",
+          "EcClOrdIdOrigClOrdIdAreTheSame",
+          "EcDuplicatedClOrdId",
+          "EcOrigClOrdIdDoesNotExist",
+          "EcTooLateToCancel",
+          "EcUnknownOrderType",
+          "EcUnknownSide",
+          "EcUnknownTimeInForce",
+          "EcWronglyRouted",
+          "EcMarketOrderPriceIsNotZero",
+          "EcLimitOrderInvalidPrice",
+          "EcNoEnoughQtyToFill",
+          "EcNoImmediateQtyToFill",
+          "EcPerCancelRequest",
+          "EcMarketOrderCannotBePostOnly",
+          "EcPostOnlyWillTakeLiquidity",
+          "EcReduceOnlyNoPosition",
+          "EcReduceOnlyWouldIncreasePosition",
+          "EcReduceOnlyExceedsPosition",
+          "EcReduceOnlyMode",
+          "EcTradingHalted",
+          "EcCancelReplaceOrder",
+          "EcInvalidSymbolStatus",
+          "EcCancelForNoFullFill",
+          "EcBySelfMatch",
+          "EcInCallAuctionStatus",
+          "EcQtyCannotBeZero",
+          "EcMarketOrderNoSupportTif",
+          "EcReachMaxTradeNum",
+          "EcInvalidPriceScale",
+          "EcBitIndexInvalid",
+          "EcStopBySelfMatch",
+          "EcInvalidSmpType",
+          "EcCancelByMmp",
+          "EcInvalidUserType",
+          "EcInvalidMirrorOid",
+          "EcInvalidMirrorUid",
+          "EcEcInvalidQty",
+          "EcInvalidAmount",
+          "EcLoadOrderCancel",
+          "EcMarketQuoteNoSuppSell",
+          "EcDisorderOrderId",
+          "EcInvalidBaseValue",
+          "EcLoadOrderCanMatch",
+          "EcSecurityStatusFail",
+          "EcReachRiskPriceLimit",
+          "EcOrderNotExist",
+          "EcCancelByOrderValueZero",
+          "EcCancelByMatchValueZero",
+          "EcReachMarketPriceLimit"
+        ],
+        "type": "string"
+      },
+      "Side": {
+        "description": "Order side: buy or sell.",
+        "oneOf": [
+          {
+            "const": "Sell",
+            "description": "Sell side: short",
+            "type": "string"
+          },
+          {
+            "const": "Buy",
+            "description": "Buy side: long",
+            "type": "string"
+          }
+        ]
+      },
+      "StopOrderType": {
+        "enum": [
+          "TakeProfit",
+          "StopLoss",
+          "TrailingStop",
+          "Stop",
+          "PartialTakeProfit",
+          "PartialStopLoss",
+          "TpslOrder",
+          "OcoOrder",
+          "MmRateClose",
+          "BidirectionalTpslOrder"
+        ],
+        "type": "string"
+      },
+      "TickerSnapshot": {
+        "description": "Query for the latest price snapshot, best bid/ask price, and trading volume in the last 24 hours.",
+        "properties": {
+          "addr": {
+            "description": "Market address",
+            "type": "string"
+          },
+          "best_ask_price": {
+            "description": "Best ask price",
+            "type": "string"
+          },
+          "best_ask_size": {
+            "description": "Best ask size",
+            "type": "string"
+          },
+          "best_bid_price": {
+            "description": "Best bid price",
+            "type": "string"
+          },
+          "best_bid_size": {
+            "description": "Best bid size",
+            "type": "string"
+          },
+          "funding_rate": {
+            "description": "Funding rate",
+            "type": "string"
+          },
+          "high_price_24h": {
+            "description": "The highest price in the last 24 hours",
+            "type": "string"
+          },
+          "index_price": {
+            "description": "Index price",
+            "type": "string"
+          },
+          "last_price": {
+            "description": "Last traded price",
+            "type": "string"
+          },
+          "low_price_24h": {
+            "description": "The lowest price in the last 24 hours",
+            "type": "string"
+          },
+          "mark_price": {
+            "description": "Mark price",
+            "type": "string"
+          },
+          "next_funding_time": {
+            "description": "Next funding time (ms)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "open_interest": {
+            "description": "Open interest size",
+            "type": "string"
+          },
+          "open_interest_value": {
+            "description": "Open interest value",
+            "type": "string"
+          },
+          "prev_price_1h": {
+            "description": "Market price 1 hour ago",
+            "type": "string"
+          },
+          "prev_price_24h": {
+            "description": "Market price 24 hours ago",
+            "type": "string"
+          },
+          "symbol": {
+            "description": "Symbol name",
+            "type": "string"
+          },
+          "turnover_24h": {
+            "description": "Turnover for 24h",
+            "type": "string"
+          },
+          "volume_24h": {
+            "description": "Volume for 24h",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "addr",
+          "last_price",
+          "index_price",
+          "mark_price",
+          "prev_price_24h",
+          "high_price_24h",
+          "low_price_24h",
+          "prev_price_1h",
+          "volume_24h",
+          "turnover_24h",
+          "open_interest",
+          "open_interest_value",
+          "funding_rate",
+          "next_funding_time",
+          "best_ask_size",
+          "best_ask_price",
+          "best_bid_size",
+          "best_bid_price"
+        ],
+        "type": "object"
+      },
+      "TimeInForce": {
+        "description": "Time in Force instructions.",
+        "oneOf": [
+          {
+            "const": "GTC",
+            "description": "Good Till Cancel",
+            "type": "string"
+          },
+          {
+            "const": "IOC",
+            "description": "Immediate or Cancel",
+            "type": "string"
+          },
+          {
+            "const": "FOK",
+            "description": "Fill or Kill",
+            "type": "string"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Good Till Date",
+            "properties": {
+              "GTD": {
+                "format": "uint64",
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "GTD"
+            ],
+            "type": "object"
+          },
+          {
+            "const": "Day",
+            "description": "Good For Day",
+            "type": "string"
+          }
+        ]
+      },
+      "Topic": {
+        "description": "Subscription topic string (e.g. 'ticker.BTC-USDC', 'orderbook.10.BTC-USDC', 'insurance_pool.BTC-USDC', 'position').",
+        "examples": [
+          "orderbook.10.BTC-USDC",
+          "trade.BTC-USDC",
+          "ticker.BTC-USDC",
+          "kline.1m.BTC-USDC",
+          "all_liquidations.BTC-USDC",
+          "insurance_pool.BTC-USDC",
+          "adl_alert.BTC-USDC",
+          "order",
+          "position",
+          "execution",
+          "account_balance"
+        ],
+        "pattern": "^(orderbook\\.[^.]+\\.[^.]+|trade\\.[^.]+|ticker\\.[^.]+|kline\\.[^.]+\\.[^.]+|all_liquidations\\.[^.]+|insurance_pool\\.[^.]+|adl_alert\\.[^.]+|order|position|execution|account_balance)$",
+        "type": "string"
+      },
+      "TpSl": {
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/TpSlMode"
+          },
+          "stop_loss": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TpSlSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "take_profit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TpSlSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "type": "object"
+      },
+      "TpSlMode": {
+        "enum": [
+          "Full",
+          "Partial"
+        ],
+        "type": "string"
+      },
+      "TpSlSpec": {
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "market": {
+                "properties": {
+                  "trigger_by": {
+                    "$ref": "#/components/schemas/TriggerBy"
+                  },
+                  "trigger_price": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "trigger_price",
+                  "trigger_by"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "market"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "limit": {
+                "properties": {
+                  "limit_price": {
+                    "type": "string"
+                  },
+                  "trigger_by": {
+                    "$ref": "#/components/schemas/TriggerBy"
+                  },
+                  "trigger_price": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "trigger_price",
+                  "limit_price",
+                  "trigger_by"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "limit"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "TriggerBy": {
+        "enum": [
+          "LastPrice",
+          "IndexPrice",
+          "MarkPrice"
+        ],
+        "type": "string"
+      },
+      "TriggerDirection": {
+        "enum": [
+          "Up",
+          "Down"
+        ],
+        "type": "string"
+      }
+    }
+  },
+  "channels": {
+    "public": {
+      "title": "Public",
+      "description": "Market data streams — order book, trades, tickers, klines.\n\n**Path:** `/ws/public`\n\nNo authentication required.",
+      "address": "/ws/public",
+      "messages": {
+        "SubscribeRequest": {
+          "$ref": "#/components/messages/SubscribeRequest"
+        },
+        "UnsubscribeRequest": {
+          "$ref": "#/components/messages/UnsubscribeRequest"
+        },
+        "PingRequest": {
+          "$ref": "#/components/messages/PingRequest"
+        },
+        "Subscribed": {
+          "$ref": "#/components/messages/Subscribed"
+        },
+        "Unsubscribed": {
+          "$ref": "#/components/messages/Unsubscribed"
+        },
+        "Pong": {
+          "$ref": "#/components/messages/Pong"
+        },
+        "Error": {
+          "$ref": "#/components/messages/Error"
+        },
+        "Event": {
+          "$ref": "#/components/messages/Event"
+        }
+      }
+    },
+    "private": {
+      "title": "Private",
+      "description": "Account streams — orders, positions, executions, balances.\n\n**Path:** `/ws/private`\n\nAuthenticate with JWT or API key before subscribing.",
+      "address": "/ws/private",
+      "messages": {
+        "AuthRequest": {
+          "$ref": "#/components/messages/AuthRequest"
+        },
+        "AuthApiKeyRequest": {
+          "$ref": "#/components/messages/AuthApiKeyRequest"
+        },
+        "AuthResponse": {
+          "$ref": "#/components/messages/AuthResponse"
+        },
+        "SubscribeRequest": {
+          "$ref": "#/components/messages/SubscribeRequest"
+        },
+        "UnsubscribeRequest": {
+          "$ref": "#/components/messages/UnsubscribeRequest"
+        },
+        "PingRequest": {
+          "$ref": "#/components/messages/PingRequest"
+        },
+        "Subscribed": {
+          "$ref": "#/components/messages/Subscribed"
+        },
+        "Unsubscribed": {
+          "$ref": "#/components/messages/Unsubscribed"
+        },
+        "Pong": {
+          "$ref": "#/components/messages/Pong"
+        },
+        "Error": {
+          "$ref": "#/components/messages/Error"
+        },
+        "Event": {
+          "$ref": "#/components/messages/Event"
+        }
+      }
+    }
+  },
+  "operations": {
+    "sendSubscribe": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/public"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/public/messages/SubscribeRequest"
+        }
+      ]
+    },
+    "sendUnsubscribe": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/public"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/public/messages/UnsubscribeRequest"
+        }
+      ]
+    },
+    "sendPing": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/public"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/public/messages/PingRequest"
+        }
+      ]
+    },
+    "receiveSubscribed": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/public"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/public/messages/Subscribed"
+        }
+      ]
+    },
+    "receiveUnsubscribed": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/public"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/public/messages/Unsubscribed"
+        }
+      ]
+    },
+    "receivePong": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/public"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/public/messages/Pong"
+        }
+      ]
+    },
+    "receiveError": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/public"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/public/messages/Error"
+        }
+      ]
+    },
+    "receiveEvent": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/public"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/public/messages/Event"
+        }
+      ]
+    },
+    "sendAuthPrivate": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/AuthRequest"
+        }
+      ]
+    },
+    "sendAuthApiKeyPrivate": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/AuthApiKeyRequest"
+        }
+      ]
+    },
+    "sendSubscribePrivate": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/SubscribeRequest"
+        }
+      ]
+    },
+    "sendUnsubscribePrivate": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/UnsubscribeRequest"
+        }
+      ]
+    },
+    "sendPingPrivate": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/PingRequest"
+        }
+      ]
+    },
+    "receiveAuthPrivate": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/AuthResponse"
+        }
+      ]
+    },
+    "receiveSubscribedPrivate": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/Subscribed"
+        }
+      ]
+    },
+    "receiveUnsubscribedPrivate": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/Unsubscribed"
+        }
+      ]
+    },
+    "receivePongPrivate": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/Pong"
+        }
+      ]
+    },
+    "receiveErrorPrivate": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/Error"
+        }
+      ]
+    },
+    "receiveEventPrivate": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/private"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/private/messages/Event"
+        }
+      ]
+    }
+  }
+}
