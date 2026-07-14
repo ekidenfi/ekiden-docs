@@ -114,7 +114,9 @@
           },
           {
             "group": "Websoket API",
-            "pages": []
+            "pages": [
+              "api-reference/integration/Adjust-the-leverage"
+            ]
           },
           {
             "group": "Websocket",
