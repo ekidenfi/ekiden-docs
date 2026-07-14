@@ -114,7 +114,7 @@
           },
           {
             "group": "Websoket API",
-            "pages": []
+            "openapi": "api-reference/openapi.json"
           },
           {
             "group": "Websocket",
