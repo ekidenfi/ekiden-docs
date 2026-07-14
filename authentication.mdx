@@ -1,3 +1,47 @@
 ---
 title: "Authentication"
 ---
+
+# Authentication
+
+Authentication is required only when connecting to the private WebSocket endpoint.
+
+Ekiden supports two authentication methods:
+
+- **JWT Access Token** — recommended for authenticated user sessions.
+- **API Key** — recommended for server-side applications, trading bots, and automated integrations.
+
+Authentication must be completed immediately after connecting to `/ws/private` and before subscribing to private topics.
+
+---
+
+## JWT Authentication
+
+JWT authentication is intended for authenticated Ekiden users.
+
+Connection flow:
+
+1. Connect to the private WebSocket endpoint.
+2. Send an `auth` message containing a valid JWT access token.
+3. Wait for a successful authentication response.
+4. Subscribe to one or more private topics.
+
+See the **WebSocket Reference → auth** section for the complete request and response schema.
+
+---
+
+## API Key Authentication
+
+API Key authentication is intended for automated integrations and backend services.
+
+Unlike the REST API, WebSocket authentication uses a dedicated signing payload.
+
+Connection flow:
+
+1. Connect to the private WebSocket endpoint.
+2. Generate the authentication signature.
+3. Send an `auth_api_key` message.
+4. Wait for a successful authentication response.
+5. Subscribe to one or more private topics.
+
+See the [**WebSocket Reference Private**](..api-reference/websockets/private) **→ auth\_api\_key** section for the complete request format, signing rules, and response schema.
