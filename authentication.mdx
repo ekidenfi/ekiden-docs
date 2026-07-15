@@ -43,11 +43,11 @@ Unlike the REST API, WebSocket API key authentication uses a dedicated signing p
 EKIDEN_WS|AUTH|{timestamp_ms}|{nonce}
 ```
 
-| Step | Description |  |
-| --- | --- | --- |
-| 1 | Generate `timestamp_ms` (Unix time in milliseconds) and a unique `nonce`. |  |
-| 2 | Generate an **Ed25519** signature over \`EKIDEN\_WS | AUTH |
-| 3 | Send an `auth_api_key` message to the **private WebSocket** (`/ws/private`). |  |
+| Step | Description |
+| --- | --- |
+| 1 | Generate `timestamp_ms` (Unix time in milliseconds) and a unique `nonce`. |
+| 2 | Generate an Ed25519 signature using your API private key. |
+| 3 | Send an `auth_api_key` message to the private WebSocket (`/ws/private`). |
 
 ```json
 {
