@@ -2,48 +2,54 @@
 title: "Quick Start"
 ---
 
-This guide will be updated when the official TypeScript SDK becomes available.
+This guide shows how to authenticate with the Ekiden TypeScript SDK and make your first API request.
 
-{/* Import and initialize the client, authorize via wallet signature and make a test call:
+## Initialize the client
 
-  ```ts
-  import { Ed25519Account, Ed25519PrivateKey } from "@aptos-labs/ts-sdk";
+```ts
+import {
+  Account,
+  Ed25519PrivateKey,
+  EkidenClient,
+  TESTNET,
+} from "@ekidenfi/ts-sdk";
 
-  import { EkidenClient, TESTNET } from "@ekiden/ts-sdk";
+const ekiden = new EkidenClient(TESTNET);
+```
 
-  const ekiden = new EkidenClient(TESTNET);
+## Authenticate
 
-  const privateKey = new Ed25519PrivateKey(ENV.PRIVATE_KEY);
-  const account = new Ed25519Account({ privateKey });
+```ts
+const privateKey = new Ed25519PrivateKey(process.env.PRIVATE_KEY!);
+const account = Account.fromPrivateKey({ privateKey });
 
-  const publicKey = account.publicKey.toString();
+const timestamp_ms = Date.now();
+const nonce = Math.random().toString(36).slice(2);
 
-  const nowMs = Date.now();
-  const nonce = crypto.getRandomValues(new Uint8Array(16))
-  .reduce((acc, b) => acc + String.fromCharCode(b), "");
-  const nonceB64Url = btoa(nonce).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
-  const signed = `AUTHORIZE|${nowMs}|${nonceB64Url}`;
-  const messageBytes = new TextEncoder().encode(signed);
-  const signature = account.sign(messageBytes).toString();
+const message = `AUTHORIZE|${timestamp_ms}|${nonce}`;
+const signature = account
+  .sign(new TextEncoder().encode(message))
+  .toString();
 
-
-  // Authorize (get JWT)
-  const { token } = await ekiden.authorize({
+const { token } = await ekiden.user.authorize({
+  public_key: account.publicKey.toString(),
+  timestamp_ms,
+  nonce,
   signature,
-  public_key: publicKey,
-  timestamp_ms: nowMs,
-  nonce: nonceB64Url
-  });
+});
 
-  // Fetch user orders
-  const orders = await ekiden.getUserOrders({ market_addr: "0x..." });
+ekiden.setToken(token);
+```
 
-  // Fetch user vaults
-  const vaults = await ekiden.getUserVaults();
+## Make your first request
 
-  // Fetch user positions
-  const positions = await ekiden.getUserPositions();
-  ```
-  */}
+```ts
+const markets = await ekiden.market.getMarkets();
 
-{/* TODO(SDK): Rewrite this Quick Start for the current Canton integration. The example still uses the Aptos SDK, Aptos Ed25519 account/private-key authentication, an outdated package name, and SDK methods that do not match the current TypeScript SDK API. */}
+const balance = await ekiden.account.getBalance();
+
+const positions = await ekiden.position.getPositionInfo({
+  sub_account_address: "0x...",
+  symbol: "BTC-USDCx",
+});
+```

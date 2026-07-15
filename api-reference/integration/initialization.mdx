@@ -1,80 +1,38 @@
 ---
 title: "Client Initialization"
-description: "This page explains how to initialize the Ekiden SDK in TypeScript. Initialization sets up your client to interact with Ekiden's REST and WebSocket APIs. You can operate in either public mode (read-only access) or authenticated mode (private endpoints and trading)."
+description: "Initialize the Ekiden TypeScript SDK to connect to the REST and WebSocket APIs."
 ---
 
 ## Supported Environments
 
-Ekiden supports the following environments:
+The SDK provides predefined configurations for supported environments.
 
-| Environment | Network Key | REST URL | WebSocket URL |
+| Environment | REST API | Public WebSocket | Private WebSocket |
 | --- | --- | --- | --- |
-| Testnet Beta | testnet | [https://api.cnt.ekiden.fi/api/v1](https://api.cnt.ekiden.fi/api/v1) | wss://api.cnt.ekiden.fi/ws |
-| Staging | testnet | [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1) | wss://api.canton.ekiden.fi/ws |
+| Testnet Beta | `https://api.cnt.ekiden.fi/api/v1` | `wss://api.cnt.ekiden.fi/ws/public` | `wss://api.cnt.ekiden.fi/ws/private` |
+| Staging | `https://api.canton.ekiden.fi/api/v1` | `wss://api.canton.ekiden.fi/ws/public` | `wss://api.canton.ekiden.fi/ws/private` |
 
-{/*
-  Use the network parameter during client initialization to select your target environment.
+## Initialize the Client
 
-  ## Initialization Parameters
+```ts
+import { EkidenClient, TESTNET } from "@ekidenfi/ts-sdk";
 
-  | Parameter | Description | Required | Default |
-  | --- | --- | --- | --- |
-  | network | mainnet or testnet | No | mainnet |
-  | api\_key | For private endpoints | Yes (if API key auth) | — |
-  | private\_key | Alternative for signature-based auth | Yes (if no API key) | — |
-  | subaccount\_id | Optional subaccount ID | No | 0 |
-  | use\_websocket | Enable WS connections | No | true |
-  */}
+const ekiden = new EkidenClient(TESTNET);
+```
 
-{/*
-  ## Examples
+## Custom Configuration
 
-  ### TypeScript
+You can also provide a custom configuration.
 
-  ```ts
-  import { Ed25519Account, Ed25519PrivateKey } from "@aptos-labs/ts-sdk";
+```ts
+import { EkidenClient } from "@ekidenfi/ts-sdk";
 
-  import { EkidenClient, TESTNET } from "@ekiden/ts-sdk";
+const ekiden = new EkidenClient({
+  baseURL: "https://your-api.example.com",
+  wsURL: "wss://your-api.example.com/ws/public",
+  privateWSURL: "wss://your-api.example.com/ws/private",
+  apiPrefix: "/api/v1",
+});
+```
 
-  const ekiden = new EkidenClient(TESTNET);
-
-  const privateKey = new Ed25519PrivateKey(ENV.PRIVATE_KEY);
-  const account = new Ed25519Account({ privateKey });
-
-  const publicKey = account.publicKey.toString();
-
-  const nowMs = Date.now();
-  const nonce = crypto.getRandomValues(new Uint8Array(16))
-  .reduce((acc, b) => acc + String.fromCharCode(b), "");
-  const nonceB64Url = btoa(nonce).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
-  const signed = `AUTHORIZE|${nowMs}|${nonceB64Url}`;
-  const messageBytes = new TextEncoder().encode(signed);
-  const signature = account.sign(messageBytes).toString();
-
-
-  // Authorize (get JWT)
-  const { token } = await ekiden.authorize({
-  signature,
-  public_key: publicKey,
-  timestamp_ms: nowMs,
-  nonce: nonceB64Url
-  });
-  ```
-
-  ### Rust
-
-  ```rust
-  use ekiden_sdk::{ClientBuilder, Network};
-
-  #[tokio::main]
-  async fn main() {
-  let client = ClientBuilder::new(Network::Mainnet)
-  .with_subaccount(0)
-  .enable_websocket(true)
-  .build()
-  .unwrap();
-  }
-  ```
-  */}
-
-{/* TODO(SDK): Verify and update the client initialization parameters against the current TypeScript SDK. The documented parameters and defaults may not match the current EkidenClient configuration. */}
+After initializing the client, continue with the Authentication guide to obtain a JWT or configure API Key authentication.
