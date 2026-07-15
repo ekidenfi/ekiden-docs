@@ -1,0 +1,62 @@
+---
+title: "Message Format"
+description: "Overview of WebSocket message types and structure."
+---
+
+All WebSocket messages are exchanged as JSON objects.
+
+Every message includes an `op` field that identifies the operation or message type.
+
+The optional `req_id` field can be used to correlate client requests with their corresponding server responses.
+
+---
+
+## Client → Server
+
+| Operation | Purpose |
+| --- | --- |
+| `auth` | Authenticate using a JWT access token |
+| `auth_api_key` | Authenticate using an API key |
+| `subscribe` | Subscribe to one or more topics |
+| `unsubscribe` | Unsubscribe from one or more topics |
+| `ping` | Keep the connection alive and measure round-trip latency |
+
+Example:
+
+```json
+{
+  "op": "subscribe",
+  "args": ["ticker.BTC-USDCx"],
+  "req_id": "2"
+}
+```
+
+---
+
+## Server → Client
+
+| Operation | Purpose |
+| --- | --- |
+| `auth` | Authentication result |
+| `subscribed` | Subscription confirmation |
+| `unsubscribed` | Unsubscription confirmation |
+| `pong` | Response to a `ping` message |
+| `error` | Error response |
+| `event` | Real-time event payload |
+
+---
+
+## Event Envelope
+
+All streaming updates are delivered using the following envelope:
+
+```json
+{
+  "op": "event",
+  "server_ts_ms": 1700000000000,
+  "topic": "ticker.BTC-USDCx",
+  "data": {}
+}
+```
+
+Order book events may also include a type field (snapshot vs delta). See the **Public WebSocket Reference** and **Private WebSocket Reference** for complete message schemas and payload definitions.

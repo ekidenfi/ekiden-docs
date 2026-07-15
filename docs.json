@@ -145,7 +145,8 @@
               "overview",
               "connection",
               "authentication",
-              "topics"
+              "topics",
+              "message-format"
             ]
           },
           {
