@@ -4,24 +4,29 @@ title: "Deposit & Withdraw Funds"
 
 ## Overview
 
-Ekiden uses a smart contract-based margin bank to custody collateral for trading. Users can deposit USDCx to the margin bank and withdraw available (free) collateral at any time. All deposits and withdrawals are on-chain but occur on Canton.
+Ekiden uses Canton to manage collateral for trading.
 
-## Supported Tokens
+Users can deposit supported assets into their funding account and withdraw available collateral.
 
-Ekiden supports the following tokens as margin collateral:
+## Supported Assets
 
-- USDCx.
-- More coming soon.
+Currently supported collateral:
 
-Check the documentation for the most current list of supported collateral assets.
+- USDCx
 
-## Depositing Tokens
+Additional assets may be added in future releases.
 
-### Steps
+## Deposits
 
-- Ensure Wallet Connection to the correct network
+Deposit functionality is available through the TypeScript SDK and Canton integration.
 
-Deposit and withdrawal integrations for Canton are being finalized. Updated integration instructions and SDK examples will be added once available.
+Detailed integration examples will be added once the deposit workflow is finalized.
+
+## Withdrawals
+
+Withdrawal functionality is available through the TypeScript SDK and Canton integration.
+
+Detailed integration examples will be added once the withdrawal workflow is finalized.
 
 {/*
   - Call Deposit Endpoint or SDK Method
@@ -113,8 +118,8 @@ Deposit and withdrawal integrations for Canton are being finalized. Updated inte
   sender: account.accountAddress,
   data: transactionPayload,
   options: {
-    gasUnitPrice: gas_estimate,
-    maxGasAmount, // bigint!
+  gasUnitPrice: gas_estimate,
+  maxGasAmount, // bigint!
   },
   });
 
@@ -202,8 +207,8 @@ Deposit and withdrawal integrations for Canton are being finalized. Updated inte
   sender: account.accountAddress,
   data: transactionPayload,
   options: {
-    gasUnitPrice: gas_estimate,
-    maxGasAmount, // bigint!
+  gasUnitPrice: gas_estimate,
+  maxGasAmount, // bigint!
   },
   });
 
