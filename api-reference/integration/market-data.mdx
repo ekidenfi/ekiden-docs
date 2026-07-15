@@ -2,27 +2,28 @@
 title: "Market Data"
 ---
 
-### **Sources**
+## Sources
 
-- REST: see API Reference for `/api/v1/market/*` endpoints, including market data, order books, tickers, klines, funding, open interest, and risk information.
+- REST: See the API Reference for `/api/v1/market/*` endpoints, including market data, order books, tickers, klines, funding, open interest, and risk limits.
 - WebSocket (real-time):
   - Public: `wss://api.cnt.ekiden.fi/ws/public`
-  - Private: `wss://api.cnt.ekiden.fi/ws/private` (requires JWT auth)
+  - Private: `wss://api.cnt.ekiden.fi/ws/private` (requires JWT authentication)
 
-### **Common Subscriptions**
+## Common Subscriptions
 
-- Orderbook snapshots and deltas: `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTC-USDCx`)
-- Trades (aggregated): `trade.<symbol>`
-- Ticker snapshots: `ticker.<symbol>`
-- Klines (candlesticks): `kline.<interval>.<symbol>`
-- Liquidations: `all_liquidations.<symbol>`
-- Insurance pool snapshots: `insurance_pool.<symbol>`
-- ADL alerts: `adl_alert.<symbol>`
-- Private user streams (on private WS after auth): `order`, `position`, `execution`, `account_balance`
+- `orderbook.<depth>.<symbol>` (e.g. `orderbook.1.BTC-USDCx`) — order book snapshots and deltas
+- `trade.<symbol>` — public trade feed
+- `ticker.<symbol>` — 24-hour ticker updates
+- `kline.<interval>.<symbol>` — candlestick updates
+- `all_liquidations.<symbol>` — liquidation events
+- `insurance_pool.<symbol>` — insurance pool snapshots
+- `adl_alert.<symbol>` — ADL alert updates
+- `order`, `position`, `execution`, `account_balance` — private user streams (available on `/ws/private` after authentication)
 
-### Timestamps
+## Timestamps
 
-- Ticker snapshots use `ts` in milliseconds.
-- WS ping/pong use milliseconds for `client_ts`/`server_ts`.
-- WS event envelope uses `server_ts_ms` in milliseconds.
-- See Conventions → Timestamps for the full matrix.
+- `ts` (ticker snapshots) is a Unix timestamp in milliseconds.
+- `client_ts` and `server_ts` (WebSocket ping/pong) are Unix timestamps in milliseconds.
+- `server_ts_ms` (WebSocket event envelope) is a Unix timestamp in milliseconds.
+
+See **Conventions → Timestamps** for additional details.
