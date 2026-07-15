@@ -5,7 +5,7 @@ title: "Orders"
 ### **REST Endpoints**
 
 - **Get Order History**: `GET /api/v1/order/history`
-- **Get Realtime Orders**: `GET /api/v1/order/realtime`
+- **Get Open Orders**: `GET /api/v1/order/realtime`
 - **Place Order**: `POST /api/v1/order/place`
 - **Place Batch Orders**: `POST /api/v1/order/place-batch`
 - **Amend Order**: `POST /api/v1/order/amend`
@@ -69,104 +69,9 @@ The `trigger` object includes:
 
 #### Order placement results and status updates
 
-Single-order placement does not return a final order result in the REST response. Track order status updates through the private WebSocket order stream.
+A successful REST response indicates that the request was accepted, not that the order has been executed. Track subsequent order status changes through the private WebSocket `order` topic.
 
 Batch order placement returns per-request result information in `exit_info`, including `Success` or `Error`, together with order identifiers in `result`.
-
-{/*
-  **SDK Examples**
-
-  ```typescript
-  const order = await ekiden.createOrder({
-  market_addr: "0x...",
-  side: "buy",
-  size: 100,
-  price: 123.45,
-  type: "limit",
-  nonce: 1,
-  signature: "0x..."
-  });
-  ```
-
-  #### Examples by type
-
-  Limit GTC (rest on book):
-
-  ```ts
-  await ekiden.createOrder({
-  market_addr: "0x...",
-  side: "buy",
-  size: "100",
-  price: "123.45",
-  type: "limit",
-  time_in_force: "GTC",
-  is_cross: true,
-  });
-  ```
-
-  Limit PostOnly (add liquidity only):
-
-  ```ts
-  await ekiden.createOrder({
-  market_addr: "0x...",
-  side: "sell",
-  size: "50",
-  price: "130.00",
-  type: "limit",
-  time_in_force: "PostOnly",
-  });
-  ```
-
-  Market IOC (take liquidity now):
-
-  ```ts
-  await ekiden.createOrder({
-  market_addr: "0x...",
-  side: "buy",
-  size: "25",
-  type: "market",
-  time_in_force: "IOC",
-  });
-  ```
-
-  Stop-Market (conditional entry):
-
-  ```ts
-  await ekiden.createOrder({
-  market_addr: "0x...",
-  side: "sell",
-  size: "10",
-  type: "market",
-  trigger_price: "100.00",
-  });
-  ```
-
-  Stop-Limit (conditional entry):
-
-  ```ts
-  await ekiden.createOrder({
-  market_addr: "0x...",
-  side: "sell",
-  size: "10",
-  type: "limit",
-  price: "99.50",
-  trigger_price: "100.00",
-  time_in_force: "GTC",
-  });
-  ```
-
-  ### Response fields
-
-  - `timestamp_ms` — Unix milliseconds when the order was created.
-  - `timestamp` — Unix seconds (deprecated; kept for backward compatibility).
-  - `is_cross` — true for cross margin, false for isolated.
-  - `initial_margin` — required initial margin for the order at current price/size (if available).
-  - `time_in_force` — one of `GTC | IOC | FOK | PostOnly`.
-  - `reduce_only` — when true, the order will not increase exposure.
-  - `trigger_price` — present for conditional entries (see Stop-Market/Stop-Limit above).
-
-  See full schema in OpenAPI for `OrderResponse`.
-  */}
 
 ### Triggers and TP/SL
 
@@ -182,6 +87,6 @@ Batch order placement returns per-request result information in `exit_info`, inc
   - `mode`: `"Full"` or `"Partial"`.
   - `take_profit` / `stop_loss`: Optional TP/SL settings that support `market` or `limit` order types.
 - **Reduce-only**
-  - Use `reduce_only: true` to prevent increasing exposure. Triggered bracket legs always enforce reduce-only.
+  - Use `reduce_only: true` to prevent increasing exposure. Triggered TP/SL orders are intended to reduce or close an existing position.
 
 See the dedicated page: TP/SL, Triggers, and Reduce-Only.
