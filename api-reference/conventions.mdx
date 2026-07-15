@@ -244,15 +244,19 @@ Ekiden uses Unix timestamps in milliseconds unless otherwise specified.
 
 Common timestamp fields include:
 
-- `timestamp`: Unix milliseconds since epoch (int). Example: `1718000000000`.
-- `timestamp_ms`: Unix milliseconds since epoch (int). Example: `1718000000000`.
-- `server_ts_ms`: Unix milliseconds since epoch (int).
-- `created_time` / `updated_time`: Unix milliseconds since epoch (int).
-- `ts`: Unix milliseconds since epoch (int).
-- `mts`: Unix milliseconds since epoch (int).
-- `client_ts` / `server_ts` (WebSocket ping/pong): Unix milliseconds since epoch (int).
+- `timestamp`
+- `timestamp_ms`
+- `server_ts_ms`
+- `created_time`
+- `updated_time`
+- `ts`
+- `mts`
+- `client_ts`
+- `server_ts`
 
-Some API endpoints accept ISO 8601 date-time strings as query parameters (for example, `start_time` and `end_time`). Refer to the endpoint schema for the expected format, e.g. `"2025-05-10T12:34:56Z"`.
+All of the above represent Unix timestamps in milliseconds.
+
+Some endpoints also accept Unix timestamps in milliseconds as query parameters (for example, `start_time` and `end_time`). Refer to the endpoint documentation for the supported parameters.
 
 ---
 
