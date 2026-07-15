@@ -2,29 +2,67 @@
 title: "PnL, Margin & Funding"
 ---
 
-- Funding index is embedded in GET /api/v1/user/positions response.
-- PnL = (Mark Price - Entry Price) × Position Size ± Funding
+This page describes the margin- and funding-related fields returned by the position endpoints.
 
-## Margin Modes
+## Position Information
 
-Ekiden supports both cross and isolated margin:
+Position information is available through:
 
-- Cross margin (`is_cross: true`): All positions on a market share the same margin pool. Maintenance and initial margin ratios use the market’s cross settings. Liquidation risk is assessed against the shared equity.
-- Isolated margin (`is_cross: false`): Each position has its own margin. Maintenance and initial ratios use the market’s isolated settings. Risk is isolated per position.
+```http
+GET /api/v1/position/list
+```
 
-API surfaces include:
+The response includes commonly used margin and risk fields such as:
 
-- `GET /api/v1/user/positions` with `is_cross` indicating the mode.
-- `initial_margin`, `maintenance_margin`, and `leverage` pre-computed per position for convenience.
-- `liq_price` (estimated liquidation price) mirrors the on-chain Move logic and considers:
-	- margin mode (cross vs isolated)
-	- maintenance ratio
-	- maximum leverage constraints
-	- funding index (market vs position)
+- `entry_price`
+- `mark_price`
+- `unrealised_pnl`
+- `realised_pnl`
+- `margin_mode`
+- `initial_margin`
+- `maintenance_margin`
+- `leverage`
+- `liq_price`
+- `funding`
 
-Notes:
+---
 
-- `initial_margin` is computed from entry notional and the applicable initial margin ratio.
-- `maintenance_margin` is computed from mark-notional and the applicable maintenance ratio.
-- `leverage = notional / margin` with guards for zero values.
-- `liq_price` may be absent when it cannot be computed (e.g., zero size).
+## Margin Mode
+
+Ekiden currently supports **Cross Margin** only.
+
+In Cross Margin mode:
+
+- Margin is shared across all positions within the trading account.
+- Available account equity may be used to prevent liquidation.
+- Liquidation risk is evaluated using the account's available margin.
+
+The current margin mode is returned in the `margin_mode` field.
+
+---
+
+## Risk Fields
+
+Position responses include the following risk-related fields:
+
+- `initial_margin`
+- `maintenance_margin`
+- `leverage`
+- `liq_price`
+
+These values are calculated by the trading engine and returned for informational purposes.
+
+---
+
+## Funding
+
+Funding-related information is available through:
+
+- Position responses (`funding`)
+- Funding Rate History:
+
+```http
+GET /api/v1/market/funding/history
+```
+
+Refer to the Market Data documentation for funding rate history endpoints.
