@@ -1,0 +1,43 @@
+---
+title: "Topics"
+description: "Available WebSocket topics."
+---
+
+Clients receive real-time updates by subscribing to one or more topics.
+
+Topics are passed as strings in the `args` field of the **Subscribe** message and removed using the **Unsubscribe** message.
+
+A single WebSocket connection can maintain multiple active topic subscriptions simultaneously.
+
+---
+
+## Public Topics
+
+Public topics provide real-time market data and do not require authentication.
+
+| Topic Pattern | Example | Description |
+| --- | --- | --- |
+| `orderbook.{depth}.{symbol}` | `orderbook.10.BTC-USDCx` | Order book snapshots and incremental updates |
+| `trade.{symbol}` | `trade.BTC-USDCx` | Public trade stream |
+| `ticker.{symbol}` | `ticker.BTC-USDCx` | 24-hour ticker updates |
+| `kline.{interval}.{symbol}` | `kline.1m.BTC-USDCx` | Candlestick (OHLCV) updates |
+| `all_liquidations.{symbol}` | `all_liquidations.BTC-USDCx` | Liquidation events |
+| `insurance_pool.{symbol}` | `insurance_pool.BTC-USDCx` | Insurance pool updates |
+| `adl_alert.{symbol}` | `adl_alert.BTC-USDCx` | ADL alert notifications |
+
+---
+
+## Private Topics
+
+Private topics require authentication and stream account-specific events.
+
+| Topic | Description |
+| --- | --- |
+| `order` | Order updates |
+| `position` | Position updates |
+| `execution` | Trade execution updates |
+| `account_balance` | Account balance updates |
+
+---
+
+Examples, payload schemas, and message formats are available in the[**WebSocket Reference Public**](./api-reference/websockets/public) and [**WebSocket Reference Private**](./api-reference/websockets/private).

@@ -2,46 +2,70 @@
 title: "Authentication"
 ---
 
-# Authentication
-
-Authentication is required only when connecting to the private WebSocket endpoint.
+Authentication is required only for the private WebSocket endpoint.
 
 Ekiden supports two authentication methods:
 
 - **JWT Access Token** — recommended for authenticated user sessions.
 - **API Key** — recommended for server-side applications, trading bots, and automated integrations.
 
-Authentication must be completed immediately after connecting to `/ws/private` and before subscribing to private topics.
-
 ---
 
 ## JWT Authentication
 
-JWT authentication is intended for authenticated Ekiden users.
+Authenticate by sending an **Auth** message.
 
-Connection flow:
+| Field | Value |
+| --- | --- |
+| `op` | `auth` |
+| `bearer` | Your JWT access token |
+| `req_id` | Optional correlation identifier |
 
-1. Connect to the private WebSocket endpoint.
-2. Send an `auth` message containing a valid JWT access token.
-3. Wait for a successful authentication response.
-4. Subscribe to one or more private topics.
+```json
+{
+  "op": "auth",
+  "bearer": "<token>",
+  "req_id": "1"
+}
+```
 
-See the **WebSocket Reference → auth** section for the complete request and response schema.
+See the **Auth** message in the [**Private WebSocket Reference**](./api-reference/websockets/private) for the complete request and response schema.
 
 ---
 
 ## API Key Authentication
 
-API Key authentication is intended for automated integrations and backend services.
+Unlike the REST API, WebSocket API key authentication uses a dedicated signing payload.
 
-Unlike the REST API, WebSocket authentication uses a dedicated signing payload.
+**Signing payload**
 
-Connection flow:
+```text
+EKIDEN_WS|AUTH|{timestamp_ms}|{nonce}
+```
 
-1. Connect to the private WebSocket endpoint.
-2. Generate the authentication signature.
-3. Send an `auth_api_key` message.
-4. Wait for a successful authentication response.
-5. Subscribe to one or more private topics.
+| Step | Description |  |  |  |
+| --- | --- | --- | --- | --- |
+| 1 | Generate `timestamp_ms` (Unix time in milliseconds) and a unique `nonce`. |  |  |  |
+| 2 | Sign \`EKIDEN\_WS | AUTH |  |  |
+| 3 | Send an **AuthApiKey** message (`op: "auth_api_key"`). |  |  |  |
 
-See the [**WebSocket Reference Private**](./api-reference/websockets/private) **→ auth\_api\_key** section for the complete request format, signing rules, and response schema.
+```json
+{
+  "op": "auth_api_key",
+  "api_key": "0x...",
+  "signature": "0x...",
+  "timestamp_ms": 1700000000000,
+  "nonce": "unique-nonce",
+  "req_id": "1"
+}
+```
+
+### Validation Rules
+
+| Rule | Description |
+| --- | --- |
+| Clock skew | ±30 seconds from server time |
+| Nonce | Must be unique per API key |
+| Scopes | The API key must allow access to the requested private topics |
+
+See the **AuthApiKey** message in the [**Private WebSocket Reference**](./api-reference/websockets/private) for the complete request format and response schema.
