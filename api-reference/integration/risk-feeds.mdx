@@ -2,17 +2,21 @@
 title: "Insurance Pool & ADL"
 ---
 
-Insurance pool and ADL endpoints expose public risk-system state. Use them alongside the matching WebSocket topics when building dashboards or monitoring tools.
+Insurance Pool and Auto-Deleveraging (ADL) endpoints expose the current state of Ekiden's risk management system. These endpoints are intended for monitoring, analytics, and operational dashboards.
 
-## Insurance Pool Snapshot
+For real-time updates, subscribe to the corresponding public WebSocket topics.
+
+## Insurance Pool
+
+### Current State
 
 ```http
 GET /api/v1/market/insurance-pool?symbol=BTC-USDCx
 ```
 
-Returns current insurance pool snapshots.
+Returns the current insurance pool state for the specified market.
 
-Important fields:
+Common response fields include:
 
 - `pool_id`
 - `pool_group_id`
@@ -30,30 +34,34 @@ Important fields:
 - `updated_time`
 - `inventory`
 
-## Insurance Pool History
+### History
 
 ```http
 GET /api/v1/market/insurance-pool/history?symbol=BTC-USDCx&start_time=1731541800000&end_time=1732146600000&limit=100
 ```
 
-History query parameters:
+Supported query parameters:
 
-| Parameter | Notes |
+| Parameter | Description |
 | --- | --- |
 | `symbol` | Optional market symbol filter. |
-| `start_time` | Optional start timestamp in milliseconds. |
-| `end_time` | Optional end timestamp in milliseconds. |
-| `limit` | Optional row limit. |
+| `start_time` | Optional Unix timestamp in milliseconds. |
+| `end_time` | Optional Unix timestamp in milliseconds. |
+| `limit` | Maximum number of records to return. |
 
-## ADL Alert Snapshot
+---
+
+## Auto-Deleveraging (ADL)
+
+### Current State
 
 ```http
 GET /api/v1/market/adl-alert?symbol=BTC-USDCx
 ```
 
-Returns current ADL alert snapshots.
+Returns the current ADL status for the specified market.
 
-Important fields:
+Common response fields include:
 
 - `pool_id`
 - `pool_group_id`
@@ -64,17 +72,32 @@ Important fields:
 - `equity`
 - `updated_time`
 
-## ADL Alert History
+### History
 
 ```http
 GET /api/v1/market/adl-alert/history?symbol=BTC-USDCx&start_time=1731541800000&end_time=1732146600000&limit=100
 ```
 
+Supported query parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `symbol` | Optional market symbol filter. |
+| `start_time` | Optional Unix timestamp in milliseconds. |
+| `end_time` | Optional Unix timestamp in milliseconds. |
+| `limit` | Maximum number of records to return. |
+
+---
+
 ## WebSocket Topics
 
-For live updates, subscribe to:
+Live updates are available on the public WebSocket endpoint:
+
+```text
+wss://api.cnt.ekiden.fi/ws/public
+```
+
+Available topics:
 
 - `insurance_pool.<symbol>`
 - `adl_alert.<symbol>`
-
-See [Insurance Pool WebSocket](../websocket/insurance_pool) and [ADL Alert WebSocket](../websocket/adl_alert).
