@@ -2,15 +2,19 @@
 title: "Root Whitelist"
 ---
 
-Root whitelist endpoints control whether a root account can authorize and onboard when whitelist enforcement is enabled.
+Root whitelist endpoints manage the set of root accounts that are permitted to authorize and onboard when whitelist enforcement is enabled.
 
 ## Check Whitelist Status
+
+Check whether a root account is currently whitelisted.
+
+By root address:
 
 ```http
 GET /api/v1/authorize/whitelist/check?root_address=0x...
 ```
 
-You can also check by public key:
+Or by public key:
 
 ```http
 GET /api/v1/authorize/whitelist/check?root_public_key=0x...
@@ -18,7 +22,7 @@ GET /api/v1/authorize/whitelist/check?root_public_key=0x...
 
 Provide exactly one of `root_address` or `root_public_key`.
 
-Response:
+Example response:
 
 ```json
 {
@@ -27,26 +31,49 @@ Response:
 }
 ```
 
-When whitelist enforcement is disabled, the backend treats roots as effectively whitelisted.
+The `whitelisted` field indicates whether the specified root account is currently allowed to authorize.
 
-## Add or Remove Entries
+When whitelist enforcement is disabled, all root accounts are treated as whitelisted.
 
-Administrative endpoints use root whitelist basic auth:
+---
+
+## Manage Whitelist Entries
+
+Whitelist entries can be managed using the following administrative endpoints.
+
+These endpoints are protected using **HTTP Basic Authentication** and are intended for administrative use only.
 
 ```http
 PUT /api/v1/authorize/whitelist/{root_address}
+```
+
+Adds or updates a whitelist entry.
+
+```http
 DELETE /api/v1/authorize/whitelist/{root_address}
 ```
 
-These endpoints are operational controls, not normal end-user integration endpoints. Do not expose them in client applications.
+Removes a whitelist entry.
+
+These endpoints should never be exposed in client applications or SDKs.
+
+---
 
 ## Root Account Lookup
 
-Authenticated users can fetch their root account:
+Authenticated users can retrieve the root account associated with their account.
 
 ```http
 GET /api/v1/user/root-account
 Authorization: Bearer <jwt>
 ```
 
-This is useful when a frontend or SDK needs to display the root address associated with the authenticated user.
+Example response:
+
+```json
+{
+  "root_address": "0x..."
+}
+```
+
+This endpoint is useful when a frontend or SDK needs to display the authenticated user's root account.
