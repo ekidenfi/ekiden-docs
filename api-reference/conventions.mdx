@@ -58,16 +58,24 @@ Messages use an `op` field with snake\_case values. Optional `req_id` lets you c
 
 ### Topics
 
-- Public (Market-scoped):
-  - `orderbook.<depth>.<symbol>` (e.g., `orderbook.1.BTC-USDCx`)
-  - `trade.<symbol>`
-  - `ticker.<symbol>`
-  - `kline.<interval>.<symbol>`
-- Private (User-scoped, only over `/ws/private` after auth):
-  - `order`
-  - `position`
-  - `execution`
-  - `account_balance`
+#### Public topics (market data)
+
+- `orderbook.<depth>.<symbol>` (e.g. `orderbook.10.BTC-USDCx`) — order book snapshots and deltas
+- `trade.<symbol>` — public trade feed
+- `ticker.<symbol>` — 24h ticker updates
+- `kline.<interval>.<symbol>` — candlestick updates
+- `all_liquidations.<symbol>` — liquidation events
+- `insurance_pool.<symbol>` — insurance pool snapshots
+- `adl_alert.<symbol>` — ADL alert updates
+
+#### Private topics (authenticated)
+
+Available only after successful authentication on `/ws/private`.
+
+- `order` — order updates
+- `position` — position updates
+- `execution` — execution (fill) updates
+- `account_balance` — account balance updates
 
 ### Subscribe
 
@@ -93,9 +101,20 @@ Server → Client
 
 ### Unsubscribe
 
+Client → Server
+
 ```json
 {
   "op": "unsubscribe",
+  "args": ["orderbook.1.BTC-USDCx"]
+}
+```
+
+Server → Client
+
+```json
+{
+  "op": "unsubscribed",
   "args": ["orderbook.1.BTC-USDCx"]
 }
 ```
@@ -107,25 +126,59 @@ Server → Client
   "op": "event",
   "topic": "ticker.BTC-USDCx",
   "server_ts_ms": 1731541800000,
-  "data": { /* snapshot or update payload */ }
+  "data": { /* event payload */ }
 }
 ```
 
-### Authenticate (private WS only)
+## Authenticate (private WebSocket only)
 
-Send your JWT (see REST auth below) over `/ws/private`:
+Private WebSocket connections support two authentication methods:
+
+### JWT
+
+Authenticate immediately after connecting to `/ws/private` using a JWT access token obtained from the REST authorization endpoint.
 
 Client → Server
 
 ```json
-{ "op": "auth", "bearer": "<jwt>", "req_id": "optional-id" }
+{
+  "op": "auth",
+  "bearer": "<jwt>",
+  "req_id": "optional-id"
+}
 ```
 
 Server → Client
 
 ```json
-{ "op": "auth", "success": true, "user_id": "<user_id>", "req_id": "optional-id" }
+{
+  "op": "auth",
+  "success": true,
+  "user_id": "<user_id>",
+  "req_id": "optional-id"
+}
 ```
+
+### API Key
+
+Authenticate immediately after connecting to `/ws/private` using an API key.
+
+Client → Server
+
+```json
+{
+  "op": "auth_api_key",
+  "api_key": "<api_key>",
+  "signature": "<signature>",
+  "timestamp_ms": 1731541800000,
+  "nonce": "unique-nonce",
+  "req_id": "optional-id"
+}
+```
+
+The `signature` must be an Ed25519 signature of:
+
+`EKIDEN_WS|AUTH|{timestamp_ms}|{nonce}`
 
 ---
 
@@ -179,28 +232,27 @@ Gateway supports API-key auth via headers:
 
 ## 6. Numerical Precision
 
-- All token quantities and prices are **strings**
-- Up to 18 decimal places
-- Use big number or decimal libraries — avoid floats
-
-```json
-"2.000000000000000000"
-```
+- Prices and quantities are represented as strings to preserve precision.
+- Clients should use arbitrary-precision decimal libraries instead of floating-point numbers.
+- Price and quantity precision vary by instrument. Use the `price_filter.tick_size` and `lot_size_filter.qty_step` values returned in the response from `GET /api/v1/market/instruments-info` to determine the supported precision for each market.
 
 ---
 
 ## 7. Timestamps
 
-We use explicit units depending on the field name and context:
+Ekiden uses Unix timestamps in milliseconds unless otherwise specified.
 
-- `timestamp` (REST resources like orders, fills, positions): Unix seconds since epoch (int). Example: `1718000000`.
-- `timestamp_ms` (REST authorize flow, API Key headers): Unix milliseconds since epoch (int). Example: `1718000000000`.
-- `server_ts_ms` (WebSocket event envelope): Unix milliseconds since epoch (int).
-- `ts` (WebSocket ticker snapshots and ping/pong client\_ts/server\_ts):
-  - For ticker `ts`: Unix milliseconds since epoch (int). Example: `1718000000000`.
-  - For WS ping/pong `client_ts`/`server_ts`: Unix milliseconds since epoch (int). Example: `1718000000000`.
+Common timestamp fields include:
 
-When an ISO 8601 string appears (e.g., funding endpoints), it is explicitly documented in the schema, e.g. `"2025-05-10T12:34:56Z"`.
+- `timestamp`: Unix milliseconds since epoch (int). Example: `1718000000000`.
+- `timestamp_ms`: Unix milliseconds since epoch (int). Example: `1718000000000`.
+- `server_ts_ms`: Unix milliseconds since epoch (int).
+- `created_time` / `updated_time`: Unix milliseconds since epoch (int).
+- `ts`: Unix milliseconds since epoch (int).
+- `mts`: Unix milliseconds since epoch (int).
+- `client_ts` / `server_ts` (WebSocket ping/pong): Unix milliseconds since epoch (int).
+
+Some API endpoints accept ISO 8601 date-time strings as query parameters (for example, `start_time` and `end_time`). Refer to the endpoint schema for the expected format, e.g. `"2025-05-10T12:34:56Z"`.
 
 ---
 
@@ -221,7 +273,7 @@ When an ISO 8601 string appears (e.g., funding endpoints), it is explicitly docu
 | --- | --- |
 | `BAD_REQUEST` | Invalid request parameters |
 | `UNAUTHORIZED` | Authentication failed or token expired |
-| `FORBIDDEN` | Insufficient permissions (scopes) |
+| `FORBIDDEN` | Insufficient permissions |
 | `RateLimitExceeded` | Too many requests |
 | `NOT_FOUND` | Resource not found |
 | `SERVICE_UNAVAILABLE` | Backend service down or lagging |
@@ -233,10 +285,11 @@ When an ISO 8601 string appears (e.g., funding endpoints), it is explicitly docu
 
 ## 9. Rate Limits
 
-- Public REST endpoints: 60 requests/minute
-- Private REST endpoints: 30 requests/minute per token
+REST API requests are subject to rate limits.
 
-### Example response on limit exceeded
+When a rate limit is exceeded, the server returns HTTP `429 Too Many Requests`.
+
+Example:
 
 ```json
 {
@@ -249,50 +302,71 @@ When an ISO 8601 string appears (e.g., funding endpoints), it is explicitly docu
 
 ## 10. Pagination
 
-Offset-style pagination with page counters:
+Cursor-based pagination is used for endpoints that return lists of resources.
 
-- Query params: `page` (default 1), `per_page` (default 20)
+Common query parameters:
+
+- `limit` — Maximum number of items to return.
+- `cursor` — Pagination cursor returned by the previous request.
+
+Example:
 
 ```http
-GET /api/v1/trade/executions?symbol=BTC-USDCx&page=1&per_page=20
+GET /api/v1/trade/executions?symbol=BTC-USDCx&limit=20
 ```
 
-Responses generally return arrays for list endpoints (see schema in the API reference).
+Example response:
 
----
+```json
+{
+  "list": [...],
+   "next_page_cursor": ""
+}
+```
+
+To retrieve the next page, pass the returned `next_page_cursor` value as the `cursor` parameter in the next request.
 
 ## 11. Field Naming
 
-- All JSON keys use `snake_case`
-- All numeric values are strings (except timestamps and page counters)
-
----
+- All JSON keys use `snake_case`.
+- High-precision numeric values are represented as strings.
+- Integer values are represented as JSON numbers.
 
 ## 12. WebSocket Heartbeats
 
 ### Application-level ping/pong
 
-- Client may send:
+Clients may send:
 
 ```json
-{ "op": "ping", "req_id": "optional-id", "ts": 1718000000000 }
+{
+  "op": "ping",
+  "req_id": "optional-id",
+  "ts": 1718000000000
+}
 ```
 
-- Server replies:
+The server replies:
 
 ```json
-{ "op": "pong", "req_id": "optional-id", "client_ts": 1718000000000, "server_ts": 1718000001000 }
+{
+  "op": "pong",
+  "req_id": "optional-id",
+  "client_ts": 1718000000000,
+  "server_ts": 1718000001000
+}
 ```
 
-Timestamps are Unix milliseconds.
+All timestamps are Unix milliseconds.
 
 ### WebSocket-level ping/pong (keepalive)
 
-- The server periodically sends WebSocket-level pings and expects pongs.
-- If the server does not see a pong within the timeout window (~30s by default), it will close the connection.
+The server periodically sends WebSocket-level ping frames and expects pong responses.
 
-Clients should automatically answer WS-level pings and may also send periodic app-level `ping` messages if desired.
+If a pong is not received within the configured timeout, the server may close the connection.
+
+Clients should automatically respond to WebSocket-level ping frames and may also send application-level `ping` messages if desired.
 
 ---
 
-For detailed endpoint specifications and integration examples, continue to the API reference.
+For detailed endpoint specifications and integration examples, refer to the API Reference.
