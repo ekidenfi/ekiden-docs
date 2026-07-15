@@ -113,33 +113,6 @@
             "openapi": "/api-reference/openapi.json"
           },
           {
-            "group": "Websocket",
-            "pages": [
-              "api-reference/websocket/connect",
-              {
-                "group": "Public",
-                "pages": [
-                  "api-reference/websocket/orderbook",
-                  "api-reference/websocket/kline",
-                  "api-reference/websocket/trade",
-                  "api-reference/websocket/ticker",
-                  "api-reference/websocket/all_liquidations",
-                  "api-reference/websocket/insurance_pool",
-                  "api-reference/websocket/adl_alert"
-                ]
-              },
-              {
-                "group": "Private",
-                "pages": [
-                  "api-reference/websocket/order",
-                  "api-reference/websocket/position",
-                  "api-reference/websocket/execution",
-                  "api-reference/websocket/account_balance"
-                ]
-              }
-            ]
-          },
-          {
             "group": "WebSocket Guide",
             "pages": [
               "overview",
