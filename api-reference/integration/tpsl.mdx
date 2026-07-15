@@ -2,20 +2,59 @@
 title: "TP/SL, Triggers, and Reduce-Only"
 ---
 
-### Overview
+## Overview
 
-- **TP/SL**: Attach Take Profit and/or Stop Loss settings to an entry order using the `tpsl` object.
-- **Modes**:
-  - **Full**: Configures TP/SL in full mode.
-  - **Partial**: Configures TP/SL in partial mode.
-- **TP/SL order types**: `take_profit` and `stop_loss` support `market` or `limit` configurations.
-- **Trigger**: Conditional orders use a `trigger` object with:
-  - `trigger_by`: `"LastPrice"`, `"IndexPrice"`, or `"MarkPrice"`.
-  - `trigger_direction`: `"Up"` or `"Down"`.
-  - `trigger_price`: The price level that activates the order.
-- **Reduce-only**: Use `reduce_only: true` to prevent an order from increasing position exposure.
+Ekiden supports the following advanced order features:
 
-### Request shape (`POST /api/v1/order/place`)
+- **Take Profit / Stop Loss (TP/SL)** using the `tpsl` object attached to an entry order.
+- **Conditional orders** using the `trigger` object.
+- **Reduce-only orders** using the `reduce_only` flag to prevent increasing an existing position.
+
+## TP/SL
+
+The `tpsl` object configures Take Profit and Stop Loss for an entry order.
+
+### Modes
+
+The `mode` field supports the following values:
+
+| Value | Description |
+| --- | --- |
+| `Full` | Applies the configured Take Profit and Stop Loss settings in full mode. |
+| `Partial` | Applies the configured Take Profit and Stop Loss settings in partial mode. |
+
+### TP/SL Configuration
+
+The `take_profit` and `stop_loss` fields support both **Market** and **Limit** configurations.
+
+| Field | Description |
+| --- | --- |
+| `market` | Executes a market order when the trigger price is reached. |
+| `limit` | Places a limit order when the trigger price is reached. |
+
+## Trigger
+
+Conditional orders are configured using the `trigger` object.
+
+| Field | Description |
+| --- | --- |
+| `trigger_by` | Price source used to evaluate the trigger. Supported values: `LastPrice`, `IndexPrice`, `MarkPrice`. |
+| `trigger_direction` | Trigger direction. Supported values: `Up` or `Down`. |
+| `trigger_price` | Price level that activates the order. |
+
+## Reduce-only
+
+Set
+
+```json
+{
+  "reduce_only": true
+}
+```
+
+to ensure that an order only reduces or closes an existing position.
+
+## Example Request
 
 ```json
 {
@@ -48,179 +87,17 @@ title: "TP/SL, Triggers, and Reduce-Only"
 }
 ```
 
-### Behavior details
-
-- **Conditional orders**
-  - The `trigger` object defines the price source (`trigger_by`), trigger direction (`trigger_direction`), and activation price (`trigger_price`).
-- **Full mode**
-  - Configured using `tpsl.mode: "Full"`.
-  - Take Profit and Stop Loss settings are defined through `take_profit` and `stop_loss`.
-- **Partial mode**
-  - Configured using `tpsl.mode: "Partial"`.
-  - Take Profit and Stop Loss settings are defined through `take_profit` and `stop_loss`.
-- **TP/SL triggers**
-  - Take Profit and Stop Loss configurations specify their trigger settings within the selected `market` or `limit` configuration.
-- **Reduce-only**
-  - Use `reduce_only: true` to prevent an order from increasing position exposure.
-
-{/*
-  ### Environment and guard configuration
-
-  - Env var: `SLIPPAGE_GUARD_BPS` (default 200 = 2%). 
-  */}
-
-{/* TODO(BACKEND): Confirm whether `SLIPPAGE_GUARD_BPS` is still used in the current Canton backend and whether the default value remains 200 bps (2%). */}
-
-{/*
-
-  ### Examples
-
-  - Attach Full TP/SL using market execution:
-
-  ```json
-  {
-  "mode": "Full",
-  "take_profit": {
-  "market": {
-  "trigger_price": "0.151785799",
-  "trigger_by": "LastPrice"
-  }
-  },
-  "stop_loss": {
-  "market": {
-  "trigger_price": "0.124188381",
-  "trigger_by": "LastPrice"
-  }
-  }
-  }
-  ```
-
-  - Attach Partial TP/SL using limit execution:
-
-  ```json
-  {
-  "mode": "Partial",
-  "take_profit": {
-  "limit": {
-  "limit_price": "0.15",
-  "trigger_price": "0.15",
-  "trigger_by": "LastPrice"
-  }
-  },
-  "stop_loss": {
-  "limit": {
-  "limit_price": "0.12",
-  "trigger_price": "0.12",
-  "trigger_by": "LastPrice"
-  }
-  }
-  }
-  ```
-  */}
-
-### Notes and constraints
+## Notes
 
 - Market TP/SL configurations require `trigger_by` and `trigger_price`.
 - Limit TP/SL configurations require `limit_price`, `trigger_by`, and `trigger_price`.
-- `trigger_by` supports `"LastPrice"`, `"IndexPrice"`, and `"MarkPrice"`.
-- `limit_price` and `trigger_price` are represented as strings.
+- `trigger_by` supports `LastPrice`, `IndexPrice`, and `MarkPrice`.
+- All price values (`trigger_price` and `limit_price`) are represented as strings.
 
-{/*
-  ### WebSocket examples
-
-  - When a TP/SL leg executes, you will receive standard `fill` and `order` events on the private stream.
-
-  Order update (reduce-only IOC leg placed/cancelled/filled):
-
-  ```json
-  {
-  "op": "event",
-  "topic": "order",
-  "data": [
-  {
-    "sid": "0xordLeg...",
-    "side": "sell",
-    "size": 100000000,
-    "price": 105000000000,
-    "leverage": 10,
-    "initial_margin": null,
-    "type": "limit",
-    "status": "filled",
-    "user_addr": "0xuser...",
-    "market_addr": "0xmarket...",
-    "is_cross": false,
-    "seq": 1234,
-    "timestamp": 1718000000,
-    "timestamp_ms": 1718000000000
-  }
-  ]
-  }
-  ```
-
-  Fill event generated by the leg execution:
-
-  ```json
-  {
-  "op": "event",
-  "topic": "fill",
-  "data": [
-  {
-    "sid": "0xfill...",
-    "side": "sell",
-    "size": 100000000,
-    "price": 105000000000,
-    "maker_fee": 0,
-    "taker_fee": 0,
-    "taker_order_sid": "0xordLeg...",
-    "taker_addr": "0xuser...",
-    "maker_order_sid": "0xordMaker...",
-    "maker_addr": "0xother...",
-    "market_addr": "0xmarket...",
-    "seq": 1234,
-    "maker_leverage": 10,
-    "taker_leverage": 10,
-    "maker_is_cross": false,
-    "taker_is_cross": false,
-    "timestamp": 1718000000,
-    "timestamp_ms": 1718000000000
-  }
-  ]
-  }
-  ```
-
-  Position update reflecting reduced size:
-
-  ```json
-  {
-  "op": "event",
-  "topic": "position",
-  "data": [
-  {
-    "sid": "0xpos...",
-    "market_addr": "0xmarket...",
-    "user_addr": "0xuser...",
-    "size": 0,
-    "price": 100000000000,
-    "entry_price": 100000000000,
-    "margin": 5000000000,
-    "funding_index": 0,
-    "epoch": 42,
-    "is_cross": false,
-    "initial_margin": 0,
-    "initial_margin_mark": 0,
-    "maintenance_margin": 0,
-    "leverage": null,
-    "mark_price": 105000000000,
-    "seq": 1234,
-    "timestamp": 1718000000,
-    "timestamp_ms": 1718000000000,
-    "side": "buy",
-    "unrealized_pnl": 0,
-    "liq_price": null
-  }
-  ]
-  }
-  ```
+{/* TODO(BACKEND):
+  Confirm whether `SLIPPAGE_GUARD_BPS` is still used in the current Canton backend.
   */}
 
-{/* TODO: Replace legacy TP/SL WebSocket examples with current Canton private stream events for `order`, `execution`, and `position` after capturing an actual TP/SL trigger and execution flow. */}
+{/* TODO(SDK):
+  Add TypeScript SDK examples after the current Canton SDK exposes TP/SL support.
+  */}

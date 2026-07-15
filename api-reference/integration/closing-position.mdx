@@ -2,16 +2,27 @@
 title: "Closing Positions"
 ---
 
-### **REST**
+A position can be reduced or closed by submitting an order on the opposite side of the current position.
 
-- Submit a reduce-only order for the current position size.
-- Alternatively, submit an opposite-side market order. Use `reduce_only: true` if you want to ensure the order only reduces or closes the existing position.
+To ensure that the order does not increase exposure, set:
 
-### Position fields to watch
+```json
+{
+  "reduce_only": true
+}
+```
 
-- `margin_mode` — cross vs isolated margin mode.
-- `maintenance_margin`, `initial_margin`, `leverage` — helpful for risk management.
-- `liq_price` — estimated liquidation price (considers margin mode, maintenance ratio, funding, and leverage limits).
-- `timestamp_ms` — last update time of the position in milliseconds (`timestamp` in seconds is deprecated).
+A reduce-only order will only decrease or close an existing position. If the order would increase the position size, it is rejected.
 
-See also: PnL, Margin & Funding for more details on cross vs isolated behavior.
+## Position Fields
+
+Useful position fields include:
+
+- `margin_mode` — Cross or Isolated margin mode.
+- `initial_margin` — Initial margin allocated to the position.
+- `maintenance_margin` — Maintenance margin requirement.
+- `leverage` — Position leverage.
+- `liq_price` — Estimated liquidation price.
+- `updated_time` — Last position update time (Unix timestamp in milliseconds).
+
+See also: **PnL, Margin & Funding**.

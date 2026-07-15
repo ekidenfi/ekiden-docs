@@ -4,21 +4,19 @@ title: "Leverage"
 
 ## Overview
 
-Ekiden supports leverage settings per market, allowing users to control leverage independently for each trading pair. Adjusting leverage changes how much margin is allocated to an open position in a given market. Increasing leverage reduces the required margin but increases liquidation risk, while lowering leverage increases the required margin and reduces liquidation risk.
+Ekiden allows leverage to be configured independently for each trading symbol.
+
+Changing leverage affects the margin requirements for future position exposure and the estimated liquidation price. Increasing leverage reduces the required margin but increases liquidation risk, while lowering leverage increases the required margin and reduces liquidation risk.
 
 ## Endpoint
 
-`POST /api/v1/position/set-leverage`
+```http
+POST /api/v1/position/set-leverage
+```
 
-Sets leverage for a specific symbol and sub-account.
+Updates the leverage setting for a specific trading symbol and sub-account.
 
-The request body includes:
-
-- `leverage`: Leverage value to set.
-- `sub_account_address`: Sub-account address.
-- `symbol`: Market symbol.
-
-### Headers
+### Authentication
 
 ```text
 Authorization: Bearer <JWT>
@@ -29,9 +27,9 @@ Content-Type: application/json
 
 | Parameter | Type | Description | Required |
 | --- | --- | --- | --- |
-| `leverage` | string | Leverage value to set (e.g. `"10"` for 10x) | Yes |
-| `sub_account_address` | string | Sub-account address | Yes |
-| `symbol` | string | Market symbol (e.g. `"CC-USDCx"`) | Yes |
+| `leverage` | string | Leverage value to set (for example, `"10"` for 10× leverage). | Yes |
+| `sub_account_address` | string | Sub-account address. | Yes |
+| `symbol` | string | Trading symbol (for example, `"BTC-USDCx"`). | Yes |
 
 ## Example Request
 
@@ -43,39 +41,6 @@ Content-Type: application/json
 }
 ```
 
-{/*
-  ## Example
-
-  ```ts
-    const nonce = Date.now();
-
-    const payload = {
-      type: "leverage_assign",
-      market_addr: marketStore.activeMarket.addr,
-      leverage,
-    } satisfies ActionPayload;
-
-    const hex = buildOrderPayload({
-      payload,
-      nonce,
-    });
-
-    const signature = accountStore.subAccount.sign(hex).toString();
-
-    const params = {
-      payload,
-      nonce,
-      signature,
-    } satisfies SendIntentParams;
-
-    let response: SendIntentResponse;
-
-    response = await ekiden.sendIntent(params);
-  ```
-  */}
-
-{/* TODO(SDK): Replace the legacy intent-based leverage example with a current Canton-compatible SDK example once available. */}
-
 ## Response
 
 ```json
@@ -85,21 +50,14 @@ Content-Type: application/json
 }
 ```
 
-{/*
-  ## Error Example
-
-  ```json
-  {
-  "success": false,
-  "error": "Leverage 25x exceeds the maximum allowed for BTC-PERP (20x)."
-  }
-  ```
-  */}
+A successful response indicates that the leverage update request has been accepted.
 
 ## Notes
 
-- Leverage is configured per symbol.
-- Minimum and maximum leverage limits may vary by market.
-- Changing leverage may affect margin requirements and liquidation price.
+- Leverage is configured independently for each trading symbol.
+- Supported leverage ranges vary by market and can be obtained from `GET /api/v1/market/instruments-info`.
+- Changing leverage affects margin requirements and the estimated liquidation price.
 
----
+{/* TODO(SDK):
+  Add a TypeScript SDK example once leverage management is exposed through the current Canton SDK.
+  */}
