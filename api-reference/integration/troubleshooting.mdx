@@ -1,10 +1,34 @@
 ---
 title: "Troubleshooting & Best Practices"
-description: "Description of your new file."
+description: "Common troubleshooting tips and integration best practices."
 ---
 
-- Sync clock before auth.
+## Troubleshooting
 
+### Authentication
 
-- Retry WS subscriptions on disconnect.
-- Keep backup REST polling for critical risk checks.
+- Ensure your system clock is synchronized before requesting JWTs or signing API requests.
+- Verify that `timestamp_ms` is close to the current time.
+- Use a unique `nonce` for every authorization request.
+- Refresh the JWT if authentication fails due to token expiration.
+
+### WebSocket
+
+- Automatically reconnect if the connection is interrupted.
+- Re-authenticate after reconnecting to the private WebSocket.
+- Re-subscribe to all required topics after reconnecting.
+- Respond to WebSocket ping frames and optionally send application-level `ping` messages to monitor latency.
+
+### REST
+
+- Retry transient failures using exponential backoff.
+- Respect HTTP `429 Too Many Requests` responses and the `Retry-After` header.
+- Avoid excessive polling for frequently changing market data.
+
+## Best Practices
+
+- Use WebSocket streams for real-time market data instead of frequent REST polling.
+- Keep a REST fallback for critical state synchronization and recovery.
+- Validate order parameters using the instrument metadata returned by `/api/v1/market/instruments-info`.
+- Treat all prices and quantities as decimal strings to avoid precision loss.
+- Handle order status updates through the private `order` WebSocket topic rather than relying solely on REST responses.
