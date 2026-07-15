@@ -2,17 +2,27 @@
 title: "Referrals & Rewards"
 ---
 
-Referral and rewards endpoints provide access to referral information, XP rewards, weekly summaries, and reward history.
+Referral and reward endpoints provide access to referral information, referral code management, XP rewards, weekly summaries, and reward history.
 
-These are authenticated user endpoints. Use bearer auth or API-key auth as described in [Onboarding & Auth](./api-reference/integration/onboarding-auth).
+These endpoints require authentication using either a JWT bearer token or API Key authentication. See the Authentication guide for details.
+
+---
 
 ## Referral Summary
+
+Retrieve the authenticated user's referral information.
+
+### REST
 
 ```http
 GET /api/v1/user/referral
 ```
 
-Returns the current user's referral information.
+### TypeScript SDK
+
+```ts
+const referral = await client.user.getReferralSummary();
+```
 
 The response includes:
 
@@ -20,6 +30,8 @@ The response includes:
 - `referrer_code`
 - `referrer_user_id`
 - `downline_count`
+
+Example response:
 
 ```json
 {
@@ -30,26 +42,62 @@ The response includes:
 }
 ```
 
+---
+
 ## Bind a Referrer
+
+Associate the authenticated user with a referral code.
+
+### REST
 
 ```http
 POST /api/v1/user/referral
 Content-Type: application/json
-
-{ "referral_code": "PARTNER42" }
 ```
 
-The response is the updated referral summary.
+```json
+{
+  "referral_code": "PARTNER42"
+}
+```
 
-Do not build flows that repeatedly rebind users unless the backend explicitly allows it.
+### TypeScript SDK
+
+```ts
+await client.user.bindReferral({
+  referral_code: "PARTNER42",
+});
+```
+
+The response returns the updated referral summary.
+
+> A referral can typically only be bound once. Refer to the platform rules for the current referral policy.
+
+---
 
 ## Rewards Summary
+
+Retrieve the user's XP balance, weekly statistics, and reward history.
+
+### REST
 
 ```http
 GET /api/v1/user/rewards
 ```
 
-Returns the current XP balance, current weekly summary, historical weekly summaries, and recent reward ledger entries.
+### TypeScript SDK
+
+```ts
+const rewards = await client.user.getRewardsSummary();
+```
+
+Or with optional query parameters:
+
+```ts
+const rewards = await client.user.getRewardsSummary({
+  limit: 100,
+});
+```
 
 The response includes:
 
@@ -57,6 +105,8 @@ The response includes:
 - `current_week`
 - `history`
 - `ledger`
+
+Example response:
 
 ```json
 {
@@ -75,4 +125,4 @@ The response includes:
 }
 ```
 
-See the generated OpenAPI schema (`RewardSummaryResponse`) for the complete response structure.
+Refer to the API Reference for the complete `RewardSummaryResponse` schema.

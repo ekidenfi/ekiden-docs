@@ -2,33 +2,51 @@
 title: "Account Statistics"
 ---
 
-Use account statistics to fetch time-series trading metrics for a sub-account.
+Use account statistics to retrieve historical time-series metrics for a trading sub-account, including equity, PnL, trading volume, and ROI.
 
-## Endpoint
+## REST Endpoint
 
 ```http
 GET /api/v1/account/statistics
 ```
 
-Query parameters:
+### Query Parameters
 
-| Parameter | Required | Notes |
+| Parameter | Required | Description |
 | --- | --- | --- |
-| `sub_account_address` | No | Sub-account to query. Auth context may determine the accessible account set. |
-| `start_time` | No | Start time. See the OpenAPI schema for the expected format. |
-| `end_time` | No | End time time. See the OpenAPI schema for the expected format. |
-| `step` | No | Aggregation step. See OpenAPI for accepted values. |
-| `limit` | No | Maximum rows to return. |
-| `sorting_order` | No | Sort direction. |
+| `sub_account_address` | No | Sub-account to query. If omitted, the backend determines the accessible account(s) from the authenticated user. |
+| `start_time` | No | Start timestamp in Unix milliseconds. |
+| `end_time` | No | End timestamp in Unix milliseconds. |
+| `step` | No | Aggregation interval. Supported values: `hour`, `day`, `week`, `month` (aliases `h`, `d`, `w`, `m` are also accepted). |
+| `limit` | No | Maximum number of records to return. |
+| `sorting_order` | No | Sort order: `asc` or `desc`. |
+
+## TypeScript SDK
+
+Retrieve account statistics:
+
+```ts
+const statistics = await client.account.getStatistics({
+  sub_account_address,
+  start_time,
+  end_time,
+  step: "day",
+  limit: 100,
+  sorting_order: "desc",
+});
+```
 
 ## Example
 
 ```bash
-curl -H "Authorization: Bearer <jwt>" \
-"https://api.cnt.ekiden.fi/api/v1/account/statistics?sub_account_address=<sub_account_address>"
+curl \
+  -H "Authorization: Bearer <jwt>" \
+  "https://api.cnt.ekiden.fi/api/v1/account/statistics?sub_account_address=<sub_account_address>"
 ```
 
-## Response
+## Response Fields
+
+Each entry may include:
 
 - `timestamp`
 - `sub_account_address`
@@ -38,4 +56,4 @@ curl -H "Authorization: Bearer <jwt>" \
 - `volume`
 - `roi`
 
-Field coverage can expand as the backend adds statistics. Use the generated REST reference for the exact `AccountStatistics` schema.
+The exact response schema is documented in the API Reference.
