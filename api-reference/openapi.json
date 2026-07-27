@@ -16,7 +16,7 @@
     {
       "url": "https://api.canton.ekiden.fi/",
       "description": "Staging"
-    },
+    }
   ],
   "paths": {
     "/api/v1/account/balance": {
@@ -4163,6 +4163,14 @@
           "CreateByBboOrder"
         ]
       },
+      "Depth": {
+        "type": "string",
+        "enum": [
+          "10",
+          "50",
+          "200"
+        ]
+      },
       "ErrorResponse": {
         "type": "object",
         "required": [
@@ -5084,6 +5092,18 @@
           "3d",
           "1w",
           "1M"
+        ]
+      },
+      "IntervalTime": {
+        "type": "string",
+        "enum": [
+          "5m",
+          "15m",
+          "30m",
+          "1h",
+          "4h",
+          "1d",
+          "4d"
         ]
       },
       "KlineSnapshot": {
