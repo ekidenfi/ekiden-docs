@@ -10,7 +10,7 @@ This document outlines Ekiden's API design conventions and standards. These ensu
 
 Ekiden provides separate base URLs for each environment:
 
-- **Mainnet**: `(Coming Soon)`
+- **Mainnet**: [https://api.ekiden.fi/api/v1](https://api.ekiden.fi/api/v1)
 - **Testnet Beta**: [https://api.cnt.ekiden.fi/api/v1](https://api.cnt.ekiden.fi/api/v1)
 - **Staging**: [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1)
 
@@ -46,7 +46,9 @@ Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
 
 Endpoints:
 
-- Mainnet: `(Coming Soon)`
+- Mainnet:
+  - Public data: `wss://api.ekiden.fi/ws/public`
+  - Private data: `wss://api.ekiden.fi/ws/private`
 - Testnet Beta:
   - Public data: `wss://api.cnt.ekiden.fi/ws/public`
   - Private data: `wss://api.cnt.ekiden.fi/ws/private`
