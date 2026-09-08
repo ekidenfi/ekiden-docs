@@ -71,7 +71,7 @@ Authorization: Bearer <jwt>
 Connect to the private WebSocket endpoint:
 
 ```text
-wss://api.cnt.ekiden.fi/ws/private
+wss://api.ekiden.fi/ws/private
 ```
 
 Authenticate immediately after connecting.
@@ -135,7 +135,7 @@ are available on `/ws/public` without authentication.
 Request a JWT:
 
 ```bash
-curl -X POST "https://api.cnt.ekiden.fi/api/v1/authorize" \
+curl -X POST "https://api.ekiden.fi/api/v1/authorize" \
   -H "Content-Type: application/json" \
   -d '{
     "public_key": "<public_key>",
@@ -150,7 +150,7 @@ Call a private endpoint:
 ```bash
 curl \
   -H "Authorization: Bearer <jwt>" \
-  "https://api.cnt.ekiden.fi/api/v1/user/sub-accounts"
+  "https://api.ekiden.fi/api/v1/user/sub-accounts"
 ```
 
 ---
