@@ -1,123 +1,141 @@
 ---
-title: "Points Program"
+title: "Earning XP"
 sidebarTitle: "Points Program"
-description: "How Ekiden XP, referral points, and KOL campaign points should be earned and audited."
+description: "Learn how XP is earned from trading, holding positions, referrals, multipliers, and quests."
 ---
 
-Ekiden points are XP ledger balances. They should be earned through measurable trading, referral, competition, or campaign activity and recorded with auditable ledger reasons.
+XP is credited as you trade and hold positions. Trading XP appears in your account within about 30 seconds, while holding XP is credited every minute after a position becomes eligible.
 
-## Implemented XP Model
+## Four ways to earn
 
-The backend rewards formula is `rewards_xp_mvp_v1`.
+<Columns cols={2}>
+  <Card title="Take liquidity">
+    **10 XP per \$1 of taker fees paid**
 
-Each allocation run distributes a fixed weekly XP pool pro rata by power score:
+    Every taker fill earns XP based on the fee you actually paid.
+
+    ```text
+    taker_xp = taker_fees_paid * 10
+    ```
+  </Card>
+
+  <Card title="Make liquidity">
+    **5 XP per \$1 of taker-equivalent fees**
+
+    Maker fills earn XP based on what a taker would have paid for the same trade. You still earn when your maker fee is zero or receives a rebate.
+
+    ```text
+    maker_xp = taker_equivalent_fees * 5
+    ```
+  </Card>
+
+  <Card title="Hold a position">
+    **Up to 1 XP per \$1,000 held for one hour**
+
+    Positions accrue XP every minute after they have been open for five minutes. The rate is adjusted by effective leverage.
+  </Card>
+
+  <Card title="Refer traders">
+    **15% / 10% / 5% of the XP earned by your network**
+
+    Referral XP is paid three levels deep and added on top of the trader's reward.
+  </Card>
+</Columns>
+
+## What that looks like
+
+A trader takes a \$5,000 position at a 0.1% taker fee, holds it for six hours at 3x effective leverage, then closes it.
 
 ```text
-base_power_score = volume * (1 + roi) * drawdown_factor
-final_power_score = base_power_score + referral_bonus_power_score
-weekly_xp = weekly_pool_xp * final_power_score / sum(final_power_score)
+Taker fee     $5,000 * 0.1%             = $5.00
+Trading XP    $5.00 * 10                 = 50 XP
+
+Risk factor   3x leverage / 10           = 0.3
+Holding XP    5 units * 6 hours * 0.3    = 9 XP
+
+Total                                      59 XP
+L1 referral   59 * 15%                  = 8.85 XP
+Displayed referral XP                     8 XP
+Fraction carried forward                0.85 XP
 ```
 
-The default referral bonus rates are:
+The trader keeps all 59 XP. The referral reward is added on top.
 
-| Referral Level | Bonus |
-| -------------- | ----- |
-| Level 1        | 15%   |
-| Level 2        | 10%   |
-| Level 3        | 5%    |
+<Info>
+  **Small amounts are never lost.** XP is displayed as a whole number, but fractional XP is tracked precisely. Any remainder carries forward until it adds up.
+</Info>
 
-XP is persisted through allocation runs, ledger entries, and balances. Public/user-facing APIs expose trading XP, referral XP, total XP, referral summary, rewards summary, and leaderboard XP fields.
+## How holding XP works
 
-## Earning Sources
+Holding XP rewards both position size and the risk carried. Two positions with the same notional can earn different amounts when they use different amounts of account equity.
 
-Core XP sources:
-
-- Eligible trading volume and performance.
-- Referral bonuses from active referred traders.
-- Competition rewards and projected XP.
-- Operator-approved manual grants or adjustments.
-
-KOL campaign sources should use the same ledger model:
-
-- Referred active traders that pass eligibility checks.
-- Referred trading volume or fee contribution.
-- Competition participation driven by a campaign.
-- Campaign-specific quests with verifiable completion.
-- Verified content deliverables that are reviewed and capped.
-- Manual operator grants or clawbacks for edge cases.
-
-Avoid uncapped raw impressions, follower counts, or screenshots as automatic point sources. They are easy to manipulate and should only influence manually reviewed campaign adjustments.
-
-## KOL Campaign Rules
-
-KOL campaigns should be configured before launch and should not depend on ad hoc UI-only balances. Every campaign grant or correction should map to a ledger reason, an operator decision, or a deterministic backend allocation.
-
-Minimum campaign configuration:
-
-- Campaign identifier and active window.
-- Eligible referral code or attribution rule.
-- Minimum referred-user activity threshold.
-- Per-user, per-KOL, and campaign-wide caps.
-- Reward reasons used in the ledger.
-- Review and clawback policy.
-
-Recommended default thresholds:
-
-| Rule | Default |
-| ---- | ------- |
-| Active referred trader | Referred account completes at least one eligible trade and meets the campaign minimum volume. |
-| Eligible referred volume | Count filled notional from non-abusive perpetual trades during the campaign window. |
-| Eligible referred fees | Count net trading fees from eligible fills, excluding rebates, reversals, and clawed-back activity. |
-| Attribution | First valid referral binding wins unless operations approve a correction. |
-| Content deliverables | Manual review required before points are granted. |
-| Campaign caps | Apply per referred user, per KOL, and globally before granting manual campaign points. |
-
-Recommended KOL ledger reasons:
-
-| Reason | Use |
-| ------ | --- |
-| `weekly_allocation` | Core weekly trading and referral XP allocation generated by the rewards service. |
-| `kol_referral_active_trader` | Referred user reaches the active-trader threshold. |
-| `kol_referral_volume` | Referred eligible volume or fee contribution. |
-| `kol_competition_participation` | Referred user joins or completes a campaign competition. |
-| `kol_content_deliverable` | Manually reviewed content milestone. |
-| `operator_adjustment` | Manual grant or correction. |
-| `operator_clawback` | Negative ledger entry for disqualified or reversed rewards. |
-
-Campaign metadata should include enough detail to audit the grant later:
-
-```json
-{
-  "campaign_id": "kol_s1",
-  "source": "operator",
-  "referral_code": "PARTNER42",
-  "referred_user_id": "user_abc",
-  "basis": "active_trader",
-  "window_start": "2026-06-01T00:00:00Z",
-  "window_end": "2026-06-30T23:59:59Z",
-  "operator": "ops@example.com"
-}
+```text
+effective_leverage = position_notional / account_equity
+risk_factor = min(max(effective_leverage / 10, 0.1), 1)
+holding_xp = (position_notional / 1,000) * hours_held * risk_factor
 ```
 
-Use negative `delta_xp` entries for clawbacks instead of rewriting history.
+| Rule | How it works |
+| --- | --- |
+| **Scales with leverage** | Holding XP increases with effective leverage and reaches the full rate at 10x and above. |
+| **Floor at low leverage** | Lower-leverage positions still earn at one tenth of the full rate. The risk factor never falls below `0.1`. |
+| **Five-minute minimum** | A position starts earning once it is five minutes old. The first five minutes are not credited retroactively. |
+| **Accrues every minute** | XP is credited while the position is open; you do not need to close it first. |
+| **Adding resets nothing** | Adding to a position keeps its age. Fully closing and reopening starts a new five-minute clock. |
 
-## Abuse Policy
+## Referrals pay three levels deep
 
-The following activity should be excluded or clawed back:
+When a referred trader earns XP, referral rewards travel up their chain for three levels.
 
-- Self-referral or circular referral chains.
-- Wash trading, spoofing, or economically meaningless volume.
-- Multi-account farming.
-- Referral attribution manipulation.
-- Campaign activity outside the eligibility window.
-- Any activity tied to sanctioned, banned, or otherwise ineligible accounts.
+If a trader you referred earns 100 XP:
 
-## User Visibility
+| Level | Recipient | Relationship | Reward |
+| --- | --- | --- | --: |
+| Earner | Your referral | Keeps every point earned | **100 XP** |
+| L1 | You | Referred the trader directly | **+15 XP** |
+| L2 | Your referrer | One level further up | **+10 XP** |
+| L3 | Their referrer | Final rewarded level | **+5 XP** |
 
-Users should be able to inspect:
+<Info>
+  **Nobody pays for referral XP.** It is added on top. The trader keeps all the XP they earned, and no referral reward is deducted from another user's balance.
+</Info>
 
-- Current referral code and referral tree summary.
-- Trading XP, referral XP, and total XP.
-- Recent ledger entries or allocation history.
-- Leaderboard placement with XP fields.
-- Campaign-specific caps and eligibility status when participating in a KOL campaign.
+| Rule | How it works |
+| --- | --- |
+| **Every source counts** | Referral rewards apply to XP earned from trading, holding, and quests - not only fees. |
+| **Bind once** | You can add one referrer after signing up. Once added, the referrer cannot be changed. Self-referrals are not allowed. |
+| **No cap** | There is no limit on the number of traders you can refer or the amount of referral XP you can earn. |
+
+## Multipliers
+
+Some accounts receive an XP multiplier through the access code used to join or through a season conversion.
+
+| Rule | How it works |
+| --- | --- |
+| **The highest multiplier wins** | Multipliers do not stack. If an account has more than one, only the highest applies. |
+| **Applies to your own trading** | The multiplier boosts XP earned from your own fills and positions. |
+| **Your referrers benefit too** | Referral rewards are calculated after your multiplier is applied. |
+
+## Quests
+
+Quests award a fixed amount of XP for completing a specific target. A quest can require you to:
+
+- Reach a trading-volume threshold.
+- Place a set number of trades.
+- Bring in your first active referral.
+
+Daily quests reset at midnight UTC. One-off quests can be completed once.
+
+Available quests and progress are shown on the quests page.
+
+## Good to know
+
+|  |  |
+| --- | --- |
+| **When XP appears** | Trading XP appears within about 30 seconds. Holding XP is credited every minute while an eligible position is open. |
+| **Fees are the basis** | Trading XP is proportional to fees, not raw trading volume. |
+| **XP does not go down** | Losing a trade does not reduce your XP balance. |
+| **Market makers are excluded** | Designated market-maker and internal accounts do not earn XP. |
+| **One account, one chain** | XP and referrals belong to the root account, not individual sub-accounts. |
+
+Your XP total, referral link, and quest progress are available on the rewards page.
