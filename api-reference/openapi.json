@@ -10,15 +10,65 @@
   },
   "servers": [
     {
+      "url": "https://api.ekiden.fi/",
+      "description": "Production"
+    },
+    {
       "url": "https://api.cnt.ekiden.fi/",
       "description": "Testnet"
     },
     {
       "url": "https://api.canton.ekiden.fi/",
       "description": "Staging"
-    },
+    }
   ],
   "paths": {
+    "/api/v1/access/activate": {
+      "post": {
+        "tags": [
+          "Access"
+        ],
+        "summary": "Activate a closed-launch access code",
+        "operationId": "activate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessActivateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Wallet activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessActivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid, expired, or revoked code"
+          },
+          "401": {
+            "description": "Bad or stale signature"
+          },
+          "404": {
+            "description": "Access module disabled"
+          },
+          "409": {
+            "description": "Code already used or wallet already activated"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
     "/api/v1/account/balance": {
       "get": {
         "tags": [
@@ -112,7 +162,7 @@
           "Account"
         ],
         "summary": "Get Account Statistics",
-        "description": "Returns historical snapshots of equity, PnL, volume, and ROI. When step is omitted, raw snapshots are returned, otherwise time bucketed by day/week/month. Optional sub_account_address: when set, the result includes only specified subaccount, otherwise all of the user's subaccounts;. Default limit 100, max 1000.",
+        "description": "Query account equity, PnL, volume, and ROI. Optional step: hour/day/week/month. Newest `limit` rows (default 100, max 1000).",
         "operationId": "get_account_statistics",
         "parameters": [
           {
@@ -256,6 +306,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthorizeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/authorize/provision": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Provision Canton OIDC Ledger User",
+        "description": "Verify an OIDC id_token and ensure a Ledger API user/party exists for its `sub`",
+        "operationId": "provision",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CantonProvisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Ledger user ensured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CantonProvisionResponse"
                 }
               }
             }
@@ -1604,6 +1686,105 @@
         }
       }
     },
+    "/api/v1/market/stats": {
+      "get": {
+        "tags": [
+          "Market"
+        ],
+        "summary": "Get Stats",
+        "description": "Query for period-filtered turnover, trades, open interest, and per-market stats.",
+        "operationId": "get_stats",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Stats period. `24h`, `7d`, `30d`, or `all_time`.",
+              "enum": [
+                "24h",
+                "7d",
+                "30d",
+                "all_time"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetStatsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
+    "/api/v1/market/stats/volume": {
+      "get": {
+        "tags": [
+          "Market"
+        ],
+        "summary": "Get Stats Volume",
+        "description": "Query for turnover time series and 24h/7d/30d/all_time aggregates.",
+        "operationId": "get_stats_volume",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Stats period. `24h`, `7d`, `30d`, or `all_time`.",
+              "enum": [
+                "24h",
+                "7d",
+                "30d",
+                "all_time"
+              ]
+            }
+          },
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/components/schemas/Symbol"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Turnover series",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetStatsVolumeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    },
     "/api/v1/market/tickers": {
       "get": {
         "tags": [
@@ -1766,7 +1947,7 @@
           "Trade"
         ],
         "summary": "Cancel All Orders",
-        "description": "Cancel all existing orders for a user",
+        "description": "Cancel all existing orders for a sub-account. Optionally filtered by symbol; omit symbol to cancel open orders across all markets.",
         "operationId": "cancel_all_orders",
         "requestBody": {
           "content": {
@@ -2452,6 +2633,135 @@
         ]
       }
     },
+    "/api/v1/referral/click": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "record_referral_click",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordReferralClickRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Click recorded"
+          },
+          "400": {
+            "description": "Malformed code"
+          }
+        }
+      }
+    },
+    "/api/v1/user/access": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "get_user_access",
+        "responses": {
+          "200": {
+            "description": "Stage-1 access standing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/user/access/activate": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "activate_user_access",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivateAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Wallet activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessActivateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid, expired, or revoked code"
+          },
+          "403": {
+            "description": "Bound sub-account session"
+          },
+          "404": {
+            "description": "Access module disabled"
+          },
+          "409": {
+            "description": "Code already used or wallet already activated"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/user/affiliate": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "get_user_affiliate",
+        "responses": {
+          "200": {
+            "description": "Affiliate dashboard",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AffiliateDashboardResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not an affiliate"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
     "/api/v1/user/api-keys": {
       "get": {
         "tags": [
@@ -2746,13 +3056,67 @@
         ]
       }
     },
+    "/api/v1/user/invite-codes": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "get_user_invite_codes",
+        "responses": {
+          "200": {
+            "description": "Earned invite-code standing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "post_user_invite_codes",
+        "responses": {
+          "200": {
+            "description": "One earned code minted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MintInviteCodeResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "No earned code available to claim"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
     "/api/v1/user/leaderboard": {
       "get": {
         "tags": [
           "Leaderboard"
         ],
         "summary": "Get Leaderboard",
-        "description": "Returns a paginated leaderboard of subaccounts ranked by PnL for the given timeframe. Timeframe is required and relative to now (today, 7d, 30d, or all). Default limit 10, max 100; default offset 0.",
+        "description": "Paginated subaccount leaderboard ranked by PnL. Realized + unrealized (mark-to-market). Timeframe required: today, 7d, 30d, all. Default limit 10, max 100.",
         "operationId": "get_leaderboard",
         "parameters": [
           {
@@ -2877,6 +3241,73 @@
         ]
       }
     },
+    "/api/v1/user/quests": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "get_user_quests",
+        "responses": {
+          "200": {
+            "description": "Active quests with claim state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserQuestsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/user/quests/{quest_id}/claim": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "claim_user_quest",
+        "parameters": [
+          {
+            "name": "quest_id",
+            "in": "path",
+            "description": "Quest UUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quest claimed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimQuestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Repeat, inactive, or ineligible claim"
+          },
+          "404": {
+            "description": "Unknown quest"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
     "/api/v1/user/referral": {
       "get": {
         "tags": [
@@ -2935,6 +3366,120 @@
         ]
       }
     },
+    "/api/v1/user/referral-codes": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "list_referral_codes",
+        "responses": {
+          "200": {
+            "description": "List referral codes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListReferralCodesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "create_referral_code",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReferralCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Referral code created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralCodeInfo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/user/referral-codes/{code_id}": {
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "delete_referral_code",
+        "parameters": [
+          {
+            "name": "code_id",
+            "in": "path",
+            "description": "Referral code ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referral code deleted"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Referral code not found"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
     "/api/v1/user/rewards": {
       "get": {
         "tags": [
@@ -2945,6 +3490,7 @@
           {
             "name": "limit",
             "in": "query",
+            "description": "Ledger page size (default 20, max 100).",
             "required": false,
             "schema": {
               "type": [
@@ -2953,6 +3499,18 @@
               ],
               "format": "int32",
               "minimum": 0
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor from a previous response's `next_cursor`.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
             }
           }
         ],
@@ -3002,6 +3560,68 @@
         ]
       }
     },
+    "/api/v1/user/season-claim/redeem": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "`POST /user/season-claim/redeem` — verifies a season-claim voucher issued\nby the testnet side and redeems it (merging the testnet root's XP into\nthe caller's mainnet account), or dry-runs the entitlement when\n`preview` is set. Root-only, same as the issue side.",
+        "operationId": "redeem_season_claim",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemSeasonClaimRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Redemption outcome",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedeemSeasonClaimResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/user/season-claim/voucher": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "`POST /user/season-claim/voucher` — issues a short-lived, server-signed\nvoucher attesting the caller's testnet root address. Root-only: a signed\nbearer proof of the wallet's identity is only meaningful for the wallet\nthat owns it.",
+        "operationId": "issue_season_claim_voucher",
+        "responses": {
+          "200": {
+            "description": "Season-claim voucher",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeasonClaimVoucherResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
     "/api/v1/user/sub-accounts": {
       "get": {
         "tags": [
@@ -3032,6 +3652,102 @@
   },
   "components": {
     "schemas": {
+      "AccessActivateRequest": {
+        "type": "object",
+        "description": "Public Stage 1 activation request (spec §4). The caller is NOT yet\nwhitelisted. The wallet signs a canonical message that binds the code hash,\nits root address, and `signed_at`:\n`ekiden-stage1-activate:{sha256(normalized code)}:{root_address}:{signed_at}`\nusing the same wallet-signature scheme JWT login uses. The root address is\nderived from `public_key` (never trusted from the client), exactly as\n`/authorize` does.",
+        "required": [
+          "code",
+          "public_key",
+          "signed_at",
+          "signature"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Plaintext access code. Normalized (trim + uppercase) and hashed\nserver-side; the plaintext is never persisted (S1-D5)."
+          },
+          "nonce": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Replay nonce bound into the Canton activation message. REQUIRED on the\nCanton rail, ignored on Aptos."
+          },
+          "party_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canton party id (`<hint>::<fingerprint>`). REQUIRED on the Canton rail,\nignored on Aptos.\n\nCanton has no address derivable from the public key alone, so the wallet\nsigns for its party and the server derives the root from that party —\nthe same identity `/authorize` uses. The party's `::<fingerprint>` suffix\ncommits to the public key, so a caller cannot claim someone else's party."
+          },
+          "public_key": {
+            "type": "string",
+            "description": "Wallet public key, same encoding as `/authorize`'s `public_key`."
+          },
+          "signature": {
+            "type": "string",
+            "description": "Wallet signature over the canonical activation message."
+          },
+          "signed_at": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix seconds at which the message was signed. Must be within the\nconfigured signature window of server time."
+          }
+        }
+      },
+      "AccessActivateResponse": {
+        "type": "object",
+        "required": [
+          "activated",
+          "multiplier_bps",
+          "badge"
+        ],
+        "properties": {
+          "activated": {
+            "type": "boolean"
+          },
+          "badge": {
+            "type": "boolean"
+          },
+          "multiplier_bps": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "AccessStatusResponse": {
+        "type": "object",
+        "description": "`GET /user/access` response (spec §6): the authenticated wallet's Stage-1\nstanding — whether it activated, its cosmetic badge, and its granted\nmultiplier (null when never activated).",
+        "required": [
+          "activated",
+          "stage1_badge",
+          "allocation_reserved"
+        ],
+        "properties": {
+          "activated": {
+            "type": "boolean",
+            "description": "True once this wallet has activated a closed-launch access code."
+          },
+          "allocation_reserved": {
+            "type": "boolean",
+            "description": "Whether a future airdrop allocation is reserved for this wallet\n(season1-conversion §5, S2-D3): true for every activated wallet, false\notherwise. The allocation itself is out of scope; this is the persistence\nhook that survives the Stage-1 gate-off."
+          },
+          "multiplier_bps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Granted activation multiplier in bps; null when never activated.",
+            "minimum": 0
+          },
+          "stage1_badge": {
+            "type": "boolean",
+            "description": "Cosmetic Stage-1 badge (spec §6); false for un-activated wallets."
+          }
+        }
+      },
       "AccountBalance": {
         "type": "object",
         "description": "Account-wide wallet and margin metrics.",
@@ -3121,7 +3837,8 @@
             "type": "string"
           },
           "realised_pnl_cum": {
-            "type": "string"
+            "type": "string",
+            "description": "Cumulative realized PnL of the closed positions, fees, and funding."
           },
           "roi": {
             "type": "string"
@@ -3134,7 +3851,8 @@
             "format": "date-time"
           },
           "unrealised_pnl": {
-            "type": "string"
+            "type": "string",
+            "description": "Unrealized PnL of the current open positions."
           },
           "volume": {
             "type": "string"
@@ -3158,6 +3876,19 @@
           "week",
           "month"
         ]
+      },
+      "ActivateAccessRequest": {
+        "type": "object",
+        "description": "`POST /user/access/activate` — redeem a closed-launch code for the\nauthenticated wallet.\n\nIdentity is the session, so the body carries nothing but the code. This\nreplaces the pre-auth signature ceremony below, which custodial (Auth0)\nwallets could never satisfy: they hold no signing key.",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Plaintext access code. Normalized (trim + uppercase) and hashed\nserver-side; the plaintext is never persisted (S1-D5)."
+          }
+        }
       },
       "AdlAlertSnapshot": {
         "type": "object",
@@ -3215,6 +3946,160 @@
           "Four",
           "Five"
         ]
+      },
+      "AffiliateDashboardDownline": {
+        "type": "object",
+        "description": "Downline user counts at referral levels 1/2/3 below the affiliate (spec §7\n`downline`).",
+        "required": [
+          "l1",
+          "l2",
+          "l3"
+        ],
+        "properties": {
+          "l1": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "l2": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "l3": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        }
+      },
+      "AffiliateDashboardRates": {
+        "type": "object",
+        "description": "Positional commission rates in bps (spec §7 `rates_bps`).",
+        "required": [
+          "l1",
+          "l2",
+          "l3"
+        ],
+        "properties": {
+          "l1": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "l2": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "l3": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AffiliateDashboardResponse": {
+        "type": "object",
+        "description": "`GET /user/affiliate` response (spec §7). Returned only for an affiliate; a\nnon-affiliate wallet gets 404.",
+        "required": [
+          "status",
+          "rates_bps",
+          "downline",
+          "weeks",
+          "pending_usdt"
+        ],
+        "properties": {
+          "downline": {
+            "$ref": "#/components/schemas/AffiliateDashboardDownline"
+          },
+          "lifetime_paid_usdt_micro": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Lifetime SETTLED commission — the sum of `amount_usdt_micro` over this\naffiliate's `paid` weeks, in integer micro-USDT (6dp). Summed at the\ndatabase so it is exact regardless of the `weeks` page size. Integer\nmicro (not the decimal string the sibling money fields use) so the client\ncan total/compare it without parsing; `0` for an affiliate never paid."
+          },
+          "pending_usdt": {
+            "type": "string",
+            "description": "Total computed-but-unpaid commission across all weeks, decimal USDT."
+          },
+          "rates_bps": {
+            "$ref": "#/components/schemas/AffiliateDashboardRates"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle status: `active` or `suspended`."
+          },
+          "volume": {
+            "$ref": "#/components/schemas/AffiliateDashboardVolume",
+            "description": "Per-level downline volume (decimal USDC). Additive + defaulted."
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffiliateDashboardWeek"
+            },
+            "description": "Weekly commission history, newest week first."
+          }
+        }
+      },
+      "AffiliateDashboardVolume": {
+        "type": "object",
+        "description": "Lifetime downline trading volume at levels 1/2/3, as decimal USDC strings\n(6dp). Strings because the totals can exceed a JS safe integer.",
+        "required": [
+          "l1",
+          "l2",
+          "l3"
+        ],
+        "properties": {
+          "l1": {
+            "type": "string"
+          },
+          "l2": {
+            "type": "string"
+          },
+          "l3": {
+            "type": "string"
+          }
+        }
+      },
+      "AffiliateDashboardWeek": {
+        "type": "object",
+        "description": "One week of the affiliate's commission history (spec §7 `weeks[]`).",
+        "required": [
+          "week_start",
+          "amount_usdt",
+          "status",
+          "breakdown"
+        ],
+        "properties": {
+          "amount_usdt": {
+            "type": "string",
+            "description": "This week's commission for the affiliate, decimal USDT (e.g. `\"412.51\"`)."
+          },
+          "breakdown": {
+            "description": "Auditable `{l1,l2,l3}:{fees,bps,amount}` split (micro-USDT integers)."
+          },
+          "paid_at_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "PAYOUT RECEIPT — when the week was marked `paid`, epoch millis (the\ndashboard's ms convention). `null` while still `computed`."
+          },
+          "status": {
+            "type": "string",
+            "description": "Per-affiliate payout status: `computed` (pending) or `paid`."
+          },
+          "transfer_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "PAYOUT RECEIPT — the settling transfer's reference (`tb:<id>` on the\nTigerBeetle rail). `null` while the week is still `computed`. Additive:\nan older client that ignores it is unaffected."
+          },
+          "week_start": {
+            "type": "string",
+            "description": "RFC3339 week start (Monday 00:00 UTC)."
+          }
+        }
       },
       "AmendOrderRequest": {
         "type": "object",
@@ -3368,17 +4253,31 @@
             ],
             "description": "Optional Aptos Wallet Standard full message (APTOS-prefixed, newline-delimited).\nIf provided, the backend will verify the signature against this exact string\nand also validate that it contains `message: AUTHORIZE|{timestamp_ms}|{nonce}` and a matching `nonce:`.\n\nExample:\n\nAPTOS\\nmessage: AUTHORIZE|1731541800000|b7d1c2e8f5a94f3db2f8c6a9d1e4\\nnonce: b7d1c2e8f5a94f3db2f8c6a9d1e4"
           },
+          "id_token": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional Auth0/OIDC `id_token` (RS256) for hosted Canton party auth."
+          },
           "nonce": {
             "type": "string",
             "description": "Example: b7d1c2e8f5a94f3db2f8c6a9d1e4"
           },
+          "party_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional Canton party id (`<hint>::<fingerprint>`) for Console (CIP-103) auth."
+          },
           "public_key": {
             "type": "string",
-            "description": "Example: 0xa9d81da788977638194c857b918f12ff2233c7a86e82b44705761b2d02426f6d"
+            "description": "Ed25519 public key as hex (`0x` optional) or standard base64.\n\nExample: 0xa9d81da788977638194c857b918f12ff2233c7a86e82b44705761b2d02426f6d"
           },
           "signature": {
             "type": "string",
-            "description": "Example: 0xf5ec808e52d014f5193eccf680acf84c6256bdddb0159088e7cb18d74b9c590b92eb4381e10307fccc0868612993dfb9a542257aab22d7a3decfda33045fb905"
+            "description": "Ed25519 signature as hex (`0x` optional) or standard base64.\nCanton Console: signs `EKIDEN-CANTON-AUTHORIZE|{party_id}|{timestamp_ms}|{nonce}`.\n\nExample: 0xf5ec808e52d014f5193eccf680acf84c6256bdddb0159088e7cb18d74b9c590b92eb4381e10307fccc0868612993dfb9a542257aab22d7a3decfda33045fb905"
           },
           "timestamp_ms": {
             "type": "integer",
@@ -3559,7 +4458,7 @@
       },
       "CancelAllOrdersRequest": {
         "type": "object",
-        "description": "Request to cancel all orders, optionally filtered by symbol\nTODO: Cancels up to 500 orders per request\nTODO: System picks up 500 orders randomly to cancel when you have over 500 orders",
+        "description": "Request to cancel all orders, optionally filtered by symbol.\n\nOmit `symbol` to cancel every open order on the sub-account.\nSet `symbol` to cancel only open orders on that market.\nTODO: Cancels up to 500 orders per request\nTODO: System picks up 500 orders randomly to cancel when you have over 500 orders",
         "required": [
           "sub_account_address"
         ],
@@ -3573,7 +4472,8 @@
                 "type": "null"
               },
               {
-                "$ref": "#/components/schemas/Symbol"
+                "$ref": "#/components/schemas/Symbol",
+                "description": "Optional market filter. Omit to cancel open orders across all markets."
               }
             ]
           }
@@ -3686,6 +4586,56 @@
           "CancelByOcoTpCanceledBySlTriggered",
           "CancelByOcoSlCanceledByTpTriggered"
         ]
+      },
+      "CantonProvisionRequest": {
+        "type": "object",
+        "required": [
+          "id_token"
+        ],
+        "properties": {
+          "id_token": {
+            "type": "string"
+          }
+        }
+      },
+      "CantonProvisionResponse": {
+        "type": "object",
+        "required": [
+          "party_id",
+          "created"
+        ],
+        "properties": {
+          "created": {
+            "type": "boolean"
+          },
+          "party_id": {
+            "type": "string"
+          }
+        }
+      },
+      "ClaimQuestResponse": {
+        "type": "object",
+        "description": "`POST /user/quests/{quest_id}/claim` response (spec §10): the credited\nreward. Repeat/inactive/ineligible claims are 400s, not bodies.",
+        "required": [
+          "quest_id",
+          "reward_xp"
+        ],
+        "properties": {
+          "day": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UTC day the claim is scoped to (daily quests only)."
+          },
+          "quest_id": {
+            "type": "string"
+          },
+          "reward_xp": {
+            "type": "string",
+            "description": "XP credited by this claim."
+          }
+        }
       },
       "ClosedPnl": {
         "type": "object",
@@ -3817,7 +4767,7 @@
           },
           "metric_value": {
             "type": "string",
-            "description": "Raw metric total across all days (before capping / weighting)."
+            "description": "Raw metric total. For metric=pnl: closed PnL + fees + funding (excludes unrealized)."
           },
           "projected_xp": {
             "type": "string",
@@ -4130,6 +5080,23 @@
           }
         }
       },
+      "CreateReferralCodeRequest": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "CreateType": {
         "type": "string",
         "enum": [
@@ -4227,11 +5194,16 @@
           "exec_time",
           "is_maker",
           "fee_rate",
+          "base_fee",
           "mark_price",
           "index_price",
           "seq"
         ],
         "properties": {
+          "base_fee": {
+            "type": "string",
+            "description": "Flat base fee charged on order creation."
+          },
           "closed_size": {
             "type": [
               "string",
@@ -4819,6 +5791,52 @@
           }
         }
       },
+      "GetStatsResponse": {
+        "type": "object",
+        "description": "Stats response.",
+        "required": [
+          "period",
+          "summary",
+          "list"
+        ],
+        "properties": {
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatsMarket"
+            }
+          },
+          "period": {
+            "$ref": "#/components/schemas/StatsPeriod"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/StatsSummary"
+          }
+        }
+      },
+      "GetStatsVolumeResponse": {
+        "type": "object",
+        "description": "Turnover series response.",
+        "required": [
+          "period",
+          "list",
+          "aggregates"
+        ],
+        "properties": {
+          "aggregates": {
+            "$ref": "#/components/schemas/StatsVolumeAggregates"
+          },
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatsVolumePoint"
+            }
+          },
+          "period": {
+            "$ref": "#/components/schemas/StatsPeriod"
+          }
+        }
+      },
       "GetSubAccountsResponse": {
         "type": "object",
         "required": [
@@ -4890,8 +5908,11 @@
           "quote_addr",
           "maker_fee_rate",
           "taker_fee_rate",
+          "maker_base_fee",
+          "taker_base_fee",
           "base_scale",
-          "quote_scale"
+          "quote_scale",
+          "default_slippage_tolerance"
         ],
         "properties": {
           "addr": {
@@ -4904,6 +5925,9 @@
             "type": "integer",
             "format": "int32",
             "minimum": 0
+          },
+          "default_slippage_tolerance": {
+            "$ref": "#/components/schemas/SlippageTolerance"
           },
           "delivery_fee_rate": {
             "type": "string"
@@ -4924,6 +5948,9 @@
           },
           "lot_size_filter": {
             "$ref": "#/components/schemas/LotSizeFilter"
+          },
+          "maker_base_fee": {
+            "type": "string"
           },
           "maker_fee_rate": {
             "type": "string"
@@ -4954,6 +5981,9 @@
             "type": "string"
           },
           "symbol": {
+            "type": "string"
+          },
+          "taker_base_fee": {
             "type": "string"
           },
           "taker_fee_rate": {
@@ -5086,6 +6116,80 @@
           "1M"
         ]
       },
+      "InviteCodeEntry": {
+        "type": "object",
+        "required": [
+          "code",
+          "status",
+          "createdAtMs"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "createdAtMs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "redeemedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "`active` or `used`."
+          }
+        }
+      },
+      "InviteCodesResponse": {
+        "type": "object",
+        "required": [
+          "volumeUsdc",
+          "earned",
+          "claimed",
+          "available",
+          "cap",
+          "gatingEnabled",
+          "codes"
+        ],
+        "properties": {
+          "available": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "cap": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "claimed": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "codes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InviteCodeEntry"
+            }
+          },
+          "earned": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "gatingEnabled": {
+            "type": "boolean",
+            "description": "Root-whitelist enforcement. When false, invite codes are unused."
+          },
+          "volumeUsdc": {
+            "type": "string"
+          }
+        }
+      },
       "KlineSnapshot": {
         "type": "object",
         "required": [
@@ -5165,6 +6269,7 @@
           "volume",
           "trading_xp",
           "referral_xp",
+          "other_xp",
           "total_xp"
         ],
         "properties": {
@@ -5172,13 +6277,18 @@
             "type": "string",
             "description": "Equity in quote units (e.g. USDC)."
           },
+          "other_xp": {
+            "type": "integer",
+            "format": "int64",
+            "description": "XP that is neither — quests today, plus admin adjustments. Reported\nseparately so it cannot inflate `trading_xp`, which is what it used to do."
+          },
           "place": {
             "type": "string",
             "description": "Rank position (1-based), or \"0\" when not ranked."
           },
           "pnl": {
             "type": "string",
-            "description": "PnL in quote units for the selected ranking window."
+            "description": "PnL for the selected timeframe. Realized + unrealized (mark-to-market)."
           },
           "ranked": {
             "type": "boolean",
@@ -5200,12 +6310,12 @@
           "total_xp": {
             "type": "integer",
             "format": "int64",
-            "description": "Total XP balance."
+            "description": "Total XP balance. Equals `trading_xp + referral_xp + other_xp`."
           },
           "trading_xp": {
             "type": "integer",
             "format": "int64",
-            "description": "XP earned from trading activity."
+            "description": "XP earned from trading activity: taker/maker fees and position holding."
           },
           "volume": {
             "type": "string",
@@ -5341,6 +6451,20 @@
           }
         }
       },
+      "ListReferralCodesResponse": {
+        "type": "object",
+        "required": [
+          "codes"
+        ],
+        "properties": {
+          "codes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReferralCodeInfo"
+            }
+          }
+        }
+      },
       "LongShortRatio": {
         "type": "object",
         "required": [
@@ -5405,6 +6529,17 @@
           "Cross",
           "Isolated"
         ]
+      },
+      "MintInviteCodeResponse": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
       },
       "OpenInterest": {
         "type": "object",
@@ -5909,37 +7044,6 @@
           }
         }
       },
-      "PointsLedgerEntry": {
-        "type": "object",
-        "required": [
-          "ledger_id",
-          "run_id",
-          "delta_xp",
-          "reason",
-          "metadata_json",
-          "created_at"
-        ],
-        "properties": {
-          "created_at": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "delta_xp": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "ledger_id": {
-            "type": "string"
-          },
-          "metadata_json": {},
-          "reason": {
-            "type": "string"
-          },
-          "run_id": {
-            "type": "string"
-          }
-        }
-      },
       "Position": {
         "type": "object",
         "description": "Position information.\n\n* risk_id: numeric identifier of the current risk tier your position is on for that symbol.\n* risk_limit_value: the maximum position value allowed under that tier (the tier’s limit). If your position value grows beyond this, the tier steps up (higher requirements).\n\nDetails:\n* Meaning: Bybit enforces “risk limit tiers” to cap position value and scale maintenance margin. The tier is referenced by riskId, and its cap is riskLimitValue.\n* Effects: Higher tiers allow larger positions but increase maintenance margin and may constrain leverage.\n* Portfolio margin note: In portfolio margin mode, both fields are not meaningful and are returned as 0 (docs: “risk limit rules are invalid”).",
@@ -6241,6 +7345,127 @@
           }
         }
       },
+      "RecordReferralClickRequest": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "RedeemSeasonClaimRequest": {
+        "type": "object",
+        "description": "`POST /season-claim/redeem` — redeem (or, with `preview`, dry-run) a\nseason-claim voucher.",
+        "required": [
+          "voucher"
+        ],
+        "properties": {
+          "preview": {
+            "type": "boolean"
+          },
+          "voucher": {
+            "type": "string"
+          }
+        }
+      },
+      "RedeemSeasonClaimResponse": {
+        "type": "object",
+        "description": "`status` is one of `\"preview\"`, `\"granted\"`, or `\"already_claimed\"`.",
+        "required": [
+          "status",
+          "merged_xp",
+          "multiplier_bps"
+        ],
+        "properties": {
+          "merged_xp": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "multiplier_bps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "ReferralCodeInfo": {
+        "type": "object",
+        "required": [
+          "code_id",
+          "code",
+          "is_default",
+          "created_at",
+          "clicks",
+          "binds",
+          "downline_count"
+        ],
+        "properties": {
+          "binds": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of users who bound through this specific code (`users.bound_via_code_id`).",
+            "minimum": 0
+          },
+          "clicks": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of recorded clicks that resolved to this code (`referral_clicks.code_id`).",
+            "minimum": 0
+          },
+          "code": {
+            "type": "string"
+          },
+          "code_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "downline_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Total direct downline of this code's owner (`users.referrer_id`). Owner-level, so it is\nidentical across all of the owner's codes.",
+            "minimum": 0
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ReferralStatus": {
+        "type": "object",
+        "description": "Referral program status for the viewer as a referrer.",
+        "required": [
+          "l1_bps_effective",
+          "downline_count"
+        ],
+        "properties": {
+          "downline_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Direct (L1) referrals.",
+            "minimum": 0
+          },
+          "l1_bps_effective": {
+            "type": "integer",
+            "format": "int32",
+            "description": "L1 cut in bps — flat for everyone (ranks removed 2026-07-20).",
+            "minimum": 0
+          }
+        }
+      },
       "ReferralSummaryResponse": {
         "type": "object",
         "required": [
@@ -6315,7 +7540,10 @@
           "EcInvalidUserType",
           "EcInvalidMirrorOid",
           "EcInvalidMirrorUid",
-          "EcEcInvalidQty",
+          "EcPriceNotMultipleOfTick",
+          "EcQtyBelowMin",
+          "EcQtyNotMultipleOfLot",
+          "EcQtyAboveMax",
           "EcInvalidAmount",
           "EcLoadOrderCancel",
           "EcMarketQuoteNoSuppSell",
@@ -6332,67 +7560,72 @@
       },
       "RewardSummaryResponse": {
         "type": "object",
+        "description": "`GET /user/rewards` response (spec §10).",
         "required": [
-          "current_week",
-          "history",
           "xp_balance",
-          "ledger"
+          "closed_tournament_eligible",
+          "breakdown",
+          "ledger",
+          "referral"
         ],
         "properties": {
-          "current_week": {
-            "$ref": "#/components/schemas/RewardWeekSummary"
+          "breakdown": {
+            "$ref": "#/components/schemas/XpBreakdown"
           },
-          "history": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RewardWeekSummary"
-            }
+          "closed_tournament_eligible": {
+            "type": "boolean",
+            "description": "Closed-tournament eligibility: XP at/above the configured floor\n(`gateway.closed_tournament_min_xp`). Ranks removed 2026-07-20."
           },
           "ledger": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PointsLedgerEntry"
-            }
+              "$ref": "#/components/schemas/RewardsLedgerEntry"
+            },
+            "description": "One ledger page, newest first."
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor for the next ledger page; null when this page is the last."
+          },
+          "referral": {
+            "$ref": "#/components/schemas/ReferralStatus"
+          },
+          "season": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SeasonStatus",
+                "description": "Season-1 starting multiplier (season1-conversion §5); omitted entirely\nwhen the wallet's active-season multiplier is 1.0× (no positive band)."
+              }
+            ]
           },
           "xp_balance": {
-            "type": "integer",
-            "format": "int64"
+            "type": "string"
           }
         }
       },
-      "RewardWeekSummary": {
+      "RewardsLedgerEntry": {
         "type": "object",
+        "description": "One instant-XP ledger entry.",
         "required": [
-          "week_start",
-          "week_end",
-          "own_ps",
-          "bonus_ps",
-          "final_ps",
-          "xp",
-          "finalized"
+          "reason",
+          "delta_xp",
+          "created_at"
         ],
         "properties": {
-          "bonus_ps": {
+          "created_at": {
+            "type": "string",
+            "description": "RFC 3339 UTC timestamp."
+          },
+          "delta_xp": {
             "type": "string"
           },
-          "final_ps": {
-            "type": "string"
-          },
-          "finalized": {
-            "type": "boolean"
-          },
-          "own_ps": {
-            "type": "string"
-          },
-          "week_end": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "week_start": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "xp": {
+          "reason": {
             "type": "string"
           }
         }
@@ -6486,6 +7719,48 @@
           "withdraw",
           "admin"
         ]
+      },
+      "SeasonClaimVoucherResponse": {
+        "type": "object",
+        "description": "`POST /season-claim/voucher` — a signed, time-boxed voucher the mainnet\nside redeems to merge a testnet root's XP into the caller's mainnet\naccount.",
+        "required": [
+          "voucher",
+          "expires_at_ms"
+        ],
+        "properties": {
+          "expires_at_ms": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "voucher": {
+            "type": "string"
+          }
+        }
+      },
+      "SeasonStatus": {
+        "type": "object",
+        "description": "Season-1 starting-multiplier block for `GET /user/rewards`\n(season1-conversion §5). Present only when the wallet's active-season\nmultiplier is above 1.0× (a positive band); the whole block is omitted at\n1.0×.",
+        "required": [
+          "name",
+          "multiplier_bps",
+          "source"
+        ],
+        "properties": {
+          "multiplier_bps": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The wallet's Season-1 starting multiplier in bps (always > 0 when the\nblock is present).",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "Active season label (config `active_season`, e.g. `season1`)."
+          },
+          "source": {
+            "type": "string",
+            "description": "The band the wallet's merged Total XP fell into, e.g. `band_2000bps` —\nthe source of the multiplier."
+          }
+        }
       },
       "SetLeverageRequest": {
         "type": "object",
@@ -6641,6 +7916,162 @@
           "CancelBoth"
         ]
       },
+      "StatsMarket": {
+        "type": "object",
+        "required": [
+          "symbol",
+          "last_price",
+          "price_change",
+          "avg_funding_rate",
+          "turnover",
+          "open_interest_value",
+          "buy_ratio",
+          "sell_ratio",
+          "next_funding_time"
+        ],
+        "properties": {
+          "avg_funding_rate": {
+            "type": "string",
+            "description": "Average funding rate"
+          },
+          "buy_ratio": {
+            "type": "string",
+            "description": "The ratio of the number of long position"
+          },
+          "last_price": {
+            "type": "string",
+            "description": "Last traded price"
+          },
+          "next_funding_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Next funding time (ms)",
+            "example": "1672531200000"
+          },
+          "open_interest_value": {
+            "type": "string",
+            "description": "Open interest value"
+          },
+          "price_change": {
+            "type": "string",
+            "description": "Price change"
+          },
+          "sell_ratio": {
+            "type": "string",
+            "description": "The ratio of the number of short position"
+          },
+          "symbol": {
+            "$ref": "#/components/schemas/Symbol",
+            "description": "Symbol name"
+          },
+          "turnover": {
+            "type": "string",
+            "description": "Turnover"
+          }
+        }
+      },
+      "StatsPeriod": {
+        "type": "string",
+        "description": "Stats period. `24h`, `7d`, `30d`, or `all_time`.",
+        "enum": [
+          "24h",
+          "7d",
+          "30d",
+          "all_time"
+        ]
+      },
+      "StatsSummary": {
+        "type": "object",
+        "required": [
+          "turnover",
+          "turnover_change",
+          "active_traders",
+          "active_traders_change",
+          "trades",
+          "trades_change",
+          "open_interest_value",
+          "open_interest_value_change"
+        ],
+        "properties": {
+          "active_traders": {
+            "type": "string",
+            "description": "Active traders"
+          },
+          "active_traders_change": {
+            "type": "string",
+            "description": "Active traders change"
+          },
+          "open_interest_value": {
+            "type": "string",
+            "description": "Open interest value"
+          },
+          "open_interest_value_change": {
+            "type": "string",
+            "description": "Open interest value change"
+          },
+          "trades": {
+            "type": "string",
+            "description": "Matched trades"
+          },
+          "trades_change": {
+            "type": "string",
+            "description": "Matched trades change"
+          },
+          "turnover": {
+            "type": "string",
+            "description": "Turnover"
+          },
+          "turnover_change": {
+            "type": "string",
+            "description": "Turnover change"
+          }
+        }
+      },
+      "StatsVolumeAggregates": {
+        "type": "object",
+        "required": [
+          "turnover_24h",
+          "turnover_7d",
+          "turnover_30d",
+          "turnover_all_time"
+        ],
+        "properties": {
+          "turnover_24h": {
+            "type": "string",
+            "description": "Turnover for 24h"
+          },
+          "turnover_30d": {
+            "type": "string",
+            "description": "Turnover for 30d"
+          },
+          "turnover_7d": {
+            "type": "string",
+            "description": "Turnover for 7d"
+          },
+          "turnover_all_time": {
+            "type": "string",
+            "description": "Turnover for all time"
+          }
+        }
+      },
+      "StatsVolumePoint": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "turnover"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "1672531200000"
+          },
+          "turnover": {
+            "type": "string",
+            "description": "Turnover"
+          }
+        }
+      },
       "StopOrderType": {
         "type": "string",
         "enum": [
@@ -6719,6 +8150,7 @@
           "prev_price_1h",
           "volume_24h",
           "turnover_24h",
+          "trades_24h",
           "open_interest",
           "open_interest_value",
           "funding_rate",
@@ -6798,6 +8230,12 @@
           "symbol": {
             "$ref": "#/components/schemas/Symbol",
             "description": "Symbol name"
+          },
+          "trades_24h": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Matched trades for 24h",
+            "minimum": 0
           },
           "turnover_24h": {
             "type": "string",
@@ -6977,6 +8415,92 @@
       "UserId": {
         "type": "string",
         "format": "uuid"
+      },
+      "UserQuestSummary": {
+        "type": "object",
+        "description": "One active quest with the viewer's claim state (`GET /user/quests`,\nspec §10).",
+        "required": [
+          "quest_id",
+          "kind",
+          "trigger",
+          "reward_xp",
+          "params",
+          "claimed"
+        ],
+        "properties": {
+          "claimed": {
+            "type": "boolean",
+            "description": "One-shot quests: ever claimed. Daily quests: claimed for the current\nUTC day."
+          },
+          "kind": {
+            "type": "string",
+            "description": "`one_shot` or `daily`."
+          },
+          "last_claimed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "RFC 3339 UTC timestamp of the most recent claim, if any."
+          },
+          "params": {
+            "description": "Quest parameters (e.g. `{\"min_volume_usdc\": 1000}`)."
+          },
+          "quest_id": {
+            "type": "string"
+          },
+          "reward_xp": {
+            "type": "string",
+            "description": "XP paid per claim; string-encoded like every XP amount on the wire."
+          },
+          "trigger": {
+            "type": "string",
+            "description": "`first_referral_active`, `manual_claim` or `volume_threshold`."
+          }
+        }
+      },
+      "UserQuestsResponse": {
+        "type": "object",
+        "description": "`GET /user/quests` response.",
+        "required": [
+          "quests"
+        ],
+        "properties": {
+          "quests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserQuestSummary"
+            }
+          }
+        }
+      },
+      "XpBreakdown": {
+        "type": "object",
+        "description": "Lifetime XP per source group (spec §10 `breakdown`). String-encoded\nintegers like every XP amount on the wire.",
+        "required": [
+          "taker",
+          "maker",
+          "position",
+          "quest",
+          "referral"
+        ],
+        "properties": {
+          "maker": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "quest": {
+            "type": "string"
+          },
+          "referral": {
+            "type": "string"
+          },
+          "taker": {
+            "type": "string"
+          }
+        }
       }
     },
     "securitySchemes": {
