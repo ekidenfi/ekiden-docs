@@ -5,24 +5,18 @@ description: "This section lists the available endpoint URLs for REST and WebSoc
 
 ## Production
 
+Use the production environment for live integrations with Ekiden.
+
 - **REST**: [https://api.ekiden.fi/api/v1](https://api.ekiden.fi/api/v1)
-- **SDK WebSocket Public**: wss://api.ekiden.fi/ws/public
-- **SDK WebSocket Private**: wss://api.ekiden.fi/ws/private
+- **WebSocket public**: wss://api.ekiden.fi/ws/public
+- **WebSocket private**: wss://api.ekiden.fi/ws/private
 
-## Testnet Beta
-
-Public beta environment running on Canton testnet.
-
-- **REST**: [https://api.cnt.ekiden.fi/api/v1](https://api.cnt.ekiden.fi/api/v1)
-- **SDK WebSocket Public**: `wss://api.cnt.ekiden.fi/ws/public`
-- **SDK WebSocket Private**: `wss://api.cnt.ekiden.fi/ws/private`
+See [Client Initialization](/api-reference/integration/initialization) for setup and [API Authentication](/api-reference/integration/onboarding-auth) for credentials.
 
 ## Staging
 
-Internal development environment running on Canton testnet.
+The staging environment is reserved for authorized development and integration testing. Request access from the Ekiden team before using it.
 
 - **REST**: [https://api.canton.ekiden.fi/api/v1](https://api.canton.ekiden.fi/api/v1)
-- **SDK WebSocket Public**: `wss://api.canton.ekiden.fi/ws/public`
-- **SDK WebSocket Private**: `wss://api.canton.ekiden.fi/ws/private`
-
-{/* TODO(CONFIG): Confirm whether GraphQL HTTP and GraphQL WebSocket endpoints are currently supported and, if so, add the correct endpoints for Testnet Beta and Devnet. */}
+- **WebSocket public**: wss://api.canton.ekiden.fi/ws/public
+- **WebSocket private**: wss://api.canton.ekiden.fi/ws/private

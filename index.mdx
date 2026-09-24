@@ -3,47 +3,32 @@ title: "Introduction"
 description: "Institutional DeFi Trading. Unleashed for the Masses"
 ---
 
-Ekiden is a decentralized, orderbook-based hybrid exchange built on Canton Network blockchain. It combines an off-chain Central Limit Orderbook (CLOB) with deferred on-chain settlement to deliver high performance, transparency, and capital efficiency for perpetual futures trading.
-
 <Frame>
-  ![Telegram Cloud Photo Size 4 5838159985194503849 Y](/images/telegram-cloud-photo-size-4-5838159985194503849-y.jpg)
+  ![Ekiden — Infrastructure for Tokenized Derivative Markets](/images/intro.jpg)
 </Frame>
 
-Built on a rollup-like architecture with Merkle-based proofs, Ekiden is designed to meet the demands of high-frequency traders and institutional DeFi participants.
+Ekiden is infrastructure for tokenized derivative markets on [Canton Network](https://www.canton.network/). It provides an orderbook-based venue for perpetual futures, combining off-chain matching with deferred on-chain settlement.
 
-## Key Features
+Ekiden is designed for traders, market makers, and teams that need low-latency execution, transparent market structure, and programmable access to a derivatives venue.
 
-### Perpetual Futures Exchange
+## How Ekiden works
 
-- **Central Limit Orderbook (CLOB)**: Off-chain matching with on-chain Merkle commitments for auditable, transparent price discovery.
-- **Deferred On-Chain Settlement**: Batched updates posted to Canton, balancing throughput and verifiability.
-- **Position Management**: Positions tracked using original order data and Merkle inclusion proofs.
-- **Price Discovery**: Powered by an off-chain Central Limit Order Book (CLOB).
+- **Central Limit Orderbook (CLOB)** — orders are matched off-chain for responsive price discovery and execution.
+- **Deferred on-chain settlement** — batched updates are settled on Canton, balancing throughput with verifiability.
+- **Merkle-based proofs** — order and position data can be verified through cryptographic commitments.
+- **Self-custody** — users retain control of their assets while trading through the platform.
 
-### Scalability Through Rollup-Like Design
+Read the [Architecture guide](/architecture) for a deeper explanation of Ekiden's design.
 
-- **Merkleized Orderbooks**: Orders compressed into Merkle proofs stored on-chain.
-- **Off-Chain Data Availability**: Full data hosted on nodes or external layers.
-- **Batch Processing**: Efficient, low-cost settlements.
+## Built for active markets
 
-### Lightning-Fast Performance
+Ekiden supports perpetual futures trading with a maker–taker fee model, account and position management, and tools for active traders. Market makers and algorithmic traders can integrate through the [API Reference](/api-reference/introduction) and real-time WebSocket feeds.
 
-- **Execution Latency**: 5–15ms, competitive with leading centralized exchanges.
-- **Taker Fee**: 0.02% (baseline PoC).
-- **Maker Fee**: 0%, incentivizing liquidity provision.
+See [Fees](/fees), the [VIP Program](/vip-program), and the [Trading Guide](/trade) for product details.
 
-### Intuitive UX
+## Get started
 
-- **Rapid Onboarding**: Seconds to begin trading.
-- **Streamlined Wallet Interaction**: One-click trade execution.
-- **Customizable Tools**: Designed for retail and institutional users.
-
-### Self-Custody
-
-- **User Control**: No centralized intermediaries. Users retain full asset custody.
-
-### Powered by Ekiden
-
-- **Hyper-Parallelization**: 200k orders per second per market
-- **Low Latency**: Sub-10ms execution speed.
-- **Secure Finality**: Trustless, on-chain settlement.
+1. [Open the Ekiden app](https://app.ekiden.fi).
+2. Complete onboarding and fund your trading account.
+3. Review the [Trading Guide](/trade) before placing your first order.
+4. Visit the [Referral Program](/untitled-page) or [Points Program](/points-program) to learn about access and rewards.
