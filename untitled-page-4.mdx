@@ -1,3 +1,124 @@
 ---
 title: "User Flows"
+description: "Learn how to create, import, unlock, and use Ekiden Wallet."
 ---
+
+This guide covers the main actions available in the Ekiden Wallet browser extension, from creating a wallet to approving transactions and managing networks.
+
+## First open
+
+No vault yet. The splash offers **Create wallet** and **Import seed**.
+
+<img
+  src="/images/splash.png"
+  alt="Ekiden Wallet welcome screen with Create wallet and Import seed options"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+Create asks them to write down the 12 words, confirm, choose a party name (`ekiden-<name>`), and set a password.
+
+<img
+  src="/images/seed-1.png"
+  alt="Wallet recovery phrase setup"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+<img
+  src="/images/password-1.png"
+  alt="Party name and password setup"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+Import asks for the same phrase, then the same party name. The name has to match the party that was allocated with that seed. Fingerprint-only restore does not find the party on this ledger.
+
+<img
+  src="/images/import-1.png"
+  alt="Import an existing wallet using a recovery phrase"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+## Unlock
+
+The vault exists and the session is locked. Password, then **Unlock**. **Sign out / remove wallet** deletes the local vault. The seed still restores it.
+
+<img
+  src="/images/unlock.png"
+  alt="Ekiden Wallet unlock screen"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+## Home
+
+After unlock: party, network, balances. Send, receive, and settings hang off this screen.
+
+<img
+  src="/images/home.png"
+  alt="Ekiden Wallet home screen showing party, network, and balances"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+<img
+  src="/images/recieve.png"
+  alt="Receive screen displaying the full Canton party ID"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+<img
+  src="/images/send.png"
+  alt="Send assets screen with instrument, amount, and recipient"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+Incoming transfer instructions show as offers the user can accept or reject.
+
+<img
+  src="/images/offer-1.png"
+  alt="Incoming transfer offer with Accept and Reject actions"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+## A website connects
+
+The site calls `connect`. The extension opens an approval with the origin and the dApp name.
+
+<img
+  src="/images/approve-connect.png"
+  alt="dApp connection approval popup"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+Signing a message and submitting a transaction are the same popup family, with the payload summarized.
+
+<img
+  src="/images/approve-sign-1.png"
+  alt="Message signing approval popup"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+<img
+  src="/images/approve-tx-1.png"
+  alt="Transaction approval popup showing command summary"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+If the user rejects, the site receives “User rejected request” (`4001` on the CIP-0103 path). If they accept a transaction, the wallet signs and submits, then the site sees `executed` and an `updateId`.
+
+## Network
+
+The user picks the network in the wallet. A dApp cannot switch it. A network marked coming soon cannot create or use an account.
+
+<img
+  src="/images/network.png"
+  alt="Wallet network selection screen"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+## Lock and remove
+
+Lock ends the session and returns to Unlock. Sign out removes the vault from this browser profile.
+
+<img
+  src="/images/settings.png"
+  alt="Wallet settings with lock and remove wallet options"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
