@@ -12,9 +12,9 @@ Browser discovery: [Canton docs — browser extension](https://docs.canton.netwo
 
 For visual explanations of wallet interactions, see:
 
-- [Discovery](/wallet/diagrams/discovery) — how a dApp discovers Ekiden Wallet.
-- [Connect](/wallet/diagrams/connect) — how a user authorizes a wallet connection.
-- [Submit](/wallet/diagrams/submit) — how the wallet signs and submits transactions.
+- [Discovery flow](#discovery-flow) — how a dApp discovers Ekiden Wallet.
+- [Connection flow](#connection-flow) — how a user authorizes a wallet connection.
+- [Transaction submission flow](#transaction-submission-flow) — how the wallet signs and submits transactions.
 
 ## Discovery
 
@@ -47,6 +47,21 @@ await sdk.init({
 ```
 
 `window.ekidenWallet` on the page is only a marker (`isEkiden`, `id`, `name`, `version`). Call the SDK, not that object.
+
+### Discovery flow
+
+```mermaid
+sequenceDiagram
+  participant App as dApp page
+  participant SDK as Canton dApp SDK
+  participant Ext as Ekiden content script
+
+  App->>SDK: init()
+  SDK->>App: canton:requestProvider
+  Ext->>App: canton:announceProvider
+  Note over Ext,App: id ekiden-wallet<br/>target ekidenWallet
+  SDK->>SDK: providerId browser:ext:ekiden-wallet
+```
 
 ## Wire protocol
 
