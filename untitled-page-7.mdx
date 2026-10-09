@@ -1,5 +1,47 @@
 ---
 title: "CIP-0056"
+description: "Canton token standard, supported token operations, and implementation limitations in Ekiden Wallet."
 ---
 
-CIP-0056
+# CIP-0056 — token standard
+
+CIP-0056 is how Canton tokens look the same to every wallet. It is a set of Daml interfaces plus optional registry HTTP APIs. It is not the API a website uses to connect. That is [CIP-0103](cip-0103.md).
+
+Specification: [CIP-0056](https://github.com/canton-foundation/cips/blob/main/cip-0056/cip-0056.md).<br />Wallet-oriented walkthrough: [Canton token standard](https://docs.canton.network/appdev/deep-dives/token-standard).
+
+## The six APIs
+
+| API | Purpose | Ekiden wallet |
+| --- | --- | --- |
+| Token metadata | Symbol, name, supply, registry URLs, icon | Catalog entries for Canton Coin (`Amulet`) and utility instruments (for example USDCx): symbol, name, icon, `kind` |
+| Holdings | Portfolio and history | Canton Coin via the Holding interface. Utility tokens via the utility holding template. Balances shown on Home |
+| Transfer instruction | Free-of-payment transfer | Send, and incoming offers the user can accept, reject, or withdraw. Factory choice for Canton Coin, transfer-offer / instruction contracts for utility tokens |
+| Allocation | Lock an asset for delivery-versus-payment | Not a general wallet screen. App-specific flows (trading margin) are separate from this API |
+| Allocation request | App asks a wallet to allocate | Not exposed to dApps as a CIP-0056 endpoint |
+| Allocation instruction | Wallet asks a registry to create an allocation | Not implemented as a generic registry call |
+
+A registry says which of these it supports. Ekiden treats Canton Coin (`kind: "amulet"`) and utility-registry instruments (`kind: "cip56"`) as the two kinds it knows how to display and send.
+
+## How the wallet uses the standard
+
+The five patterns in the Canton wallet guide, and where they live:
+
+1. **Read contracts that implement a token interface.** Holdings and incoming transfer instructions are read from active contracts (gateway and, for Canton Coin, the wallet backend ACS).
+2. **Read transaction history.** The wallet UI is balance-and-offer oriented. It does not yet render a full CIP-0056 transaction history for every registry.
+3. **Execute a factory choice.** Canton Coin sends fetch the transfer factory, then submit a signed batch.
+4. **Execute a choice on an existing contract.** Accept, reject, or withdraw on a transfer instruction the user already holds.
+5. **Custom Daml for bulk workflows.** Out of scope for the extension. Sends are one approval at a time.
+
+Private keys never go to the registry. The extension signs the prepared transaction hash. The participant co-signs where the workflow requires an operator (for example some preapproval accepts).
+
+## What a dApp should not reimplement
+
+If a site only needs “user pays this party N of an instrument”, it should submit that as `prepareExecute` commands, or use the product’s own API, and let the wallet render the approval. Parsing holding interfaces in the page duplicates the wallet and breaks when a registry adds a package version.
+
+## Gaps to keep visible in the public docs
+
+- No generic Allocation / Allocation Request UI.
+- No claim that every CIP-0056 registry on the network is listed. The wallet shows instruments it has a catalog entry for, plus holdings it can parse.
+- History is not the full token-standard transaction log.
+
+Attach [token flow](diagrams/token-send.md) when this page is published.

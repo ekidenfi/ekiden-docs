@@ -1,3 +1,182 @@
 ---
 title: "dApp Integration"
+description: "Connect your application to Ekiden Wallet using the Canton dApp SDK or Ekiden SDK."
 ---
+
+Two ways to connect. Use one.
+
+- The app should work with any CIP-0103 wallet: [Canton dApp SDK](#canton-dapp-sdk).
+- The app only supports Ekiden Wallet: [Ekiden SDK](#ekiden-sdk).
+
+Connect from a click. Do not call `connect` on page load.
+
+## Canton dApp SDK
+
+```bash
+npm install @canton-network/dapp-sdk
+```
+
+```ts
+import { init, connect, getPrimaryAccount, prepareExecute } from "@canton-network/dapp-sdk";
+
+await init();
+
+document.querySelector("#connect")!.addEventListener("click", async () => {
+  const result = await connect();
+  if (!result.isConnected) return;
+  const account = await getPrimaryAccount();
+  console.log(account.partyId);
+});
+```
+
+Ekiden shows up in the picker because the extension emits `canton:announceProvider` (`id: "ekiden-wallet"`, `target: "ekidenWallet"`). If you disable default discovery, register it:
+
+```ts
+import { ExtensionAdapter, init } from "@canton-network/dapp-sdk";
+
+await init({
+  additionalAdapters: [
+    new ExtensionAdapter({
+      providerId: "browser:ext:ekiden-wallet" as never,
+      name: "Ekiden Wallet",
+      target: "ekidenWallet",
+    }),
+  ],
+});
+```
+
+Submit:
+
+```ts
+await prepareExecute({
+  commands: [
+    {
+      CreateCommand: {
+        templateId: "#package:Module:Template",
+        createArguments: {},
+      },
+    },
+  ],
+});
+```
+
+`prepareExecute` on this path resolves `null`. Subscribe to `txChanged` for `pending`, `executed`, or `failed`. `executed.payload.updateId` is the ledger update id.
+
+Errors from the provider use CIP-0103 codes. `4001` means the user closed the popup.
+
+The wallet will not proxy `ledgerApi`. Read contracts with your own backend, or use the Ekiden SDK `getContracts` if you depend on Ekiden specifically.
+
+## Ekiden SDK
+
+```bash
+npm install @ekidenfi/dapp-sdk
+```
+
+```ts
+import { ekidenWallet } from "@ekidenfi/dapp-sdk";
+
+const availability = await ekidenWallet.checkExtensionAvailability();
+if (availability.status !== "installed") {
+  // link the user to the extension install page
+}
+
+const result = await ekidenWallet.connect({
+  name: "My dApp",
+  icon: "https://example.com/icon.png",
+});
+
+const account = await ekidenWallet.getPrimaryAccount();
+```
+
+`checkExtensionAvailability` is the only call that times out (1 second). Other methods wait until the extension answers. If it is not installed, they never settle — check availability first.
+
+### Sign
+
+```ts
+const signature = await ekidenWallet.signMessage({
+  message: "hello",
+});
+// base64 Ed25519 signature of the primary party
+```
+
+`message` may also be `{ hex }` or `{ base64 }`.
+
+### Submit
+
+```ts
+const result = await ekidenWallet.prepareExecute({
+  commands: [
+    {
+      ExerciseCommand: {
+        templateId: "#package:Module:Template",
+        contractId: "<cid>",
+        choice: "SomeChoice",
+        choiceArgument: {},
+      },
+    },
+  ],
+  commandId: "optional-id",
+  disclosedContracts: [],
+});
+
+const updateId = result.tx.payload.updateId;
+```
+
+Optional fields the wallet reads: `commandId`, `actAs` (defaults to the primary party), `synchronizerId`, `disclosedContracts`.
+
+`prepareExecuteAndWait` submits the same way. It does not poll for finality. `completionOffset` is `0`.
+
+### Events
+
+```ts
+ekidenWallet.onAccountsChanged((account) => {
+  console.log(account?.partyId);
+});
+
+ekidenWallet.on("txChanged", (event) => {
+  console.log(event);
+});
+```
+
+### Balances and contracts
+
+```ts
+const balance = await ekidenWallet.getBalance({});
+const contracts = await ekidenWallet.getContracts({
+  templateId: "#package:Module:Template",
+});
+```
+
+`getBalance` uses the active account. A `party` argument is ignored. `balance` is the USDCx amount. `tokens` is the wallet catalog, including `symbol`, `kind`, and `balance`.
+
+### Errors
+
+```ts
+try {
+  await ekidenWallet.signMessage({ message: "hello" });
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (message === "User rejected request") return;
+  throw error;
+}
+```
+
+## Approval UX
+
+The extension popup is the consent step. The website should say, before the click, which party will sign and what the command does. The popup repeats origin, action, and party. Do not try to hide it or pre-approve from the page.
+
+<img
+  src="/images/approve-connect.png"
+  alt="Ekiden Wallet connection approval popup"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+<img
+  src="/images/approve-tx-1.png"
+  alt="Ekiden Wallet transaction approval popup"
+  className="!w-[320px] !max-w-[320px] h-auto block mx-auto"
+/>
+
+## Party id
+
+A party id looks like `ekiden-<name>::1220…`. The hint (`ekiden-<name>`) is chosen when the wallet is created. The fingerprint is derived from the public key. dApps should store `partyId`, not the hint alone.
