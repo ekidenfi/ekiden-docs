@@ -1,0 +1,50 @@
+---
+title: "Ekiden Wallet"
+sidebarTitle: "Overview"
+description: "Learn how Ekiden Wallet works, how it connects to Canton dApps, and which standards it supports."
+---
+
+Ekiden Wallet is a self-custody browser extension. Keys stay on the device. The extension allocates a Canton party, holds that party’s instruments, and approves what a website is allowed to sign.
+
+A dApp never sees the seed or the private key. It asks the extension. The extension shows an approval screen. If the user accepts, the extension signs and, for transactions, submits the command.
+
+<div style={{ maxWidth: 360, margin: "0 auto" }}>
+  <img src="/images/home.png" alt="Ekiden Wallet home screen" width={360} style={{ width: "100%", height: "auto" }} />
+</div>
+
+## Two Canton standards
+
+People often say “CIP-56” for the whole wallet interface. On Canton those are two different proposals.
+
+| Proposal | Title | Who it is for |
+| --- | --- | --- |
+| [CIP-0103](https://docs.canton.network/overview/reference/cip-0103) | dApp API | Websites that connect a wallet, sign, and submit |
+| [CIP-0056](https://docs.canton.network/overview/reference/cip-0056) | Token standard | Wallets and apps that read holdings and move instruments the same way on every registry |
+
+Ekiden implements CIP-0103 as a **browser extension** (synchronous API). It does not publish a remote JSON-RPC URL and it does not speak WalletConnect. CIP-0056 is how balances and sends are modeled on the ledger, described in [CIP-0056](/wallet/cip-0056).
+
+## What a dApp can do
+
+After the user connects the site:
+
+- Read the primary party and the other parties on the active network.
+- Read the active network id (`canton:testnet`, `canton:mainnet`, `canton:devnet`).
+- Ask the user to sign a message.
+- Ask the user to prepare, sign, and submit Daml commands (`prepareExecute`).
+- Read holdings and active contracts through the Ekiden SDK methods.
+
+The site cannot switch the wallet’s network, export the seed, or skip the approval popup.
+
+## What the wallet does not do
+
+- No open proxy of the participant JSON Ledger API (`ledgerApi`). Reads go through the Ekiden gateway methods. See [CIP-0103 gaps](/wallet/cip-0103#gaps).
+- No QR / mobile session.
+- No remote `userUrl` login. Approval happens in the extension popup, which is the synchronous CIP-0103 model.
+
+## How it works
+
+Ekiden Wallet interactions follow three main stages:
+
+1. **Discovery** — the dApp detects the wallet extension.
+2. **Connect** — the user authorizes the connection.
+3. **Submit** — the user approves signing and transaction submission.
