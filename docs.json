@@ -36,7 +36,7 @@
           {
             "group": "Wallet",
             "pages": [
-              "untitled-page-3",
+              "wallet/overview",
               "untitled-page-4",
               "untitled-page-5",
               "untitled-page-6",
