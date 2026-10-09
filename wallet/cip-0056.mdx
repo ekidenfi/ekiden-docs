@@ -1,13 +1,14 @@
 ---
-title: "CIP-0056"
+title: "CIP-0056 — Token Standard"
 description: "Canton token standard, supported token operations, and implementation limitations in Ekiden Wallet."
+sidebarTitle: "CIP-0056"
 ---
 
-# CIP-0056 — token standard
+CIP-0056 is how Canton tokens look the same to every wallet. It is a set of Daml interfaces plus optional registry HTTP APIs. It is not the API a website uses to connect. That is [CIP-0103](/wallet/cip-0103).
 
-CIP-0056 is how Canton tokens look the same to every wallet. It is a set of Daml interfaces plus optional registry HTTP APIs. It is not the API a website uses to connect. That is [CIP-0103](cip-0103.md).
+Specification: [CIP-0056](https://github.com/canton-foundation/cips/blob/main/cip-0056/cip-0056.md).
 
-Specification: [CIP-0056](https://github.com/canton-foundation/cips/blob/main/cip-0056/cip-0056.md).<br />Wallet-oriented walkthrough: [Canton token standard](https://docs.canton.network/appdev/deep-dives/token-standard).
+Wallet-oriented walkthrough: [Canton token standard](https://docs.canton.network/appdev/deep-dives/token-standard).
 
 ## The six APIs
 
@@ -44,4 +45,24 @@ If a site only needs “user pays this party N of an instrument”, it should su
 - No claim that every CIP-0056 registry on the network is listed. The wallet shows instruments it has a catalog entry for, plus holdings it can parse.
 - History is not the full token-standard transaction log.
 
-Attach [token flow](diagrams/token-send) when this page is published.
+## Token transfer flow
+
+CIP-0056 instruments the wallet knows how to move. The dApp is not on this path when the user sends from the extension UI.
+
+```mermaid
+flowchart LR
+  subgraph read [Read]
+    H[Holdings]
+    M[Metadata]
+  end
+  subgraph send [Send]
+    F[Transfer factory or existing instruction]
+    A[User approves in the extension]
+    S[Signed submission]
+  end
+  H --> F
+  M --> F
+  F --> A --> S
+```
+
+Canton Coin uses the Holding interface and the transfer-factory choice. Utility instruments use the utility holding and transfer-offer / transfer-instruction contracts. Allocation for delivery-versus-payment is not this chart.
