@@ -1,0 +1,21 @@
+---
+title: "Connect"
+description: "How a dApp connects to Ekiden Wallet and retrieves the user's Canton party."
+---
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant App as dApp
+  participant Ext as Ekiden Wallet
+
+  User->>App: Click Connect
+  App->>Ext: connect
+  alt Origin not yet allowed
+    Ext->>User: Approval popup
+    User->>Ext: Approve
+  end
+  Ext->>App: isConnected true
+  App->>Ext: getPrimaryAccount
+  Ext->>App: partyId
+```

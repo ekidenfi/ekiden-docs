@@ -40,7 +40,16 @@
               "wallet/user-flows",
               "wallet/dapp-integration",
               "wallet/cip-0103",
-              "wallet/cip-0056"
+              "wallet/cip-0056",
+              {
+                "group": "Diagrams",
+                "pages": [
+                  "wallet/diagrams/discovery",
+                  "wallet/diagrams/connect",
+                  "wallet/diagrams/submit",
+                  "wallet/diagrams/token-send"
+                ]
+              }
             ]
           }
         ]
