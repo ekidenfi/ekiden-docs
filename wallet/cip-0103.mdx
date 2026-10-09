@@ -131,6 +131,50 @@ Frames whose `target` is set and is not `ekidenWallet` are ignored.
 
 `prepareExecute` params are a JSON Ledger API prepare body: `commands` (required), plus optional `commandId`, `actAs`, `synchronizerId`, `disclosedContracts`. A nested `params.params` object is flattened.
 
+### Connection flow
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant App as dApp
+  participant Ext as Ekiden Wallet
+
+  User->>App: Click Connect
+  App->>Ext: connect
+  alt Origin not yet allowed
+    Ext->>User: Approval popup
+    User->>Ext: Approve
+  end
+  Ext->>App: isConnected true
+  App->>Ext: getPrimaryAccount
+  Ext->>App: partyId
+```
+
+### Transaction submission flow
+
+```mermaid
+sequenceDiagram
+  participant App as dApp
+  participant Ext as Ekiden Wallet
+  participant User
+  participant Ledger as Canton
+
+  App->>Ext: prepareExecute(commands)
+  Ext-->>App: txChanged pending
+  Ext->>User: Approval popup
+  alt Rejected
+    User->>Ext: Reject
+    Ext-->>App: txChanged failed
+    Ext-->>App: error 4001
+  else Approved
+    User->>Ext: Approve
+    Ext->>Ledger: sign and submit
+    Ledger-->>Ext: updateId
+    Ext-->>App: txChanged executed
+    Note over App,Ext: CIP-0103 result is null.<br/>Ekiden SDK prepareExecute returns tx.
+  end
+```
+
 ## Events
 
 | Event | When | Payload |
