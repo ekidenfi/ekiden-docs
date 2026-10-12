@@ -1,0 +1,174 @@
+---
+title: "API Error Codes"
+description: "Gateway errors and matching-engine rejection codes for order placement, amendment, and cancellation."
+---
+
+# API Error Codes
+
+![API Error Codes cover](/images/clipboard.jpeg)
+
+This page is the complete reference for errors returned by Ekiden's trading API. It covers both gateway responses and matching-engine rejections for placing, amending, and cancelling orders.
+
+<Note>
+  For the general error-response envelope, authentication requirements, and rate-limit conventions, see [API conventions](/api-reference/conventions).
+</Note>
+
+## How an error is returned
+
+Gateway failures use an HTTP status code and an error payload. Matching-engine rejections are normally returned with HTTP `400`; the payload contains the applicable `RejectReason` code.
+
+```json
+{
+  "code": "EcInsufficientFunds",
+  "message": "Insufficient funds"
+}
+```
+
+If an order is rejected without a more specific matching-engine reason, the gateway may return `OrderRejected`. Batch operations can return HTTP `202 Accepted` while the final result is pending; use the relevant order or execution endpoint to retrieve the outcome.
+
+## Gateway API errors
+
+| HTTP status | Code | Meaning |
+| --- | --- | --- |
+| `400` | `BAD_REQUEST` | The request is malformed or fails endpoint validation. |
+| `401` | `UNAUTHORIZED` | Authentication is missing, invalid, or expired. |
+| `401` | `ROOT_ADDRESS_NOT_WHITELISTED` | The root address is not permitted for the requested operation. |
+| `401` | `CANTON_PARTY_NOT_PROVISIONED` | The Canton party has not been provisioned for access. |
+| `401` | `CANTON_ID_TOKEN_STALE` | The Canton identity token is no longer current. |
+| `401` | `CANTON_ID_TOKEN_INVALID` | The Canton identity token cannot be validated. |
+| `401` | `TIMESTAMP_OUTSIDE_ALLOWED_WINDOW` | The signed request timestamp is outside the permitted window. |
+| `403` | `FORBIDDEN` | The authenticated caller does not have permission for the operation. |
+| `403` | `ACCOUNT_BANNED_COMPETITIONS` | The account is restricted from competition-related access. |
+| `403` | `OPERATOR_EMAIL_DOMAIN_NOT_ALLOWED` | The operator email domain is not permitted. |
+| `403` | `ACCESS_NOT_ACTIVATED` | Trading access has not yet been activated. |
+| `403` | `BLOCKED` | The caller or account is blocked. |
+| `404` | `NOT_FOUND` | The requested resource or route does not exist. |
+| `429` | `RateLimitExceeded` | The request exceeds the applicable rate limit. |
+| `429` | `TRADING_BACKPRESSURE` | Trading requests are being throttled to protect the service. |
+| `500` | `INTERNAL` | An unexpected internal error occurred. |
+| `503` | `SERVICE_UNAVAILABLE` | A required service is unavailable or temporarily unable to process the request. |
+
+## Matching-engine rejection codes
+
+The codes below are returned as `RejectReason` values. A code can apply to more than one endpoint; the operation group shows where it is expected to occur, not an exclusive mapping.
+
+### Place order
+
+| Code | Meaning |
+| --- | --- |
+| `EcInsufficientFunds` | Available balance is insufficient for the order. |
+| `EcUnknownMessageType` | The matching engine does not recognize the request message type. |
+| `EcMissingClOrdId` | The client order ID is missing. |
+| `EcUnknownOrderType` | The order type is unsupported or invalid. |
+| `EcUnknownSide` | The order side is unsupported or invalid. |
+| `EcUnknownTimeInForce` | The time-in-force value is unsupported or invalid. |
+| `EcWronglyRouted` | The request was routed to an incorrect matching-engine destination. |
+| `EcMarketOrderPriceIsNotZero` | A market order must not include a non-zero price. |
+| `EcLimitOrderInvalidPrice` | The limit price is invalid. |
+| `EcNoEnoughQtyToFill` | The available quantity is insufficient to fill the order. |
+| `EcNoImmediateQtyToFill` | No quantity is immediately available to fill the order. |
+| `EcMarketOrderCannotBePostOnly` | A market order cannot use the post-only instruction. |
+| `EcPostOnlyWillTakeLiquidity` | A post-only order would take liquidity. |
+| `EcReduceOnlyNoPosition` | A reduce-only order was submitted without an open position. |
+| `EcReduceOnlyWouldIncreasePosition` | A reduce-only order would increase exposure. |
+| `EcReduceOnlyExceedsPosition` | The reduce-only quantity exceeds the position size. |
+| `EcReduceOnlyMode` | The requested order conflicts with the applicable reduce-only mode. |
+| `EcInvalidSymbolStatus` | The instrument is not in a valid status for the request. |
+| `EcBySelfMatch` | The order would match against the same user. |
+| `EcInCallAuctionStatus` | The instrument is in call-auction status. |
+| `EcQtyCannotBeZero` | Quantity must be greater than zero. |
+| `EcMarketOrderNoSupportTif` | The selected time-in-force is not supported for market orders. |
+| `EcReachMaxTradeNum` | The request would exceed the maximum permitted trade count. |
+| `EcInvalidPriceScale` | The price uses an invalid precision or scale. |
+| `EcInvalidSmpType` | The self-match-prevention type is invalid. |
+| `EcInvalidUserType` | The user type is invalid for this request. |
+| `EcPriceNotMultipleOfTick` | Price is not a multiple of the instrument tick size. |
+| `EcQtyBelowMin` | Quantity is below the minimum order quantity. |
+| `EcQtyNotMultipleOfLot` | Quantity is not a multiple of the lot size. |
+| `EcQtyAboveMax` | Quantity is above the maximum order quantity. |
+| `EcInvalidAmount` | Order amount is invalid. |
+| `EcMarketQuoteNoSuppSell` | A quote-denominated market sell is not supported. |
+| `EcInvalidBaseValue` | The base value is invalid. |
+| `EcSecurityStatusFail` | The instrument's security status does not permit the request. |
+| `EcReachRiskPriceLimit` | The order breaches the applicable risk-price limit. |
+| `EcReachMarketPriceLimit` | The order breaches the applicable market-price limit. |
+| `EcTradingHalted` | Trading is halted for the instrument or market. |
+| `EcCancelByMmp` | The order was cancelled by market-maker protection. |
+| `EcLoadOrderCanMatch` | The loaded order would immediately match. |
+| `EcBitIndexInvalid` | A bit index in the request is invalid. |
+| `EcStopBySelfMatch` | The order was stopped by self-match prevention. |
+
+### Amend or cancel-replace order
+
+| Code | Meaning |
+| --- | --- |
+| `EcMissingClOrdId` | The new client order ID is missing. |
+| `EcMissingOrigClOrdId` | The original client order ID is missing. |
+| `EcClOrdIdOrigClOrdIdAreTheSame` | The new and original client order IDs must differ. |
+| `EcDuplicatedClOrdId` | The specified client order ID is already in use. |
+| `EcOrigClOrdIdDoesNotExist` | The original client order ID does not identify an order. |
+| `EcTooLateToCancel` | The order can no longer be cancelled or replaced. |
+| `EcCancelReplaceOrder` | The cancel-replace request was rejected by the matching engine. |
+| `EcUnknownOrderType` | The order type is unsupported or invalid. |
+| `EcUnknownSide` | The order side is unsupported or invalid. |
+| `EcUnknownTimeInForce` | The time-in-force value is unsupported or invalid. |
+| `EcMarketOrderPriceIsNotZero` | A market order must not include a non-zero price. |
+| `EcLimitOrderInvalidPrice` | The limit price is invalid. |
+| `EcMarketOrderCannotBePostOnly` | A market order cannot use the post-only instruction. |
+| `EcPostOnlyWillTakeLiquidity` | A post-only order would take liquidity. |
+| `EcReduceOnlyNoPosition` | A reduce-only order was submitted without an open position. |
+| `EcReduceOnlyWouldIncreasePosition` | A reduce-only order would increase exposure. |
+| `EcReduceOnlyExceedsPosition` | The reduce-only quantity exceeds the position size. |
+| `EcReduceOnlyMode` | The requested order conflicts with the applicable reduce-only mode. |
+| `EcInvalidSymbolStatus` | The instrument is not in a valid status for the request. |
+| `EcQtyCannotBeZero` | Quantity must be greater than zero. |
+| `EcInvalidPriceScale` | The price uses an invalid precision or scale. |
+| `EcPriceNotMultipleOfTick` | Price is not a multiple of the instrument tick size. |
+| `EcQtyBelowMin` | Quantity is below the minimum order quantity. |
+| `EcQtyNotMultipleOfLot` | Quantity is not a multiple of the lot size. |
+| `EcQtyAboveMax` | Quantity is above the maximum order quantity. |
+| `EcInvalidAmount` | Order amount is invalid. |
+| `EcOrderNotExist` | The targeted order does not exist. |
+| `EcTradingHalted` | Trading is halted for the instrument or market. |
+| `EcSecurityStatusFail` | The instrument's security status does not permit the request. |
+| `EcReachRiskPriceLimit` | The amended order breaches the applicable risk-price limit. |
+| `EcReachMarketPriceLimit` | The amended order breaches the applicable market-price limit. |
+
+### Cancel order
+
+| Code | Meaning |
+| --- | --- |
+| `EcMissingOrigClOrdId` | The original client order ID is missing. |
+| `EcOrigClOrdIdDoesNotExist` | The original client order ID does not identify an order. |
+| `EcTooLateToCancel` | The order can no longer be cancelled. |
+| `EcPerCancelRequest` | The cancel request was rejected by the matching engine. |
+| `EcCancelForNoFullFill` | The order was cancelled because it could not be fully filled. |
+| `EcOrderNotExist` | The targeted order does not exist. |
+| `EcCancelByOrderValueZero` | The order was cancelled because its order value is zero. |
+| `EcCancelByMatchValueZero` | The order was cancelled because its matched value is zero. |
+| `EcLoadOrderCancel` | A loaded order was cancelled. |
+| `EcDisorderOrderId` | The order ID is out of the expected sequence. |
+| `EcCancelByMmp` | The order was cancelled by market-maker protection. |
+
+### Shared and generic codes
+
+| Code | Meaning |
+| --- | --- |
+| `EcNoError` | No matching-engine error was recorded. |
+| `EcOthers` | An uncategorized matching-engine rejection occurred. |
+| `EcUnknownMessageType` | The matching engine does not recognize the request message type. |
+| `EcDuplicatedClOrdId` | The specified client order ID is already in use. |
+| `EcInvalidMirrorOid` | The mirrored order ID is invalid. |
+| `EcInvalidMirrorUid` | The mirrored user ID is invalid. |
+
+## Integration guidance
+
+1. Use the HTTP status to determine whether to retry, re-authenticate, or correct the request.
+2. For HTTP `400` order rejections, branch on the returned `RejectReason` rather than parsing the human-readable message.
+3. Do not retry validation, risk, precision, or order-state rejections unchanged. Correct the request first.
+4. Back off and retry only transient errors such as `429`, `503`, or `500`; respect any rate-limit headers and use exponential backoff with jitter.
+5. For `202 Accepted` batch results, wait for the final status through the appropriate order or execution query rather than treating acceptance as execution.
+
+<Warning>
+  Do not assume that a code is exclusive to one endpoint. The matching engine may return an applicable shared rejection code for any order lifecycle operation.
+</Warning>
