@@ -3,18 +3,13 @@
   "info": {
     "title": "Ekiden WebSocket API",
     "version": "1.0.0",
-    "description": "Real-time market data and private account streams.\n\n## Base URL\n\n| Environment | Host |\n| --- | --- |\n| Production | `wss://api.ekiden.fi` |\n|  Testnet | `wss://api.cnt.ekiden.fi` |\n| Staging | `wss://api.canton.ekiden.fi`|\n\n| Channel | Path | Auth |\n| --- | --- | --- |\n| Public | `/ws/public` | Not required |\n| Private | `/ws/private` | Required before private topics |\n\n## Quick start\n\n| Step | Action |\n| --- | --- |\n| 1 | Connect to `/ws/public` or `/ws/private` |\n| 2 | **Private only:** authenticate (JWT or API key) |\n| 3 | Send `subscribe` with topic list |\n| 4 | Handle `subscribed`, then stream `event` messages |\n| 5 | Use `unsubscribe` to stop topics; `ping` / `pong` for keepalive |\n\n## Authentication (private channel)\n\nUse **one** method immediately after connecting to `/ws/private`.\n\n### JWT\n\n| Field | Value |\n| --- | --- |\n| `op` | `auth` |\n| `bearer` | Your JWT access token |\n| `req_id` | Optional correlation id |\n\n```json\n{\"op\":\"auth\",\"bearer\":\"<token>\",\"req_id\":\"1\"}\n```\n\n### API key\n\n> WebSocket API keys use a **different** signing string than REST.\n\n| Step | Detail |\n| --- | --- |\n| 1 | Pick `timestamp_ms` (Unix ms) and a unique `nonce` |\n| 2 | Canonical message (UTF-8, pipes, no trailing newline): `EKIDEN_WS\\|AUTH\\|{timestamp_ms}\\|{nonce}` |\n| 3 | Ed25519-sign with your key's private key |\n| 4 | Send `auth_api_key` on `/ws/private` |\n\n```json\n{\n  \"op\": \"auth_api_key\",\n  \"api_key\": \"0x...\",\n  \"signature\": \"0x...\",\n  \"timestamp_ms\": 1700000000000,\n  \"nonce\": \"unique-nonce\",\n  \"req_id\": \"1\"\n}\n```\n\n| Rule | Limit |\n| --- | --- |\n| Clock skew | ±30 s from server time |\n| Nonce | One use per API key |\n| Scopes | Key must allow requested private topics |\n\n## Topics\n\nDot-separated strings passed in `subscribe` / `unsubscribe` `args`.\n\nTopic symbols must be ASCII uppercase on subscribe (e.g. `ticker.BTC-USDCx`).\nMixed or lowercase symbols are rejected with `INVALID_TOPIC_SYMBOL_CASE`.\nPublished event topics are always uppercase even when the market id uses mixed\ncase (e.g. quote `USDCx`); payload `data.symbol` keeps the market's canonical\ncasing.\n\n### Public topics\n\n| Topic pattern | Example | Stream |\n| --- | --- | --- |\n| `orderbook.{depth}.{symbol}` | `orderbook.10.BTC-USDCx` | Order book snapshots / deltas |\n| `trade.{symbol}` | `trade.BTC-USDCx` | Public trades |\n| `ticker.{symbol}` | `ticker.BTC-USDCx` | 24h ticker |\n| `kline.{interval}.{symbol}` | `kline.1m.BTC-USDCx` | Candlesticks |\n| `all_liquidations.{symbol}` | `all_liquidations.BTC-USDCx` | Liquidation feed |\n| `insurance_pool.{symbol}` | `insurance_pool.BTC-USDCx` | Insurance pool |\n| `adl_alert.{symbol}` | `adl_alert.BTC-USDCx` | ADL alerts |\n\n### Private topics\n\n| Topic | Stream |\n| --- | --- |\n| `order` | Order updates |\n| `position` | Position updates |\n| `execution` | Fill / execution events |\n| `account_balance` | Balance updates |\n\n## Message reference\n\nEvery frame is JSON with an `op` field. Optional `req_id` correlates request/response pairs.\n\n### Client → server\n\n| `op` | Purpose |\n| --- | --- |\n| `auth` | JWT authentication |\n| `auth_api_key` | API key authentication |\n| `subscribe` | Start topic streams |\n| `unsubscribe` | Stop topic streams |\n| `ping` | Keepalive / RTT (`ts` echoed in `pong`) |\n\n```json\n{\"op\":\"subscribe\",\"args\":[\"ticker.BTC-USDCx\"],\"req_id\":\"2\"}\n```\n\n### Server → client\n\n| `op` | Purpose |\n| --- | --- |\n| `auth` | Auth result |\n| `subscribed` | Subscription ack |\n| `unsubscribed` | Unsubscribe ack |\n| `pong` | Ping response |\n| `error` | Error (`message` + optional `req_id`) |\n| `event` | Stream payload |\n\n### Event envelope\n\n```json\n{\n  \"op\": \"event\",\n  \"server_ts_ms\": 1700000000000,\n  \"topic\": \"ticker.BTC-USDCx\",\n  \"data\": { }\n}\n```\n\nOrder book events may also include a `type` field (snapshot vs delta). See **components → messages → Event** for payload schemas.\n"
+    "description": "Real-time market data and private account streams.\n\n## Base URL\n\n| Environment | Host |\n| --- | --- |\n| Production | `wss://api.ekiden.fi` |\n| Staging | `wss://api.canton.ekiden.fi` |\n\n| Channel | Path | Auth |\n| --- | --- | --- |\n| Public | `/ws/public` | Not required |\n| Private | `/ws/private` | Required before private topics |\n\n## Quick start\n\n| Step | Action |\n| --- | --- |\n| 1 | Connect to `/ws/public` or `/ws/private` |\n| 2 | **Private only:** authenticate (JWT or API key) |\n| 3 | Send `subscribe` with topic list |\n| 4 | Handle `subscribed`, then stream `event` messages |\n| 5 | Use `unsubscribe` to stop topics; `ping` / `pong` for keepalive |\n\n## Authentication (private channel)\n\nUse **one** method immediately after connecting to `/ws/private`.\n\n### JWT\n\n| Field | Value |\n| --- | --- |\n| `op` | `auth` |\n| `bearer` | Your JWT access token |\n| `req_id` | Optional correlation id |\n\n```json\n{\"op\":\"auth\",\"bearer\":\"<token>\",\"req_id\":\"1\"}\n```\n\n### API key\n\n> WebSocket API keys use a **different** signing string than REST.\n\n| Step | Detail |\n| --- | --- |\n| 1 | Pick `timestamp_ms` (Unix ms) and a unique `nonce` |\n| 2 | Canonical message (UTF-8, pipes, no trailing newline): `EKIDEN_WS\\|AUTH\\|{timestamp_ms}\\|{nonce}` |\n| 3 | Ed25519-sign with your key's private key |\n| 4 | Send `auth_api_key` on `/ws/private` |\n\n```json\n{\n  \"op\": \"auth_api_key\",\n  \"api_key\": \"0x...\",\n  \"signature\": \"0x...\",\n  \"timestamp_ms\": 1700000000000,\n  \"nonce\": \"unique-nonce\",\n  \"req_id\": \"1\"\n}\n```\n\n| Rule | Limit |\n| --- | --- |\n| Clock skew | ±30 s from server time |\n| Nonce | One use per API key |\n| Scopes | Key must allow requested private topics |\n\n## Topics\n\nDot-separated strings passed in `subscribe` / `unsubscribe` `args`.\n\nTopic symbols must be ASCII uppercase on subscribe (e.g. `ticker.BTC-USDC`).\nMixed or lowercase symbols are rejected with `INVALID_TOPIC_SYMBOL_CASE`.\nPublished event topics are always uppercase even when the market id uses mixed\ncase (e.g. quote `USDCx`); payload `data.symbol` keeps the market's canonical\ncasing.\n\n### Public topics\n\n| Topic pattern | Example | Stream |\n| --- | --- | --- |\n| `orderbook.{depth}.{symbol}` | `orderbook.10.BTC-USDC` | Order book snapshots / deltas |\n| `trade.{symbol}` | `trade.BTC-USDC` | Public trades |\n| `ticker.{symbol}` | `ticker.BTC-USDC` | 24h ticker |\n| `kline.{interval}.{symbol}` | `kline.1m.BTC-USDC` | Candlesticks |\n| `all_liquidations.{symbol}` | `all_liquidations.BTC-USDC` | Liquidation feed |\n| `insurance_pool.{symbol}` | `insurance_pool.BTC-USDC` | Insurance pool |\n| `adl_alert.{symbol}` | `adl_alert.BTC-USDC` | ADL alerts |\n\n### Private topics\n\n| Topic | Stream |\n| --- | --- |\n| `order` | Order updates |\n| `position` | Position updates |\n| `execution` | Fill / execution events |\n| `account_balance` | Balance updates |\n\n## Message reference\n\nEvery frame is JSON with an `op` field. Optional `req_id` correlates request/response pairs.\n\n### Client → server\n\n| `op` | Purpose |\n| --- | --- |\n| `auth` | JWT authentication |\n| `auth_api_key` | API key authentication |\n| `subscribe` | Start topic streams |\n| `unsubscribe` | Stop topic streams |\n| `ping` | Keepalive / RTT (`ts` echoed in `pong`) |\n\n```json\n{\"op\":\"subscribe\",\"args\":[\"ticker.BTC-USDC\"],\"req_id\":\"2\"}\n```\n\n### Server → client\n\n| `op` | Purpose |\n| --- | --- |\n| `auth` | Auth result |\n| `subscribed` | Subscription ack |\n| `unsubscribed` | Unsubscribe ack |\n| `pong` | Ping response |\n| `error` | Error (`message` + optional `req_id`) |\n| `event` | Stream payload |\n\n### Event envelope\n\n```json\n{\n  \"op\": \"event\",\n  \"server_ts_ms\": 1700000000000,\n  \"topic\": \"ticker.BTC-USDC\",\n  \"data\": { }\n}\n```\n\nOrder book events may also include a `type` field (snapshot vs delta). See **components → messages → Event** for payload schemas.\n"
   },
   "servers": {
     "production": {
       "host": "api.ekiden.fi",
       "protocol": "wss",
       "description": "Production WebSocket endpoint"
-    },
-    "testnet": {
-      "host": "api.cnt.ekiden.fi",
-      "protocol": "wss",
-      "description": "Testnet WebSocket endpoint"
     },
     "staging": {
       "host": "api.canton.ekiden.fi",
@@ -91,7 +86,7 @@
       },
       "SubscribeRequest": {
         "title": "Subscribe",
-        "description": "Subscribe to one or more topics.\n\n```json\n{\"op\":\"subscribe\",\"args\":[\"ticker.BTC-USDCx\"]}\n```",
+        "description": "Subscribe to one or more topics.\n\n```json\n{\"op\":\"subscribe\",\"args\":[\"ticker.BTC-USDC\"]}\n```",
         "payload": {
           "properties": {
             "args": {
@@ -565,12 +560,58 @@
             "description": "The amount of an asset that can be used to open USDC Perpetual positions (USDC)",
             "type": "string"
           },
+          "collateral": {
+            "description": "Non-quote collateral. Omitted when empty.",
+            "items": {
+              "$ref": "#/components/schemas/CollateralBalance"
+            },
+            "type": "array"
+          },
+          "debt": {
+            "description": "Quote owed: how far the quote balance is below zero (`vault_balance` then shows zero). The\ncollateral's values above are already after haircuts. Omitted when nothing is owed.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "equity": {
-            "description": "Equity under the account without considering the collateral value ratio (calculated in USDC).\nEquity = Vault Balance + Perp & Futures Unrealized P&L + Unrealized Funding",
+            "description": "What the account is worth to liquidation, in USDC, floored at zero: the quote balance (a\ndebt counted in full) plus unrealized P&L and funding plus unfrozen collateral at its\nmaintenance weight. That is `maintenance_total_collateral` floored at zero when it is\nshown, and Vault Balance + Unrealized P&L + Unrealized Funding with only the quote. Funding\naccounts: the quote balance.",
             "type": "string"
           },
+          "fee_asset": {
+            "description": "The first asset other than the quote in `fee_priority`. Trading accounts only; omitted\nwhile there is none.",
+            "format": "uint32",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "fee_priority": {
+            "description": "The assets fees are taken from first, in order (`PUT /account/fee-priority`); then the\nquote and the other stablecoins by liquidation priority, then quote debt. A volatile asset\npays fees only when listed here. Trading accounts only; omitted while empty.",
+            "items": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "initial_total_collateral": {
+            "description": "Quote balance (a debt counted in full), unrealized PnL, funding, and weighted non-quote,\nin USDC. Trading accounts holding non-quote collateral or owing a debt only.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "maintenance_total_collateral": {
+            "description": "Same total at maintenance weight, frozen collateral excluded. Present when\n`initial_total_collateral` is.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "margin_balance": {
-            "description": "Amount that can be used as margin under the account\nafter considering the collateral value ratio (calculated in USDC)\nTotal Vault Balance + Perp Unrealized P&L",
+            "description": "Same as `equity`.",
             "type": "string"
           },
           "realised_pnl_cum": {
@@ -700,6 +741,68 @@
         ],
         "type": "string"
       },
+      "CollateralBalance": {
+        "properties": {
+          "asset_id": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "balance": {
+            "description": "Whole tokens, including the hold.",
+            "type": "string"
+          },
+          "frozen": {
+            "description": "Whole tokens on hold.",
+            "type": "string"
+          },
+          "initial_value": {
+            "description": "USDC. Trading accounts only.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "initial_weight": {
+            "description": "Effective initial weight, e.g. `\"0.98\"`; `\"0\"` unless active and freshly priced.\nTrading accounts only.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "maintenance_value": {
+            "description": "USDC. Trading accounts only.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "maintenance_weight": {
+            "description": "Effective maintenance weight, e.g. `\"0.99\"`. Trading accounts only.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "price": {
+            "description": "USDC per token, net of the oracle confidence haircut. Trading accounts only.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "symbol": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "symbol",
+          "balance",
+          "frozen"
+        ],
+        "type": "object"
+      },
       "ConditionalOrder": {
         "properties": {
           "trigger_by": {
@@ -737,6 +840,7 @@
           "CreateByTrailingProfit",
           "CreateByLiq",
           "CreateByTakeOverPassThrough",
+          "CreateBySessionClose",
           "CreateByAdlPassThrough",
           "CreateByBlockPassThrough",
           "CreateByBlockTradeMovePositionPassThrough",
@@ -776,6 +880,11 @@
           {
             "const": "BustTrade",
             "description": "Takeover liquidation.",
+            "type": "string"
+          },
+          {
+            "const": "SessionClose",
+            "description": "Session auto-close.",
             "type": "string"
           },
           {
@@ -856,6 +965,23 @@
             "description": "Executed value (price * qty)",
             "type": "string"
           },
+          "fee": {
+            "description": "Signed fee in raw quote units (negative = maker rebate). Quote equivalent of `fee_legs`\nwhen a non-quote asset paid part of it. Empty on fills recorded before fees were stored.",
+            "type": "string"
+          },
+          "fee_asset": {
+            "description": "Asset that paid first; the quote when the quote paid it all. Omitted when it is the quote.",
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "fee_legs": {
+            "description": "Per-asset amounts that paid `fee`, in debit order; empty when the quote paid it all.",
+            "items": {
+              "$ref": "#/components/schemas/FeeLeg"
+            },
+            "type": "array"
+          },
           "fee_rate": {
             "description": "Trading fee rate",
             "type": "string"
@@ -897,6 +1023,13 @@
           "order_type": {
             "$ref": "#/components/schemas/OrderType",
             "description": "Order type. Market or Limit"
+          },
+          "seized_legs": {
+            "description": "On a liquidation takeover, the collateral sold to clear the account's debt; omitted\notherwise.",
+            "items": {
+              "$ref": "#/components/schemas/SeizedLeg"
+            },
+            "type": "array"
           },
           "seq": {
             "description": "Cross sequence, used to associate each fill and each position update\n* The seq will be the same when conclude multiple transactions at the same time\n* Different symbols may have the same seq, please use seq + symbol to check unique",
@@ -948,6 +1081,30 @@
           "mark_price",
           "index_price",
           "seq"
+        ],
+        "type": "object"
+      },
+      "FeeLeg": {
+        "description": "One asset's share of a fill's fee.",
+        "properties": {
+          "amount": {
+            "description": "Raw units of this asset.",
+            "type": "string"
+          },
+          "asset_id": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "quote_equivalent": {
+            "description": "Raw quote units of `fee` this leg covered.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "amount",
+          "quote_equivalent"
         ],
         "type": "object"
       },
@@ -1790,6 +1947,30 @@
         ],
         "type": "string"
       },
+      "SeizedLeg": {
+        "description": "Collateral a liquidation sold to clear an account's debt.",
+        "properties": {
+          "amount": {
+            "description": "Raw units of the asset sold.",
+            "type": "string"
+          },
+          "asset_id": {
+            "format": "uint32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "quote_credited": {
+            "description": "Raw quote units credited for it, at the price less the liquidation discount.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "amount",
+          "quote_credited"
+        ],
+        "type": "object"
+      },
       "Side": {
         "description": "Order side: buy or sell.",
         "oneOf": [
@@ -1826,6 +2007,16 @@
           "addr": {
             "description": "Market address",
             "type": "string"
+          },
+          "auto_close_at_ms": {
+            "default": null,
+            "description": "Session close time (ms)",
+            "format": "uint64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
           },
           "best_ask_price": {
             "description": "Best ask price",
@@ -1872,6 +2063,16 @@
             "format": "int64",
             "type": "integer"
           },
+          "next_open_ms": {
+            "default": null,
+            "description": "Next session open time (ms)",
+            "format": "uint64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "open_interest": {
             "description": "Open interest size",
             "type": "string"
@@ -1880,12 +2081,32 @@
             "description": "Open interest value",
             "type": "string"
           },
+          "paused_max_leverage": {
+            "default": "",
+            "description": "Max leverage when session is closed. Empty string for 24/7 markets",
+            "type": "string"
+          },
+          "pre_close_at_ms": {
+            "default": null,
+            "description": "Pre-close time (ms)",
+            "format": "uint64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "prev_price_1h": {
             "description": "Market price 1 hour ago",
             "type": "string"
           },
           "prev_price_24h": {
             "description": "Market price 24 hours ago",
+            "type": "string"
+          },
+          "session_phase": {
+            "default": "open",
+            "description": "Market session. `open`, `pre_close`, `closed`",
             "type": "string"
           },
           "symbol": {
@@ -1972,15 +2193,15 @@
         ]
       },
       "Topic": {
-        "description": "Subscription topic string (e.g. 'ticker.BTC-USDCx', 'orderbook.10.BTC-USDCx', 'insurance_pool.BTC-USDCx', 'position'). Symbol segments must be ASCII uppercase on subscribe; published event topics are always uppercase.",
+        "description": "Subscription topic string (e.g. 'ticker.BTC-USDC', 'orderbook.10.BTC-USDC', 'insurance_pool.BTC-USDC', 'position'). Symbol segments must be ASCII uppercase on subscribe; published event topics are always uppercase.",
         "examples": [
-          "orderbook.10.BTC-USDCx",
-          "trade.BTC-USDCx",
-          "ticker.BTC-USDCx",
-          "kline.1m.BTC-USDCx",
-          "all_liquidations.BTC-USDCx",
-          "insurance_pool.BTC-USDCx",
-          "adl_alert.BTC-USDCx",
+          "orderbook.10.BTC-USDC",
+          "trade.BTC-USDC",
+          "ticker.BTC-USDC",
+          "kline.1m.BTC-USDC",
+          "all_liquidations.BTC-USDC",
+          "insurance_pool.BTC-USDC",
+          "adl_alert.BTC-USDC",
           "order",
           "position",
           "execution",
