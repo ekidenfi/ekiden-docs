@@ -25,6 +25,7 @@
             "pages": [
               "index",
               "architecture",
+              "collateral",
               "fees",
               "vip-program",
               "points-program"
@@ -72,7 +73,8 @@
           {
             "group": "Fund Your Account",
             "pages": [
-              "api-reference/integration/deposit-and-withdraw"
+              "api-reference/integration/deposit-and-withdraw",
+              "api-reference/integration/fee-asset"
             ]
           },
           {

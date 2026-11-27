@@ -45,4 +45,24 @@ If your maker volume accounts for a meaningful share of a specific market, youâ€
 - Stacks with volume-based rebates.
 - Applied automatically.
 
+## Paying fees in other assets
+
+Fees are calculated in USDCx, but you can choose which of your [collateral](/collateral) assets pays them first. The fee is converted at the asset's price at the time of the fill.
+
+- **Fee asset**: one asset that pays first.
+- **Fee priority**: an ordered list of up to 8 assets.
+
+After your chosen assets, fees are taken from USDCx and then your other stablecoins. A volatile asset such as gold pays fees only when you choose it; otherwise a fee that USDCx and stablecoins can't cover becomes debt. An asset that runs out passes the rest of the fee to the next one, and an asset without a fresh price is skipped.
+
+Set it in the app or with the [fee asset API](/api-reference/integration/fee-asset).
+
+## Deposit and withdrawal fees
+
+Deposits and withdrawals of each asset carry a flat fee, charged in that asset:
+
+- A deposit transfers the amount plus the deposit fee.
+- A withdrawal needs the amount plus the withdrawal fee available in your Funding Account.
+
+The app shows the fee before you confirm; the [disclosures endpoint](/api-reference/integration/deposit-and-withdraw#fees) returns it for integrations.
+
 Ekiden fees are designed to scale with performance. High-volume and high-share makers get rewarded. No fluff, no delays  just better execution economics.

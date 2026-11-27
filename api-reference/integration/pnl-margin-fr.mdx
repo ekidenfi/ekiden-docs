@@ -39,6 +39,17 @@ In Cross Margin mode:
 
 The current margin mode is returned in the `margin_mode` field.
 
+### Multi-asset collateral
+
+When a trading account holds collateral other than USDCx, each asset counts at a weight of its value:
+
+- **Buying power** uses the initial weight (`initial_total_collateral`). An asset gives buying power only while it is active and freshly priced.
+- **Liquidation** uses the maintenance weight (`maintenance_total_collateral`, and `equity`). Collateral on hold for a withdrawal is excluded.
+- **Losses and funding** are taken from USDCx, then stablecoins in `liquidation_priority` order. Volatile collateral is never spent: the rest becomes `debt`, which liquidation clears by selling volatile collateral at its `liquidation_discount`.
+- **Closed markets**: while an asset's `market_session` is `closed`, it gives no buying power and counts at its frozen price less `closed_market_haircut`.
+
+See [Account Data](/api-reference/integration/account-data#balance-fields) for the balance fields and [Collateral & Margin](/collateral) for the full rules.
+
 ---
 
 ## Risk Fields

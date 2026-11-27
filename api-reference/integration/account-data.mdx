@@ -59,6 +59,48 @@ const statistics = await client.account.getStatistics({
 });
 ```
 
+## Balance fields
+
+`GET /api/v1/account/balance` and the `account_balance` WebSocket topic return one entry per account. Amounts are USDC decimal strings unless noted. The fields that reflect [multi-asset collateral](/collateral):
+
+| Field | Description |
+| --- | --- |
+| `vault_balance` | Quote (USDCx) balance. Shows `0` while there is a `debt`. |
+| `equity` | What the account is worth to liquidation, floored at zero: the quote balance (a debt counted in full), unrealized P&L and funding, and unfrozen collateral at its maintenance weight. |
+| `margin_balance` | Same as `equity`. |
+| `collateral[]` | Non-quote collateral; omitted when there is none. See below. |
+| `initial_total_collateral` | Quote balance, unrealized P&L, funding, and non-quote collateral at its initial weight. Trading accounts holding non-quote collateral or owing a debt only. |
+| `maintenance_total_collateral` | The same total at maintenance weight, collateral on hold excluded. Present when `initial_total_collateral` is. |
+| `debt` | Quote owed: how far the quote balance is below zero. Omitted when nothing is owed. |
+| `fee_asset` | The first asset other than the quote in `fee_priority`. Trading accounts only. |
+| `fee_priority[]` | The assets fees are taken from first, in order. Trading accounts only; omitted while empty. See [Fee Asset](/api-reference/integration/fee-asset). |
+
+Each `collateral[]` entry:
+
+| Field | Description |
+| --- | --- |
+| `asset_id`, `symbol` | The asset, as in `GET /api/v1/collateral/assets`. |
+| `balance` | Whole tokens, including the amount on hold. |
+| `frozen` | Whole tokens on hold for a withdrawal. |
+| `price` | USDC per token. Trading accounts only. |
+| `initial_weight`, `maintenance_weight` | Effective weights: `initial_weight` is `"0"` unless the asset is active and freshly priced. Trading accounts only. |
+| `initial_value`, `maintenance_value` | Value at each weight, in USDC. Trading accounts only. |
+
+## Execution fee fields
+
+Executions (REST and the `execution` WebSocket topic) carry how each fill's fee was paid:
+
+| Field | Description |
+| --- | --- |
+| `fee` | Signed fee in raw quote units (negative is a maker rebate). Empty on fills recorded before fees were stored. |
+| `fee_asset` | The asset that paid the fee; omitted when it is the quote. |
+| `fee_legs[]` | When the fee was split across assets: `{asset_id, amount, quote_equivalent}` per asset. |
+| `seized_legs[]` | On liquidation takeovers only: `{asset_id, amount, quote_credited}` per collateral asset seized. |
+
+<Warning>
+  These fields are **raw integer units**, unlike the decimal strings elsewhere. Divide by `10^decimals` of the asset (from `GET /api/v1/collateral/assets`) to get whole tokens.
+</Warning>
+
 ## Timestamp Fields
 
 REST resources use Unix timestamps in milliseconds.

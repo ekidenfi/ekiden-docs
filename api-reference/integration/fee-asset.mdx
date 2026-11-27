@@ -1,0 +1,63 @@
+---
+title: "Fee Asset"
+---
+
+Trading fees are calculated in USDC, but a trading account can choose which of its [collateral](/collateral) assets pays them first. Fees are taken from the chosen assets in order, then from the quote and the other stablecoins by `liquidation_priority`; whatever is left is owed as quote debt.
+
+- A volatile asset (e.g. gold) pays fees only when it is listed, at its oracle price, in the asset itself.
+- A listed asset without a fresh price is skipped.
+- The setting applies to fills after it.
+
+## Set a single fee asset
+
+```http
+PUT /api/v1/account/fee-asset
+```
+
+```json
+{
+  "sub_account_address": "<trading sub-account>",
+  "asset_id": 5
+}
+```
+
+Equivalent to a fee priority of that asset alone. Sending the quote (`1`) restores the default order.
+
+## Set a fee priority
+
+```http
+PUT /api/v1/account/fee-priority
+```
+
+```json
+{
+  "sub_account_address": "<trading sub-account>",
+  "asset_ids": [3, 1, 2]
+}
+```
+
+At most 8 distinct entries, each the quote or an active collateral asset. An empty list restores the default order.
+
+## Response
+
+Both endpoints require a bearer token with the Trade scope and return:
+
+```json
+{
+  "success": true,
+  "time": 1672531200000
+}
+```
+
+`200` means the request was accepted, not yet applied. Confirm with `fee_asset` and `fee_priority` in the [account balance](/api-reference/integration/account-data#balance-fields).
+
+## Errors
+
+`400` when the list is invalid:
+
+- `at most 8 fee assets`
+- `fee asset {id} is listed twice`
+- `unknown collateral asset {id}`
+- `collateral asset {id} is not Active`
+
+Both endpoints share the user-intent [rate limit](/api-reference/rate-limits) with leverage and order changes.

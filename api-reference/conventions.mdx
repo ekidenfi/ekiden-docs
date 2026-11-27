@@ -237,6 +237,7 @@ Gateway supports API-key auth via headers:
 - Prices and quantities are represented as strings to preserve precision.
 - Clients should use arbitrary-precision decimal libraries instead of floating-point numbers.
 - Price and quantity precision vary by instrument. Use the `price_filter.tick_size` and `lot_size_filter.qty_step` values returned in the response from `GET /api/v1/market/instruments-info` to determine the supported precision for each market.
+- Exception: the execution fee fields (`fee`, `fee_legs`, `seized_legs`) are raw integer units of their asset. Divide by `10^decimals` from `GET /api/v1/collateral/assets`; see [Account Data](/api-reference/integration/account-data#execution-fee-fields).
 
 ---
 
@@ -334,7 +335,7 @@ To retrieve the next page, pass the returned `next_page_cursor` value as the `cu
 
 ## 11. Field Naming
 
-- All JSON keys use `snake_case`.
+- All JSON keys use `snake_case`. Exception: the disclosed contracts in `GET /api/v1/collateral/assets/{asset_id}/disclosures` use the Canton ledger API's `camelCase` (`templateId`, `contractId`, `createdEventBlob`, `synchronizerId`), so they can be passed to a submission as-is.
 - High-precision numeric values are represented as strings.
 - Integer values are represented as JSON numbers.
 
