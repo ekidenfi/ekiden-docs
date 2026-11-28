@@ -98,7 +98,7 @@ Executions (REST and the `execution` WebSocket topic) carry how each fill's fee 
 | `seized_legs[]` | On liquidation takeovers only: `{asset_id, amount, quote_credited}` per collateral asset seized. |
 
 <Warning>
-  These fields are **raw integer units**, unlike the decimal strings elsewhere. Divide by `10^decimals` of the asset (from `GET /api/v1/collateral/assets`) to get whole tokens.
+  These fields are **raw integer units**, unlike the decimal strings elsewhere. `fee`, `quote_equivalent` and `quote_credited` are in the quote's units: divide by `10^decimals` of asset `1`. Each leg's `amount` is in its own asset's units: divide by that asset's `decimals`. Both come from `GET /api/v1/collateral/assets`.
 </Warning>
 
 ## Timestamp Fields

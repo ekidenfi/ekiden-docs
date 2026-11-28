@@ -237,7 +237,7 @@ Gateway supports API-key auth via headers:
 - Prices and quantities are represented as strings to preserve precision.
 - Clients should use arbitrary-precision decimal libraries instead of floating-point numbers.
 - Price and quantity precision vary by instrument. Use the `price_filter.tick_size` and `lot_size_filter.qty_step` values returned in the response from `GET /api/v1/market/instruments-info` to determine the supported precision for each market.
-- Exception: the execution fee fields (`fee`, `fee_legs`, `seized_legs`) are raw integer units of their asset. Divide by `10^decimals` from `GET /api/v1/collateral/assets`; see [Account Data](/api-reference/integration/account-data#execution-fee-fields).
+- Exception: the execution fee fields (`fee`, `fee_legs`, `seized_legs`) are raw integer units: quote units, or the leg's own asset for a leg's `amount`. Divide by `10^decimals` from `GET /api/v1/collateral/assets`; see [Account Data](/api-reference/integration/account-data#execution-fee-fields).
 
 ---
 
