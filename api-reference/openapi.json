@@ -96,86 +96,6 @@
         ]
       }
     },
-    "/api/v1/account/fee-asset": {
-      "put": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Set fee asset",
-        "description": "Choose the one asset a trading account's fees are taken from first: a fee priority of that asset alone (see `PUT /account/fee-priority`). Any listed Active collateral asset, stablecoin or volatile; the quote restores the default order. Applies to fills after it.",
-        "operationId": "set_fee_asset",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetFeeAssetRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Fee asset chosen",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SetFeeAssetResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The asset is unknown or not Active"
-          }
-        },
-        "security": [
-          {
-            "bearer_auth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/account/fee-priority": {
-      "put": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Set fee priority",
-        "description": "Order the assets a trading account's fees are taken from first. Fees walk the list in order, then the quote and the other stablecoins by liquidation priority; whatever is left is owed as quote debt. A volatile asset pays fees only when listed, at its oracle price, in the asset itself; a listed asset without a fresh price is skipped. At most 8 distinct entries, each the quote or a listed Active collateral asset; an empty list restores the default order. Applies to fills after it.",
-        "operationId": "set_fee_priority",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetFeePriorityRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Fee priority set",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SetFeeAssetResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "An asset is unknown, not Active or listed twice, or more than 8 are listed"
-          }
-        },
-        "security": [
-          {
-            "bearer_auth": []
-          }
-        ]
-      }
-    },
     "/api/v1/account/fund": {
       "post": {
         "tags": [
@@ -550,101 +470,6 @@
         "security": [
           {
             "root_whitelist_basic_auth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/collateral/assets": {
-      "get": {
-        "tags": [
-          "Collateral"
-        ],
-        "operationId": "get_collateral_assets",
-        "responses": {
-          "200": {
-            "description": "Collateral registry",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetCollateralAssetsResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/collateral/assets/{asset_id}/disclosures": {
-      "get": {
-        "tags": [
-          "Collateral"
-        ],
-        "summary": "Contracts a user's own deposit or withdraw of a collateral asset must disclose",
-        "description": "`DepositIntoFundingAsset` and `WithdrawFromFunding` are submitted by the user alone, who cannot\nsee the collateral registry or the asset's fee config. A deposit passes both in\n`disclosedContracts`, with their contract ids as `collateralRegistryCid` and\n`fundingFeeConfigCid`; a withdraw passes the fee config alone. The registry is replaced on\nevery registry change, so fetch this right before submitting. Every listed asset\nis served whatever its status, since a ReduceOnly or Disabled asset can still be withdrawn;\nonly an Active asset takes deposits. `fees` are the config's own, in whole tokens of the asset:\na deposit's CIP-56 transfer is `amount + fees.deposit`, and a withdrawal needs\n`amount + fees.withdraw` unlocked.",
-        "operationId": "get_collateral_disclosures",
-        "parameters": [
-          {
-            "name": "asset_id",
-            "in": "path",
-            "description": "Collateral asset id",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The contracts to disclose",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetCollateralDisclosuresResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Unknown collateral asset"
-          },
-          "503": {
-            "description": "The contracts cannot be read from the ledger projection"
-          }
-        }
-      }
-    },
-    "/api/v1/collateral/assets/{asset_id}/vaults": {
-      "post": {
-        "tags": [
-          "Collateral"
-        ],
-        "operationId": "ensure_collateral_vaults",
-        "parameters": [
-          {
-            "name": "asset_id",
-            "in": "path",
-            "description": "Collateral asset id",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 0
-            }
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Vault creation requested"
-          },
-          "400": {
-            "description": "The asset cannot take deposits"
-          }
-        },
-        "security": [
-          {
-            "bearer_auth": []
           }
         ]
       }
@@ -1869,7 +1694,7 @@
           "Market"
         ],
         "summary": "Get Stats",
-        "description": "Query for period-filtered turnover, trades, open interest, per-market stats, and trading fees by collateral asset.",
+        "description": "Query for period-filtered turnover, trades, open interest, and per-market stats.",
         "operationId": "get_stats",
         "parameters": [
           {
@@ -2228,7 +2053,7 @@
         "parameters": [
           {
             "name": "sub_account_address",
-            "in": "path",
+            "in": "query",
             "description": "Trading vault address (subaccount) to query against.",
             "required": true,
             "schema": {
@@ -2237,73 +2062,42 @@
           },
           {
             "name": "symbol",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
-              "oneOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/components/schemas/Symbol"
-                }
-              ]
+              "$ref": "#/components/schemas/Symbol"
             }
           },
           {
             "name": "order_id",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
-              "oneOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/components/schemas/OrderId"
-                }
-              ]
+              "$ref": "#/components/schemas/OrderId"
             }
           },
           {
             "name": "order_link_id",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
-              "oneOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/components/schemas/OrderLinkId"
-                }
-              ]
+              "$ref": "#/components/schemas/OrderLinkId"
             }
           },
           {
             "name": "order_filter",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
-              "oneOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/components/schemas/OrderFilter"
-                }
-              ]
+              "$ref": "#/components/schemas/OrderFilter"
             }
           },
           {
             "name": "order_status",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
-              "type": [
-                "array",
-                "null"
-              ],
+              "type": "array",
               "items": {
                 "$ref": "#/components/schemas/OrderStatus"
               }
@@ -2311,50 +2105,38 @@
           },
           {
             "name": "start_time",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": "string",
               "format": "date-time"
             }
           },
           {
             "name": "end_time",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": "string",
               "format": "date-time"
             }
           },
           {
             "name": "limit",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": "integer",
               "format": "int32",
               "minimum": 0
             }
           },
           {
             "name": "cursor",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
             }
           }
         ],
@@ -4015,59 +3797,13 @@
             "type": "string",
             "description": "The amount of an asset that can be used to open USDC Perpetual positions (USDC)"
           },
-          "collateral": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollateralBalance"
-            },
-            "description": "Non-quote collateral. Omitted when empty."
-          },
-          "debt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Quote owed: how far the quote balance is below zero (`vault_balance` then shows zero). The\ncollateral's values above are already after haircuts. Omitted when nothing is owed."
-          },
           "equity": {
             "type": "string",
-            "description": "What the account is worth to liquidation, in USDC, floored at zero: the quote balance (a\ndebt counted in full) plus unrealized P&L and funding plus unfrozen collateral at its\nmaintenance weight. That is `maintenance_total_collateral` floored at zero when it is\nshown, and Vault Balance + Unrealized P&L + Unrealized Funding with only the quote. Funding\naccounts: the quote balance."
-          },
-          "fee_asset": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int32",
-            "description": "The first asset other than the quote in `fee_priority`. Trading accounts only; omitted\nwhile there is none.",
-            "minimum": 0
-          },
-          "fee_priority": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 0
-            },
-            "description": "The assets fees are taken from first, in order (`PUT /account/fee-priority`); then the\nquote and the other stablecoins by liquidation priority, then quote debt. A volatile asset\npays fees only when listed here. Trading accounts only; omitted while empty."
-          },
-          "initial_total_collateral": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Quote balance (a debt counted in full), unrealized PnL, funding, and weighted non-quote,\nin USDC. Trading accounts holding non-quote collateral or owing a debt only."
-          },
-          "maintenance_total_collateral": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Same total at maintenance weight, frozen collateral excluded. Present when\n`initial_total_collateral` is."
+            "description": "Equity under the account without considering the collateral value ratio (calculated in USDC).\nEquity = Vault Balance + Perp & Futures Unrealized P&L + Unrealized Funding"
           },
           "margin_balance": {
             "type": "string",
-            "description": "Same as `equity`."
+            "description": "Amount that can be used as margin under the account\nafter considering the collateral value ratio (calculated in USDC)\nTotal Vault Balance + Perp Unrealized P&L"
           },
           "realised_pnl_cum": {
             "type": "string",
@@ -5028,205 +4764,6 @@
           }
         }
       },
-      "CollateralAssetInfo": {
-        "type": "object",
-        "required": [
-          "asset_id",
-          "instrument_id",
-          "symbol",
-          "decimals",
-          "kind",
-          "status",
-          "initial_weight",
-          "maintenance_weight",
-          "liquidation_discount",
-          "closed_market_haircut",
-          "market_session",
-          "liquidation_priority"
-        ],
-        "properties": {
-          "asset_id": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Stable id. 1 is the quote.",
-            "minimum": 0
-          },
-          "cap_utilization": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "`total_deposited / max_total_deposit`; `null` when uncapped or unknown."
-          },
-          "closed_market_haircut": {
-            "type": "string",
-            "description": "Haircut on the frozen price while the asset's market is closed, e.g. `\"0.03\"`."
-          },
-          "decimals": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "initial_weight": {
-            "type": "string",
-            "description": "e.g. `\"0.98\"`."
-          },
-          "instrument_id": {
-            "type": "string",
-            "description": "`{admin_party}::{id}`."
-          },
-          "kind": {
-            "$ref": "#/components/schemas/CollateralAssetKind"
-          },
-          "liquidation_discount": {
-            "type": "string",
-            "description": "Share of the price credited when liquidation sells the asset, e.g. `\"0.95\"`; `\"0\"` for a\nstablecoin."
-          },
-          "liquidation_priority": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Shortfall coverage order after the quote.",
-            "minimum": 0
-          },
-          "maintenance_weight": {
-            "type": "string",
-            "description": "e.g. `\"0.99\"`."
-          },
-          "market_session": {
-            "$ref": "#/components/schemas/CollateralMarketSession",
-            "description": "Session of the market the asset is priced on; a stablecoin is always open."
-          },
-          "max_total_deposit": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Global deposit cap in whole tokens; `null` when uncapped."
-          },
-          "max_user_deposit": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Cap on one user's trading balance in whole tokens; `null` when uncapped."
-          },
-          "status": {
-            "$ref": "#/components/schemas/CollateralAssetStatus"
-          },
-          "symbol": {
-            "type": "string"
-          },
-          "total_deposited": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Whole tokens in trading, pending transfers included. `null` when unknown."
-          }
-        }
-      },
-      "CollateralAssetKind": {
-        "type": "string",
-        "enum": [
-          "stable",
-          "volatile"
-        ]
-      },
-      "CollateralAssetStatus": {
-        "type": "string",
-        "enum": [
-          "active",
-          "reduce_only",
-          "disabled"
-        ]
-      },
-      "CollateralBalance": {
-        "type": "object",
-        "required": [
-          "asset_id",
-          "symbol",
-          "balance",
-          "frozen"
-        ],
-        "properties": {
-          "asset_id": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "balance": {
-            "type": "string",
-            "description": "Whole tokens, including the hold."
-          },
-          "frozen": {
-            "type": "string",
-            "description": "Whole tokens on hold."
-          },
-          "initial_value": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "USDC. Trading accounts only."
-          },
-          "initial_weight": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Effective initial weight, e.g. `\"0.98\"`; `\"0\"` unless active and freshly priced.\nTrading accounts only."
-          },
-          "maintenance_value": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "USDC. Trading accounts only."
-          },
-          "maintenance_weight": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Effective maintenance weight, e.g. `\"0.99\"`. Trading accounts only."
-          },
-          "price": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "USDC per token, net of the oracle confidence haircut. Trading accounts only."
-          },
-          "symbol": {
-            "type": "string"
-          }
-        }
-      },
-      "CollateralFundingFees": {
-        "type": "object",
-        "description": "A fee config's flat fees, in whole tokens of its asset, exactly as the ledger charges them: the\nconfig's exact `depositFee`/`withdrawFee` when set (e.g. `\"0.0005\"`), otherwise its cents over\n100 (e.g. `\"1.50\"`, `\"0.00\"` when there is no fee).",
-        "required": [
-          "deposit",
-          "withdraw"
-        ],
-        "properties": {
-          "deposit": {
-            "type": "string",
-            "description": "A deposit of `amount` transfers `amount + deposit` from the\nuser's holdings and credits the funding vault `amount`."
-          },
-          "withdraw": {
-            "type": "string",
-            "description": "A withdrawal of `amount` needs `amount + withdraw` unlocked in\nthe funding vault, debits that, and transfers the user `amount`."
-          }
-        }
-      },
-      "CollateralMarketSession": {
-        "type": "string",
-        "enum": [
-          "open",
-          "closed"
-        ]
-      },
       "CompetitionLeaderboardData": {
         "type": "object",
         "required": [
@@ -5620,32 +5157,6 @@
           "CreateByBboOrder"
         ]
       },
-      "DisclosedContract": {
-        "type": "object",
-        "description": "A contract a submission discloses, in the shape the Canton ledger API's `disclosedContracts`\ntakes.",
-        "required": [
-          "templateId",
-          "contractId",
-          "createdEventBlob",
-          "synchronizerId"
-        ],
-        "properties": {
-          "contractId": {
-            "type": "string"
-          },
-          "createdEventBlob": {
-            "type": "string",
-            "description": "Base64."
-          },
-          "synchronizerId": {
-            "type": "string"
-          },
-          "templateId": {
-            "type": "string",
-            "description": "`{package_id}:{module}:{entity}`."
-          }
-        }
-      },
       "ErrorResponse": {
         "type": "object",
         "required": [
@@ -5765,23 +5276,6 @@
             "type": "string",
             "description": "Executed value (price * qty)"
           },
-          "fee": {
-            "type": "string",
-            "description": "Signed fee in raw quote units (negative = maker rebate). Quote equivalent of `fee_legs`\nwhen a non-quote asset paid part of it. Empty on fills recorded before fees were stored."
-          },
-          "fee_asset": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Asset that paid first; the quote when the quote paid it all. Omitted when it is the quote.",
-            "minimum": 0
-          },
-          "fee_legs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FeeLeg"
-            },
-            "description": "Per-asset amounts that paid `fee`, in debit order; empty when the quote paid it all."
-          },
           "fee_rate": {
             "type": "string",
             "description": "Trading fee rate"
@@ -5826,13 +5320,6 @@
           "order_type": {
             "$ref": "#/components/schemas/OrderType",
             "description": "Order type. Market or Limit"
-          },
-          "seized_legs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SeizedLeg"
-            },
-            "description": "On a liquidation takeover, the collateral sold to clear the account's debt; omitted\notherwise."
           },
           "seq": {
             "type": "integer",
@@ -5921,30 +5408,6 @@
             }
           }
         ]
-      },
-      "FeeLeg": {
-        "type": "object",
-        "description": "One asset's share of a fill's fee.",
-        "required": [
-          "asset_id",
-          "amount",
-          "quote_equivalent"
-        ],
-        "properties": {
-          "amount": {
-            "type": "string",
-            "description": "Raw units of this asset."
-          },
-          "asset_id": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "quote_equivalent": {
-            "type": "string",
-            "description": "Raw quote units of `fee` this leg covered."
-          }
-        }
       },
       "FundRequest": {
         "type": "object",
@@ -6084,54 +5547,6 @@
           },
           "next_page_cursor": {
             "type": "string"
-          }
-        }
-      },
-      "GetCollateralAssetsResponse": {
-        "type": "object",
-        "required": [
-          "list"
-        ],
-        "properties": {
-          "list": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CollateralAssetInfo"
-            }
-          }
-        }
-      },
-      "GetCollateralDisclosuresResponse": {
-        "type": "object",
-        "description": "What a user's own deposit or withdraw of one collateral asset must disclose.",
-        "required": [
-          "asset_id",
-          "status",
-          "collateral_registry",
-          "funding_fee_config",
-          "fees"
-        ],
-        "properties": {
-          "asset_id": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "collateral_registry": {
-            "$ref": "#/components/schemas/DisclosedContract",
-            "description": "The live registry, `collateralRegistryCid` of `DepositIntoFundingAsset`. It is replaced on\nevery registry change, so fetch it right before submitting."
-          },
-          "fees": {
-            "$ref": "#/components/schemas/CollateralFundingFees",
-            "description": "The fees `funding_fee_config` charges. The ledger charges what that contract holds, so\nsize a submission from the fees and the config of the same response."
-          },
-          "funding_fee_config": {
-            "$ref": "#/components/schemas/DisclosedContract",
-            "description": "The asset's own fee config, `fundingFeeConfigCid` of its deposit and withdraw."
-          },
-          "status": {
-            "$ref": "#/components/schemas/CollateralAssetStatus",
-            "description": "Only an Active asset takes deposits; any status can be withdrawn."
           }
         }
       },
@@ -6410,17 +5825,9 @@
         "required": [
           "period",
           "summary",
-          "list",
-          "fees"
+          "list"
         ],
         "properties": {
-          "fees": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StatsAssetFees"
-            },
-            "description": "One entry per collateral asset, in asset id order"
-          },
           "list": {
             "type": "array",
             "items": {
@@ -8418,93 +7825,6 @@
           }
         }
       },
-      "SeizedLeg": {
-        "type": "object",
-        "description": "Collateral a liquidation sold to clear an account's debt.",
-        "required": [
-          "asset_id",
-          "amount",
-          "quote_credited"
-        ],
-        "properties": {
-          "amount": {
-            "type": "string",
-            "description": "Raw units of the asset sold."
-          },
-          "asset_id": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "quote_credited": {
-            "type": "string",
-            "description": "Raw quote units credited for it, at the price less the liquidation discount."
-          }
-        }
-      },
-      "SetFeeAssetRequest": {
-        "type": "object",
-        "description": "The one asset trading fees are taken from first: a fee priority of one entry.",
-        "required": [
-          "sub_account_address",
-          "asset_id"
-        ],
-        "properties": {
-          "asset_id": {
-            "type": "integer",
-            "format": "int32",
-            "description": "A listed Active collateral asset (`GET /collateral/assets`), stablecoin or volatile; the\nquote restores the default order.",
-            "minimum": 0
-          },
-          "sub_account_address": {
-            "type": "string"
-          }
-        }
-      },
-      "SetFeeAssetResponse": {
-        "type": "object",
-        "required": [
-          "success",
-          "time"
-        ],
-        "properties": {
-          "success": {
-            "type": "boolean"
-          },
-          "time": {
-            "type": "string",
-            "format": "date-time",
-            "example": "1672531200000"
-          }
-        }
-      },
-      "SetFeePriorityRequest": {
-        "type": "object",
-        "description": "The assets trading fees are taken from first, in order.",
-        "required": [
-          "sub_account_address",
-          "asset_ids"
-        ],
-        "properties": {
-          "asset_ids": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 0
-            },
-            "description": "At most 8 distinct ids, each the quote or a listed Active collateral asset\n(`GET /collateral/assets`), stablecoin or volatile. Empty restores the default order.",
-            "example": [
-              3,
-              1,
-              2
-            ]
-          },
-          "sub_account_address": {
-            "type": "string"
-          }
-        }
-      },
       "SetLeverageRequest": {
         "type": "object",
         "description": "Request to set leverage.",
@@ -8658,41 +7978,6 @@
           "CancelTaker",
           "CancelBoth"
         ]
-      },
-      "StatsAssetFees": {
-        "type": "object",
-        "description": "Trading fees traders paid in one collateral asset over the period. Maker rebates are not\ncounted.",
-        "required": [
-          "asset_id",
-          "symbol",
-          "amount",
-          "value",
-          "value_change"
-        ],
-        "properties": {
-          "amount": {
-            "type": "string",
-            "description": "Fees paid, in the asset's own units"
-          },
-          "asset_id": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Collateral asset id",
-            "minimum": 0
-          },
-          "symbol": {
-            "type": "string",
-            "description": "Collateral asset symbol"
-          },
-          "value": {
-            "type": "string",
-            "description": "Quote value of the fees at fill time"
-          },
-          "value_change": {
-            "type": "string",
-            "description": "Value change"
-          }
-        }
       },
       "StatsMarket": {
         "type": "object",

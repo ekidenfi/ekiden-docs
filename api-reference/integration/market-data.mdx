@@ -20,17 +20,6 @@ title: "Market Data"
 - `adl_alert.<symbol>` — ADL alert updates
 - `order`, `position`, `execution`, `account_balance` — private user streams (available on `/ws/private` after authentication)
 
-## Exchange stats
-
-`GET /api/v1/market/stats?period=…` includes `fees[]`: the trading fees traders paid in the period, per collateral asset. There is one entry per asset in the [collateral registry](/api-reference/integration/deposit-and-withdraw#supported-collateral), in `asset_id` order, with zeros when nothing was paid. Maker rebates are excluded.
-
-| Field | Description |
-| --- | --- |
-| `asset_id`, `symbol` | The asset. |
-| `amount` | Fees paid in the asset, in whole tokens. |
-| `value` | Their USDC value at fill time. |
-| `value_change` | Change against the previous period, like `turnover_change`. |
-
 ## Timestamps
 
 - `ts` (ticker snapshots) is a Unix timestamp in milliseconds.

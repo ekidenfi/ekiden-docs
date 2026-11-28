@@ -2,7 +2,7 @@
 title: "Fee Asset"
 ---
 
-Trading fees are calculated in USDC, but a trading account can choose which of its [collateral](/collateral) assets pays them first. Fees are taken from the chosen assets in order, then from the quote and the other stablecoins by `liquidation_priority`; whatever is left is owed as quote debt.
+Trading fees are calculated in USDC, but a trading account can choose which of its [collateral](/v2/collateral) assets pays them first. Fees are taken from the chosen assets in order, then from the quote and the other stablecoins by `liquidation_priority`; whatever is left is owed as quote debt.
 
 - A volatile asset (e.g. gold) pays fees only when it is listed, at its oracle price, in the asset itself.
 - A listed asset without a fresh price is skipped.
@@ -49,7 +49,7 @@ Both endpoints require a bearer token with the Trade scope and return:
 }
 ```
 
-`200` means the request was accepted, not yet applied. Confirm with `fee_asset` and `fee_priority` in the [account balance](/api-reference/integration/account-data#balance-fields).
+`200` means the request was accepted, not yet applied. Confirm with `fee_asset` and `fee_priority` in the [account balance](/v2/api-reference/integration/account-data#balance-fields).
 
 ## Errors
 

@@ -542,61 +542,16 @@ components:
         available_balance:
           description: The amount of an asset that can be used to open USDC Perpetual positions (USDC)
           type: string
-        collateral:
-          description: Non-quote collateral. Omitted when empty.
-          items:
-            $ref: '#/components/schemas/CollateralBalance'
-          type: array
-        debt:
-          description: |-
-            Quote owed: how far the quote balance is below zero (`vault_balance` then shows zero). The
-            collateral's values above are already after haircuts. Omitted when nothing is owed.
-          type:
-          - string
-          - 'null'
         equity:
           description: |-
-            What the account is worth to liquidation, in USDC, floored at zero: the quote balance (a
-            debt counted in full) plus unrealized P&L and funding plus unfrozen collateral at its
-            maintenance weight. That is `maintenance_total_collateral` floored at zero when it is
-            shown, and Vault Balance + Unrealized P&L + Unrealized Funding with only the quote. Funding
-            accounts: the quote balance.
+            Equity under the account without considering the collateral value ratio (calculated in USDC).
+            Equity = Vault Balance + Perp & Futures Unrealized P&L + Unrealized Funding
           type: string
-        fee_asset:
-          description: |-
-            The first asset other than the quote in `fee_priority`. Trading accounts only; omitted
-            while there is none.
-          format: uint32
-          minimum: 0
-          type:
-          - integer
-          - 'null'
-        fee_priority:
-          description: |-
-            The assets fees are taken from first, in order (`PUT /account/fee-priority`); then the
-            quote and the other stablecoins by liquidation priority, then quote debt. A volatile asset
-            pays fees only when listed here. Trading accounts only; omitted while empty.
-          items:
-            format: uint32
-            minimum: 0
-            type: integer
-          type: array
-        initial_total_collateral:
-          description: |-
-            Quote balance (a debt counted in full), unrealized PnL, funding, and weighted non-quote,
-            in USDC. Trading accounts holding non-quote collateral or owing a debt only.
-          type:
-          - string
-          - 'null'
-        maintenance_total_collateral:
-          description: |-
-            Same total at maintenance weight, frozen collateral excluded. Present when
-            `initial_total_collateral` is.
-          type:
-          - string
-          - 'null'
         margin_balance:
-          description: Same as `equity`.
+          description: |-
+            Amount that can be used as margin under the account
+            after considering the collateral value ratio (calculated in USDC)
+            Total Vault Balance + Perp Unrealized P&L
           type: string
         realised_pnl_cum:
           description: Cumulative Realised P&L
@@ -697,53 +652,6 @@ components:
       - CancelByOcoTpCanceledBySlTriggered
       - CancelByOcoSlCanceledByTpTriggered
       type: string
-    CollateralBalance:
-      properties:
-        asset_id:
-          format: uint32
-          minimum: 0
-          type: integer
-        balance:
-          description: Whole tokens, including the hold.
-          type: string
-        frozen:
-          description: Whole tokens on hold.
-          type: string
-        initial_value:
-          description: USDC. Trading accounts only.
-          type:
-          - string
-          - 'null'
-        initial_weight:
-          description: |-
-            Effective initial weight, e.g. `"0.98"`; `"0"` unless active and freshly priced.
-            Trading accounts only.
-          type:
-          - string
-          - 'null'
-        maintenance_value:
-          description: USDC. Trading accounts only.
-          type:
-          - string
-          - 'null'
-        maintenance_weight:
-          description: Effective maintenance weight, e.g. `"0.99"`. Trading accounts only.
-          type:
-          - string
-          - 'null'
-        price:
-          description: USDC per token, net of the oracle confidence haircut. Trading accounts only.
-          type:
-          - string
-          - 'null'
-        symbol:
-          type: string
-      required:
-      - asset_id
-      - symbol
-      - balance
-      - frozen
-      type: object
     ConditionalOrder:
       properties:
         trigger_by:
@@ -861,21 +769,6 @@ components:
         exec_value:
           description: Executed value (price * qty)
           type: string
-        fee:
-          description: |-
-            Signed fee in raw quote units (negative = maker rebate). Quote equivalent of `fee_legs`
-            when a non-quote asset paid part of it. Empty on fills recorded before fees were stored.
-          type: string
-        fee_asset:
-          description: Asset that paid first; the quote when the quote paid it all. Omitted when it is the quote.
-          format: uint32
-          minimum: 0
-          type: integer
-        fee_legs:
-          description: Per-asset amounts that paid `fee`, in debit order; empty when the quote paid it all.
-          items:
-            $ref: '#/components/schemas/FeeLeg'
-          type: array
         fee_rate:
           description: Trading fee rate
           type: string
@@ -907,13 +800,6 @@ components:
         order_type:
           $ref: '#/components/schemas/OrderType'
           description: Order type. Market or Limit
-        seized_legs:
-          description: |-
-            On a liquidation takeover, the collateral sold to clear the account's debt; omitted
-            otherwise.
-          items:
-            $ref: '#/components/schemas/SeizedLeg'
-          type: array
         seq:
           description: |-
             Cross sequence, used to associate each fill and each position update
@@ -956,24 +842,6 @@ components:
       - mark_price
       - index_price
       - seq
-      type: object
-    FeeLeg:
-      description: One asset's share of a fill's fee.
-      properties:
-        amount:
-          description: Raw units of this asset.
-          type: string
-        asset_id:
-          format: uint32
-          minimum: 0
-          type: integer
-        quote_equivalent:
-          description: Raw quote units of `fee` this leg covered.
-          type: string
-      required:
-      - asset_id
-      - amount
-      - quote_equivalent
       type: object
     InsurancePoolInventoryPosition:
       properties:
@@ -1630,24 +1498,6 @@ components:
       - EcCancelByMatchValueZero
       - EcReachMarketPriceLimit
       type: string
-    SeizedLeg:
-      description: Collateral a liquidation sold to clear an account's debt.
-      properties:
-        amount:
-          description: Raw units of the asset sold.
-          type: string
-        asset_id:
-          format: uint32
-          minimum: 0
-          type: integer
-        quote_credited:
-          description: Raw quote units credited for it, at the price less the liquidation discount.
-          type: string
-      required:
-      - asset_id
-      - amount
-      - quote_credited
-      type: object
     Side:
       description: 'Order side: buy or sell.'
       oneOf:
