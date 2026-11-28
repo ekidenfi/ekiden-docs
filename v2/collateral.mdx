@@ -1,0 +1,63 @@
+---
+title: "Collateral & Margin"
+sidebarTitle: "Collateral & Margin"
+description: "Which assets can back your positions, how much each one counts for, and what happens to them on losses, fees, closed markets and liquidation."
+---
+
+Your Trading Account can hold more than USDCx. Stablecoins and volatile assets such as tokenized gold also count as margin, each at a weight below its full value. All positions share the same pool (cross margin).
+
+<Note>
+  Weights, caps and fees are set per asset and can change. The [collateral registry](/v2/api-reference/integration/deposit-and-withdraw#supported-collateral) returns the live values; the numbers on this page are examples.
+</Note>
+
+## Asset types
+
+| Type | Examples | How it is used |
+| --- | --- | --- |
+| **Quote** | USDCx | Settles every trade. Profits, losses, fees and funding are booked in it. |
+| **Stablecoin** | USD1, USDM1 | Covers a loss or fee the USDCx balance can't, at its price. |
+| **Volatile** | eXAU (gold), cETH, CBTC | Backs positions but is never spent on a loss. A shortfall becomes USDCx debt against it. |
+
+Each asset also has a status:
+
+- **Active**: accepts deposits and counts fully as margin.
+- **Reduce-only**: no new deposits; it counts for existing positions only (maintenance value, no buying power). You can still withdraw it.
+- **Disabled**: counts for nothing. You can still withdraw it.
+
+## How much an asset counts for
+
+Every asset has two weights:
+
+- **Initial weight** sets your buying power: what you can open new positions and orders against.
+- **Maintenance weight** sets what keeps your positions open: what liquidation measures.
+
+An asset counts for its balance × price × weight. For example, 1 eXAU at \$2,000 with an initial weight of 0.70 adds \$1,400 of buying power; at a maintenance weight of 0.85 it adds \$1,700 towards keeping positions open.
+
+An asset gives buying power only while it is active and its price is fresh. When its price is stale, it has depegged (stablecoins) or its market is closed, it still counts at its maintenance weight but adds no buying power. Collateral on hold for a withdrawal counts for nothing.
+
+## When gold's market is closed
+
+Gold trades on market hours. While its market is closed, for example over a weekend:
+
+- Gold adds no buying power, so orders that need it are rejected.
+- It keeps backing your open positions at its last price less a closed-market haircut (e.g. 3%), at its maintenance weight. Price readings during the closure are ignored, so nothing is liquidated on them.
+- The first fresh price after the market reopens restores its buying power.
+
+## Losses, funding and debt
+
+A loss or funding payment is taken from USDCx first, then from your stablecoins in a set order. Volatile collateral is never spent: whatever USDCx and stablecoins can't cover leaves your USDCx balance below zero. That amount is your **debt**, backed by your volatile collateral.
+
+- Profits are always paid in USDCx, and they repay any debt first.
+- A withdrawal that would leave your debt unbacked is refused.
+
+## Liquidation
+
+If your account falls below its maintenance requirement, it is liquidated. Positions are taken over as usual. When the account still owes a debt, just enough volatile collateral is sold to the backstop to clear it, at a liquidation discount on its price (e.g. 95% of the price is credited).
+
+## Deposit caps
+
+An asset can have a total cap and a per-user cap on what is held in Trading Accounts. A transfer from your Funding Account that would exceed either cap is rejected, and the funds stay in your Funding Account.
+
+## Fees
+
+Trading fees can be paid in assets other than USDCx; see [Fees](/v2/fees#paying-fees-in-other-assets). Deposits and withdrawals of each asset carry their own flat fee, charged in that asset; see [Fees](/v2/fees#deposit-and-withdrawal-fees).

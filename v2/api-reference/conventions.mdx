@@ -1,0 +1,379 @@
+---
+title: "Conventions"
+---
+
+This document outlines Ekiden's API design conventions and standards. These ensure consistency, developer-friendliness, and compatibility across all REST and WebSocket interfaces.
+
+---
+
+## 1. Base URLs and Environments
+
+Ekiden provides separate base URLs for each environment:
+
+- **Mainnet**: [https://api.ekiden.fi/api/v1](https://api.ekiden.fi/api/v1)
+- **Testnet Beta**: [https://api.cnt.ekiden.fi/api/v1](https://api.cnt.ekiden.fi/api/v1)
+- **Staging**: [https://api.testnet.ekiden.fi/api/v1](https://api.testnet.ekiden.fi/api/v1)
+
+> All API calls must use **HTTPS**.
+
+---
+
+## 2. Versioning
+
+We use URI-based versioning:
+
+- **Format**: `/v1/`
+- **Example**: `GET /v1/market/tickers`
+
+Backward-incompatible changes will trigger a new version (e.g., `/v2/`).
+
+---
+
+## 3. RESTful Design
+
+| Method | Description |
+| --- | --- |
+| `GET` | Fetch resources (e.g., market data) |
+| `POST` | Create resources or perform actions (e.g., place or amend an order) |
+| `DELETE` | Cancel or remove resources |
+| `PUT` | Replace or update resources where applicable (e.g., whitelist management) |
+
+- Endpoints are organized by resource.
+
+---
+
+## 4. WebSocket Protocol
+
+Endpoints:
+
+- Mainnet:
+  - Public data: `wss://api.ekiden.fi/ws/public`
+  - Private data: `wss://api.ekiden.fi/ws/private`
+- Testnet Beta:
+  - Public data: `wss://api.cnt.ekiden.fi/ws/public`
+  - Private data: `wss://api.cnt.ekiden.fi/ws/private`
+- Staging:
+  - Public data: `wss://api.testnet.ekiden.fi/ws/public`
+  - Private data: `wss://api.testnet.ekiden.fi/ws/private`
+
+Messages use an `op` field with snake\_case values. Optional `req_id` lets you correlate requests/responses.
+
+### Topics
+
+#### Public topics (market data)
+
+- `orderbook.<depth>.<symbol>` (e.g. `orderbook.10.BTC-USDCx`) — order book snapshots and deltas
+- `trade.<symbol>` — public trade feed
+- `ticker.<symbol>` — 24h ticker updates
+- `kline.<interval>.<symbol>` — candlestick updates
+- `all_liquidations.<symbol>` — liquidation events
+- `insurance_pool.<symbol>` — insurance pool snapshots
+- `adl_alert.<symbol>` — ADL alert updates
+
+#### Private topics (authenticated)
+
+Available only after successful authentication on `/ws/private`.
+
+- `order` — order updates
+- `position` — position updates
+- `execution` — execution (fill) updates
+- `account_balance` — account balance updates
+
+### Subscribe
+
+Client → Server
+
+```json
+{
+  "op": "subscribe",
+  "args": ["orderbook.1.BTC-USDCx", "ticker.BTC-USDCx"],
+  "req_id": "optional-id"
+}
+```
+
+Server → Client
+
+```json
+{
+  "op": "subscribed",
+  "args": ["orderbook.1.BTC-USDCx", "ticker.BTC-USDCx"],
+  "req_id": "optional-id"
+}
+```
+
+### Unsubscribe
+
+Client → Server
+
+```json
+{
+  "op": "unsubscribe",
+  "args": ["orderbook.1.BTC-USDCx"]
+}
+```
+
+Server → Client
+
+```json
+{
+  "op": "unsubscribed",
+  "args": ["orderbook.1.BTC-USDCx"]
+}
+```
+
+### Event delivery
+
+```json
+{
+  "op": "event",
+  "topic": "ticker.BTC-USDCx",
+  "server_ts_ms": 1731541800000,
+  "data": { /* event payload */ }
+}
+```
+
+## Authenticate (private WebSocket only)
+
+Private WebSocket connections support two authentication methods:
+
+### JWT
+
+Authenticate immediately after connecting to `/ws/private` using a JWT access token obtained from the REST authorization endpoint.
+
+Client → Server
+
+```json
+{
+  "op": "auth",
+  "bearer": "<jwt>",
+  "req_id": "optional-id"
+}
+```
+
+Server → Client
+
+```json
+{
+  "op": "auth",
+  "success": true,
+  "user_id": "<user_id>",
+  "req_id": "optional-id"
+}
+```
+
+### API Key
+
+Authenticate immediately after connecting to `/ws/private` using an API key.
+
+Client → Server
+
+```json
+{
+  "op": "auth_api_key",
+  "api_key": "<api_key>",
+  "signature": "<signature>",
+  "timestamp_ms": 1731541800000,
+  "nonce": "unique-nonce",
+  "req_id": "optional-id"
+}
+```
+
+The `signature` must be an Ed25519 signature of:
+
+`EKIDEN_WS|AUTH|{timestamp_ms}|{nonce}`
+
+---
+
+## 5. Authentication (REST)
+
+Private REST and private WebSocket use a short-lived JWT issued by the gateway, or API Key authentication.
+
+### JWT Authentication
+
+1. Request a token via `POST /api/v1/authorize`
+
+{/*  by signing the message:
+
+  ```text
+  AUTHORIZE|{timestamp_ms}|{nonce}
+  ```
+
+  with Ed25519. Body: \ */}
+
+```json
+{
+  "public_key": "<Canton Party ID>",
+  "signature": "",
+  "timestamp_ms": 1731541800000,
+  "nonce": "random-unique-string"
+}
+```
+
+Response:
+
+```json
+{ "token": "<jwt>", "user_id": "<user_id>" }
+```
+
+2. Use the token with Bearer auth for private endpoints:
+
+```http
+Authorization: Bearer <jwt>
+```
+
+### API Key Authentication
+
+Gateway supports API-key auth via headers:
+
+- `X-API-KEY`: Your API public key
+- `X-SIGNATURE`: Ed25519 signature over `EKIDEN_API|{method}|{uri}|{timestamp_ms}|{nonce}`
+- `X-TIMESTAMP-MS`: Current Unix timestamp in milliseconds
+- `X-NONCE`: Random unique string
+
+---
+
+## 6. Numerical Precision
+
+- Prices and quantities are represented as strings to preserve precision.
+- Clients should use arbitrary-precision decimal libraries instead of floating-point numbers.
+- Price and quantity precision vary by instrument. Use the `price_filter.tick_size` and `lot_size_filter.qty_step` values returned in the response from `GET /api/v1/market/instruments-info` to determine the supported precision for each market.
+- Exception: the execution fee fields (`fee`, `fee_legs`, `seized_legs`) are raw integer units: quote units, or the leg's own asset for a leg's `amount`. Divide by `10^decimals` from `GET /api/v1/collateral/assets`; see [Account Data](/v2/api-reference/integration/account-data#execution-fee-fields).
+
+---
+
+## 7. Timestamps
+
+Ekiden uses Unix timestamps in milliseconds unless otherwise specified.
+
+Common timestamp fields include:
+
+- `timestamp`
+- `timestamp_ms`
+- `server_ts_ms`
+- `created_time`
+- `updated_time`
+- `ts`
+- `mts`
+- `client_ts`
+- `server_ts`
+
+All of the above represent Unix timestamps in milliseconds.
+
+Some endpoints also accept Unix timestamps in milliseconds as query parameters (for example, `start_time` and `end_time`). Refer to the endpoint documentation for the supported parameters.
+
+---
+
+## 8. Error Handling
+
+### Error response format
+
+```json
+{
+  "code": "UNAUTHORIZED",
+  "message": "Unauthorized"
+}
+```
+
+### Common Error Codes
+
+| Code | Meaning |
+| --- | --- |
+| `BAD_REQUEST` | Invalid request parameters |
+| `UNAUTHORIZED` | Authentication failed or token expired |
+| `FORBIDDEN` | Insufficient permissions |
+| `RateLimitExceeded` | Too many requests |
+| `NOT_FOUND` | Resource not found |
+| `SERVICE_UNAVAILABLE` | Backend service down or lagging |
+| `INTERNAL` | Unexpected server error |
+
+> HTTP status codes (`400`, `401`, `403`, `404`, `429`, `500`, `503`) are used appropriately.
+
+---
+
+## 9. Rate Limits
+
+REST API requests are subject to rate limits.
+
+When a rate limit is exceeded, the server returns HTTP `429 Too Many Requests`.
+
+Example:
+
+```json
+{
+  "code": "RateLimitExceeded",
+  "message": "Rate limit exceeded"
+}
+```
+
+---
+
+## 10. Pagination
+
+Cursor-based pagination is used for endpoints that return lists of resources.
+
+Common query parameters:
+
+- `limit` — Maximum number of items to return.
+- `cursor` — Pagination cursor returned by the previous request.
+
+Example:
+
+```http
+GET /api/v1/trade/executions?symbol=BTC-USDCx&limit=20
+```
+
+Example response:
+
+```json
+{
+  "list": [...],
+   "next_page_cursor": ""
+}
+```
+
+To retrieve the next page, pass the returned `next_page_cursor` value as the `cursor` parameter in the next request.
+
+## 11. Field Naming
+
+- All JSON keys use `snake_case`. Exception: the disclosed contracts in `GET /api/v1/collateral/assets/{asset_id}/disclosures` use the Canton ledger API's `camelCase` (`templateId`, `contractId`, `createdEventBlob`, `synchronizerId`), so they can be passed to a submission as-is.
+- High-precision numeric values are represented as strings.
+- Integer values are represented as JSON numbers.
+
+## 12. WebSocket Heartbeats
+
+### Application-level ping/pong
+
+Clients may send:
+
+```json
+{
+  "op": "ping",
+  "req_id": "optional-id",
+  "ts": 1718000000000
+}
+```
+
+The server replies:
+
+```json
+{
+  "op": "pong",
+  "req_id": "optional-id",
+  "client_ts": 1718000000000,
+  "server_ts": 1718000001000
+}
+```
+
+All timestamps are Unix milliseconds.
+
+### WebSocket-level ping/pong (keepalive)
+
+The server periodically sends WebSocket-level ping frames and expects pong responses.
+
+If a pong is not received within the configured timeout, the server may close the connection.
+
+Clients should automatically respond to WebSocket-level ping frames and may also send application-level `ping` messages if desired.
+
+---
+
+For detailed endpoint specifications and integration examples, refer to the API Reference.

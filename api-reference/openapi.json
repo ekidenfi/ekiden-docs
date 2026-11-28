@@ -1125,6 +1125,8 @@
         "tags": [
           "Market"
         ],
+        "summary": "Get Instruments Info",
+        "description": "Query for the instrument specification of perpetual markets.",
         "operationId": "get_instruments_info",
         "responses": {
           "200": {
@@ -1836,7 +1838,7 @@
           "Trade"
         ],
         "summary": "Amend Order",
-        "description": "Amend an existing order",
+        "description": "Amend an unfilled or partially filled order. You must specify `order_id` or `order_link_id`. If both are passed, `order_id` is used.\n\nHTTP 200 means the request was accepted. Confirm the order status via websocket or `GET /order/realtime`.\n\nUnknown or already closed: `EcOrderNotExist`. If the amended order cannot be supported: `EcInsufficientFunds`.",
         "operationId": "amend_order",
         "requestBody": {
           "content": {
@@ -1850,7 +1852,7 @@
         },
         "responses": {
           "200": {
-            "description": "Order amended",
+            "description": "Request accepted. Confirm via websocket or `/order/realtime`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1858,6 +1860,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request"
           }
         },
         "security": [
@@ -1873,7 +1878,7 @@
           "Trade"
         ],
         "summary": "Batch Amend Orders",
-        "description": "Amend multiple existing orders in a single request",
+        "description": "Amend up to 20 unfilled or partially filled orders.\n\n`exit_info` is 1:1 with the request. `result` lists successful items only. Set `await_outcome=true` to wait for each item's final outcome (`EcOrderNotExist`, `EcInsufficientFunds`).",
         "operationId": "batch_amend_orders",
         "requestBody": {
           "content": {
@@ -1887,7 +1892,7 @@
         },
         "responses": {
           "200": {
-            "description": "Orders amended",
+            "description": "Orders processed",
             "content": {
               "application/json": {
                 "schema": {
@@ -1895,6 +1900,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request"
           }
         },
         "security": [
@@ -1910,7 +1918,7 @@
           "Trade"
         ],
         "summary": "Cancel Order",
-        "description": "Cancel an existing order",
+        "description": "Cancel an unfilled or partially filled order. You must specify `order_id` or `order_link_id`. If both are passed, `order_id` is used.\n\n- 200: order canceled\n- 400: `EcOrderNotExist` (unknown), `EcTooLateToCancel` (already filled or canceled), `SystemInKillSwitch`\n- 202: accepted but not confirmed in time; not a successful cancel",
         "operationId": "cancel_order",
         "requestBody": {
           "content": {
@@ -1932,6 +1940,19 @@
                 }
               }
             }
+          },
+          "202": {
+            "description": "Accepted but not confirmed. Not a successful cancel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "EcOrderNotExist, EcTooLateToCancel, or SystemInKillSwitch"
           }
         },
         "security": [
@@ -1947,7 +1968,7 @@
           "Trade"
         ],
         "summary": "Cancel All Orders",
-        "description": "Cancel all existing orders for a sub-account. Optionally filtered by symbol; omit symbol to cancel open orders across all markets.",
+        "description": "Cancel all unfilled or partially filled orders for a sub-account. Pass `symbol` to limit to one market.\n\nHTTP 200 means the request was accepted. Confirm order status via websocket or `GET /order/realtime`.",
         "operationId": "cancel_all_orders",
         "requestBody": {
           "content": {
@@ -1961,7 +1982,7 @@
         },
         "responses": {
           "200": {
-            "description": "Orders canceled",
+            "description": "Request accepted",
             "content": {
               "application/json": {
                 "schema": {
@@ -1969,6 +1990,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request"
           }
         },
         "security": [
@@ -1984,7 +2008,7 @@
           "Trade"
         ],
         "summary": "Batch Cancel Orders",
-        "description": "Cancel multiple existing orders in a single request",
+        "description": "Cancel up to 20 unfilled or partially filled orders.\n\n`exit_info` is 1:1 with the request. `result` lists successful items only. Set `await_outcome=true` to wait for each item's final outcome (`EcOrderNotExist`, `EcTooLateToCancel`).",
         "operationId": "batch_cancel_orders",
         "requestBody": {
           "content": {
@@ -1998,7 +2022,7 @@
         },
         "responses": {
           "200": {
-            "description": "Orders canceled",
+            "description": "Orders processed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2006,6 +2030,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request"
           }
         },
         "security": [
@@ -2038,14 +2065,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "oneOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/components/schemas/Symbol"
-                }
-              ]
+              "$ref": "#/components/schemas/Symbol"
             }
           },
           {
@@ -2053,14 +2073,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "oneOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/components/schemas/OrderId"
-                }
-              ]
+              "$ref": "#/components/schemas/OrderId"
             }
           },
           {
@@ -2068,14 +2081,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "oneOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/components/schemas/OrderLinkId"
-                }
-              ]
+              "$ref": "#/components/schemas/OrderLinkId"
             }
           },
           {
@@ -2083,14 +2089,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "oneOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/components/schemas/OrderFilter"
-                }
-              ]
+              "$ref": "#/components/schemas/OrderFilter"
             }
           },
           {
@@ -2098,10 +2097,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "array",
-                "null"
-              ],
+              "type": "array",
               "items": {
                 "$ref": "#/components/schemas/OrderStatus"
               }
@@ -2112,10 +2108,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": "string",
               "format": "date-time"
             }
           },
@@ -2124,10 +2117,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ],
+              "type": "string",
               "format": "date-time"
             }
           },
@@ -2136,10 +2126,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "integer",
-                "null"
-              ],
+              "type": "integer",
               "format": "int32",
               "minimum": 0
             }
@@ -2149,10 +2136,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": [
-                "string",
-                "null"
-              ]
+              "type": "string"
             }
           }
         ],
@@ -2181,7 +2165,7 @@
           "Trade"
         ],
         "summary": "Place Order",
-        "description": "Create a new order",
+        "description": "Create an order. You must have enough available balance to support it.\n\nHTTP 200 means the request was accepted. Confirm the order status via websocket or `GET /order/realtime`.\n\nIf the order cannot be supported, it is `Rejected` with `EcInsufficientFunds`. A resting order cancelled by the system for the same reason is `Canceled` with `cancel_type=CancelBySystem` and `reject_reason=EcInsufficientFunds`.",
         "operationId": "place_order",
         "requestBody": {
           "content": {
@@ -2195,7 +2179,7 @@
         },
         "responses": {
           "200": {
-            "description": "Order placed",
+            "description": "Request accepted. Confirm via websocket or `/order/realtime`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2203,6 +2187,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request"
           }
         },
         "security": [
@@ -2218,7 +2205,7 @@
           "Trade"
         ],
         "summary": "Batch Place Orders",
-        "description": "Create multiple new orders in a single request",
+        "description": "Create up to 20 orders in one request.\n\n`exit_info` is 1:1 with the request. `result` lists successful items only. Set `await_outcome=true` to wait for each item's final outcome (including `EcInsufficientFunds`).",
         "operationId": "batch_place_orders",
         "requestBody": {
           "content": {
@@ -2232,7 +2219,7 @@
         },
         "responses": {
           "200": {
-            "description": "Orders placed",
+            "description": "Orders processed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2240,6 +2227,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request"
           }
         },
         "security": [
@@ -3116,7 +3106,7 @@
           "Leaderboard"
         ],
         "summary": "Get Leaderboard",
-        "description": "Paginated subaccount leaderboard ranked by PnL. Realized + unrealized (mark-to-market). Timeframe required: today, 7d, 30d, all. Default limit 10, max 100.",
+        "description": "Paginated subaccount leaderboard. Ranked by `sort_by`: `pnl` (default; realized + unrealized, mark-to-market) or `volume`, both over the timeframe. Timeframe required: today, 7d, 30d, all. Default limit 10, max 100.",
         "operationId": "get_leaderboard",
         "parameters": [
           {
@@ -3162,6 +3152,20 @@
                 "all"
               ]
             }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "description": "Ranking metric (default `pnl`).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Metric the leaderboard is ranked by, highest first.",
+              "enum": [
+                "pnl",
+                "volume"
+              ]
+            }
           }
         ],
         "responses": {
@@ -3184,7 +3188,7 @@
           "Leaderboard"
         ],
         "summary": "Get Leaderboard Placement",
-        "description": "Placement(s) for the authenticated user. When sub_account is omitted, returns one entry per user trading subaccount; otherwise exactly one entry. When the user has no trading subaccounts, data is an empty array. If the account is not ranked, ranked is false and place is \"0\".",
+        "description": "Placement(s) for the authenticated user, ranked by `sort_by` (default `pnl`) as on the leaderboard. When sub_account is omitted, returns one entry per user trading subaccount; otherwise exactly one entry. When the user has no trading subaccounts, data is an empty array. If the account is not ranked, ranked is false and place is \"0\".",
         "operationId": "get_leaderboard_placement",
         "parameters": [
           {
@@ -3212,6 +3216,20 @@
                 "7d",
                 "30d",
                 "all"
+              ]
+            }
+          },
+          {
+            "name": "sort_by",
+            "in": "query",
+            "description": "Ranking metric the placement is computed against (default `pnl`).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Metric the leaderboard is ranked by, highest first.",
+              "enum": [
+                "pnl",
+                "volume"
               ]
             }
           }
@@ -4028,20 +4046,20 @@
           },
           "volume": {
             "$ref": "#/components/schemas/AffiliateDashboardVolume",
-            "description": "Per-level downline volume (decimal USDC). Additive + defaulted."
+            "description": "Per-level downline volume."
           },
           "weeks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AffiliateDashboardWeek"
             },
-            "description": "Weekly commission history, newest week first."
+            "description": "Commission history, newest first."
           }
         }
       },
       "AffiliateDashboardVolume": {
         "type": "object",
-        "description": "Lifetime downline trading volume at levels 1/2/3, as decimal USDC strings\n(6dp). Strings because the totals can exceed a JS safe integer.",
+        "description": "Lifetime downline trading volume at levels 1/2/3, as decimal quote-asset\nstrings. Strings because the totals can exceed a JS safe integer.",
         "required": [
           "l1",
           "l2",
@@ -4061,7 +4079,7 @@
       },
       "AffiliateDashboardWeek": {
         "type": "object",
-        "description": "One week of the affiliate's commission history (spec §7 `weeks[]`).",
+        "description": "One period of the affiliate's commission history.",
         "required": [
           "week_start",
           "amount_usdt",
@@ -4097,13 +4115,13 @@
           },
           "week_start": {
             "type": "string",
-            "description": "RFC3339 week start (Monday 00:00 UTC)."
+            "description": "RFC3339 period start."
           }
         }
       },
       "AmendOrderRequest": {
         "type": "object",
-        "description": "Request to amend an order.",
+        "description": "Amend an unfilled or partially filled order.\nEither `order_id` or `order_link_id` is required. If both are passed, `order_id` is used.",
         "required": [
           "sub_account_address",
           "symbol",
@@ -4117,7 +4135,8 @@
                 "type": "null"
               },
               {
-                "$ref": "#/components/schemas/OrderId"
+                "$ref": "#/components/schemas/OrderId",
+                "description": "Order ID. Either `order_id` or `order_link_id` is required."
               }
             ]
           },
@@ -4135,7 +4154,8 @@
                 "type": "null"
               },
               {
-                "$ref": "#/components/schemas/OrderLinkId"
+                "$ref": "#/components/schemas/OrderLinkId",
+                "description": "User-customised order ID. Either `order_id` or `order_link_id` is required."
               }
             ]
           },
@@ -4149,7 +4169,8 @@
             "type": "string"
           },
           "symbol": {
-            "$ref": "#/components/schemas/Symbol"
+            "$ref": "#/components/schemas/Symbol",
+            "description": "Symbol name, e.g. `BTC-USDTx`."
           },
           "tpsl": {
             "oneOf": [
@@ -4175,7 +4196,7 @@
       },
       "AmendOrderResponse": {
         "type": "object",
-        "description": "Response for amending an order.",
+        "description": "Amend result. Confirm status via websocket or `/order/realtime`.",
         "properties": {
           "order_id": {
             "oneOf": [
@@ -4303,14 +4324,14 @@
       },
       "BatchAmendOrdersRequest": {
         "type": "object",
-        "description": "Batch amend order request.\nYou can amend unfilled or partially filled orders.\nTODO: Maximum 20 orders per request",
+        "description": "Amend up to 20 orders. `exit_info` is 1:1 with the request.",
         "required": [
           "request"
         ],
         "properties": {
           "await_outcome": {
             "type": "boolean",
-            "description": "If true, gateway waits up to a server-defined timeout (currently 3s)\nfor final engine outcomes and maps them into `exit_info`.\n\nIf false (default), `exit_info` reports edge outcomes\n(validation + publish ack)."
+            "description": "If true, wait for each item's final outcome in `exit_info` (timeout 3s)."
           },
           "request": {
             "type": "array",
@@ -4334,13 +4355,14 @@
             "items": {
               "$ref": "#/components/schemas/ExitMessage"
             },
-            "description": "Information about the exit status of each order in the batch."
+            "description": "Per-item outcome, 1:1 with the request."
           },
           "result": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AmendOrderResponse"
-            }
+            },
+            "description": "Successful items only."
           },
           "time": {
             "type": "string",
@@ -4351,14 +4373,14 @@
       },
       "BatchCancelOrdersRequest": {
         "type": "object",
-        "description": "Batch cancel order request.\nYou can cancel unfilled or partially filled orders.\nTODO: Maximum 20 orders per request",
+        "description": "Cancel up to 20 unfilled or partially filled orders. `exit_info` is 1:1 with the request.",
         "required": [
           "request"
         ],
         "properties": {
           "await_outcome": {
             "type": "boolean",
-            "description": "If true, gateway waits up to a server-defined timeout (currently 3s)\nfor final engine outcomes and maps them into `exit_info`.\n\nIf false (default), `exit_info` reports edge outcomes\n(validation + publish ack)."
+            "description": "If true, wait for each item's final outcome in `exit_info` (timeout 3s)."
           },
           "request": {
             "type": "array",
@@ -4382,13 +4404,14 @@
             "items": {
               "$ref": "#/components/schemas/ExitMessage"
             },
-            "description": "Information about the exit status of each order in the batch."
+            "description": "Per-item outcome, 1:1 with the request."
           },
           "result": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CancelOrderResponse"
-            }
+            },
+            "description": "Successful items only."
           },
           "time": {
             "type": "string",
@@ -4399,14 +4422,14 @@
       },
       "BatchPlaceOrdersRequest": {
         "type": "object",
-        "description": "Batch place order request.\nTODO: Maximum 20 orders per request\nTODO: Rate limiting (10 reqs per sec, 20 * 10 = 200 orders in one sec)",
+        "description": "Create up to 20 orders. `exit_info` is 1:1 with the request.",
         "required": [
           "request"
         ],
         "properties": {
           "await_outcome": {
             "type": "boolean",
-            "description": "If true, gateway waits up to a server-defined timeout (currently 3s)\nfor final engine outcomes and maps them into `exit_info`.\n\nIf false (default), `exit_info` reports edge outcomes\n(validation + publish ack)."
+            "description": "If true, wait for each item's final outcome in `exit_info` (timeout 3s)."
           },
           "request": {
             "type": "array",
@@ -4458,7 +4481,7 @@
       },
       "CancelAllOrdersRequest": {
         "type": "object",
-        "description": "Request to cancel all orders, optionally filtered by symbol.\n\nOmit `symbol` to cancel every open order on the sub-account.\nSet `symbol` to cancel only open orders on that market.\nTODO: Cancels up to 500 orders per request\nTODO: System picks up 500 orders randomly to cancel when you have over 500 orders",
+        "description": "Cancel all unfilled or partially filled orders for a sub-account.\n\nOmit `symbol` to cancel every open order on the sub-account.\nSet `symbol` to cancel only open orders on that market.",
         "required": [
           "sub_account_address"
         ],
@@ -4506,7 +4529,7 @@
       },
       "CancelOrderRequest": {
         "type": "object",
-        "description": "Request to cancel an order.",
+        "description": "Cancel an unfilled or partially filled order.\n\nEither `order_id` or `order_link_id` is required. If both are passed, `order_id` is used.",
         "required": [
           "sub_account_address",
           "symbol"
@@ -4518,7 +4541,8 @@
                 "type": "null"
               },
               {
-                "$ref": "#/components/schemas/OrderId"
+                "$ref": "#/components/schemas/OrderId",
+                "description": "Order ID. Either `order_id` or `order_link_id` is required."
               }
             ]
           },
@@ -4528,7 +4552,8 @@
                 "type": "null"
               },
               {
-                "$ref": "#/components/schemas/OrderLinkId"
+                "$ref": "#/components/schemas/OrderLinkId",
+                "description": "User-customised order ID. Either `order_id` or `order_link_id` is required."
               }
             ]
           },
@@ -4536,13 +4561,14 @@
             "type": "string"
           },
           "symbol": {
-            "$ref": "#/components/schemas/Symbol"
+            "$ref": "#/components/schemas/Symbol",
+            "description": "Symbol name, e.g. `BTC-USDTx`."
           }
         }
       },
       "CancelOrderResponse": {
         "type": "object",
-        "description": "Response for canceling an order.",
+        "description": "Acknowledgement of a cancel request.",
         "properties": {
           "order_id": {
             "oneOf": [
@@ -5113,6 +5139,7 @@
           "CreateByTrailingProfit",
           "CreateByLiq",
           "CreateByTakeOverPassThrough",
+          "CreateBySessionClose",
           "CreateByAdlPassThrough",
           "CreateByBlockPassThrough",
           "CreateByBlockTradeMovePositionPassThrough",
@@ -5167,6 +5194,7 @@
           "AdlTrade",
           "Funding",
           "BustTrade",
+          "SessionClose",
           "Delivery",
           "Settle",
           "BlockTrade",
@@ -5319,7 +5347,7 @@
           },
           "symbol": {
             "$ref": "#/components/schemas/Symbol",
-            "description": "Symbol name, e.g. BTC-USDCx"
+            "description": "Symbol name, e.g. BTCUSDC"
           }
         }
       },
@@ -5918,6 +5946,15 @@
           "addr": {
             "type": "string"
           },
+          "auto_close_at_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Session close time (ms)",
+            "minimum": 0
+          },
           "base_coin": {
             "type": "string"
           },
@@ -5955,6 +5992,28 @@
           "maker_fee_rate": {
             "type": "string"
           },
+          "next_open_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Next session open time (ms)",
+            "minimum": 0
+          },
+          "paused_max_leverage": {
+            "type": "string",
+            "description": "Max leverage when session is closed. Empty string for 24/7 markets"
+          },
+          "pre_close_at_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Pre-close time (ms)",
+            "minimum": 0
+          },
           "price_filter": {
             "$ref": "#/components/schemas/PriceFilter"
           },
@@ -5973,6 +6032,10 @@
             "type": "integer",
             "format": "int32",
             "minimum": 0
+          },
+          "session_phase": {
+            "type": "string",
+            "description": "Market session. `open`, `pre_close`, `closed`"
           },
           "settle_coin": {
             "type": "string"
@@ -6907,7 +6970,7 @@
       },
       "PlaceOrderRequest": {
         "type": "object",
-        "description": "Request to place an order.",
+        "description": "Create an order. HTTP 200 means the request was accepted.",
         "required": [
           "sub_account_address",
           "symbol",
@@ -7024,7 +7087,7 @@
       },
       "PlaceOrderResponse": {
         "type": "object",
-        "description": "Response for placing an order.",
+        "description": "Place result. Confirm status via websocket or `/order/realtime`.",
         "required": [
           "order_id"
         ],
@@ -8092,7 +8155,7 @@
       },
       "Symbol": {
         "type": "string",
-        "example": "BTC-USDCx"
+        "example": "BTCUSDC"
       },
       "SystemInfo": {
         "type": "object",
@@ -8165,6 +8228,15 @@
             "type": "string",
             "description": "Market address"
           },
+          "auto_close_at_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Session close time (ms)",
+            "minimum": 0
+          },
           "best_ask_price": {
             "type": "string",
             "description": "Best ask price"
@@ -8211,6 +8283,15 @@
             "description": "Next funding time (ms)",
             "example": "1672531200000"
           },
+          "next_open_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Next session open time (ms)",
+            "minimum": 0
+          },
           "open_interest": {
             "type": "string",
             "description": "Open interest size"
@@ -8219,6 +8300,19 @@
             "type": "string",
             "description": "Open interest value"
           },
+          "paused_max_leverage": {
+            "type": "string",
+            "description": "Max leverage when session is closed. Empty string for 24/7 markets"
+          },
+          "pre_close_at_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Pre-close time (ms)",
+            "minimum": 0
+          },
           "prev_price_1h": {
             "type": "string",
             "description": "Market price 1 hour ago"
@@ -8226,6 +8320,10 @@
           "prev_price_24h": {
             "type": "string",
             "description": "Market price 24 hours ago"
+          },
+          "session_phase": {
+            "type": "string",
+            "description": "Market session. `open`, `pre_close`, `closed`"
           },
           "symbol": {
             "$ref": "#/components/schemas/Symbol",

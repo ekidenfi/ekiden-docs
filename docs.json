@@ -14,133 +14,6 @@
   },
   "favicon": "/favicon.png",
   "navigation": {
-    "tabs": [
-      {
-        "tab": "Guides",
-        "pages": [
-          "getting-started",
-          "trade",
-          {
-            "group": "Platform",
-            "pages": [
-              "index",
-              "architecture",
-              "fees",
-              "vip-program",
-              "points-program"
-            ]
-          },
-          "referrals-and-rewards",
-          {
-            "group": "Wallet",
-            "pages": [
-              "wallet/overview",
-              "wallet/user-flows",
-              "wallet/dapp-integration",
-              "wallet/cip-0103",
-              "wallet/cip-0056"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API Reference",
-        "pages": [
-          {
-            "group": "Overview",
-            "pages": [
-              "api-reference/introduction",
-              "api-reference/conventions",
-              "api-reference/rate-limits"
-            ]
-          },
-          {
-            "group": "Getting Started",
-            "pages": [
-              "api-reference/integration/installation",
-              "api-reference/integration/quick-start"
-            ]
-          },
-          {
-            "group": "Setup",
-            "pages": [
-              "api-reference/integration/configuration",
-              "api-reference/integration/initialization",
-              "api-reference/integration/onboarding-auth"
-            ]
-          },
-          {
-            "group": "Fund Your Account",
-            "pages": [
-              "api-reference/integration/deposit-and-withdraw"
-            ]
-          },
-          {
-            "group": "Market Data",
-            "pages": [
-              "api-reference/integration/market-data",
-              "api-reference/integration/risk-feeds"
-            ]
-          },
-          {
-            "group": "Trade",
-            "pages": [
-              "api-reference/integration/orders",
-              "api-reference/integration/closing-position",
-              "api-reference/integration/adjust-the-leverage",
-              "api-reference/integration/tpsl"
-            ]
-          },
-          {
-            "group": "Market Make",
-            "pages": [
-              "api-reference/integration/market-maker-integration"
-            ]
-          },
-          {
-            "group": "Account & Portfolio",
-            "pages": [
-              "api-reference/integration/account-data",
-              "api-reference/integration/account-statistics",
-              "api-reference/integration/referrals-and-rewards",
-              "api-reference/integration/leaderboards-and-competitions",
-              "api-reference/integration/pnl-margin-fr"
-            ]
-          },
-          {
-            "group": "Access Controls",
-            "pages": [
-              "api-reference/integration/root-whitelist"
-            ]
-          },
-          {
-            "group": "Troubleshooting",
-            "pages": [
-              "api-reference/integration/troubleshooting"
-            ]
-          },
-          {
-            "group": "RESTful API",
-            "openapi": "api-reference/openapi.json"
-          },
-          {
-            "group": "WebSocket Guide",
-            "pages": [
-              "overview",
-              "connection",
-              "authentication",
-              "topics",
-              "message-format"
-            ]
-          },
-          {
-            "group": "Websoket Reference (AsyncAPI)",
-            "asyncapi": "api-reference/websocket/asyncapi.json"
-          },
-          "api-reference/errors"
-        ]
-      }
-    ],
     "global": {
       "anchors": [
         {
@@ -159,7 +32,278 @@
           "icon": "newspaper"
         }
       ]
-    }
+    },
+    "versions": [
+      {
+        "version": "v1",
+        "default": true,
+        "tabs": [
+          {
+            "tab": "Guides",
+            "pages": [
+              "getting-started",
+              "trade",
+              {
+                "group": "Platform",
+                "pages": [
+                  "index",
+                  "architecture",
+                  "fees",
+                  "vip-program",
+                  "points-program"
+                ]
+              },
+              "referrals-and-rewards",
+              {
+                "group": "Wallet",
+                "pages": [
+                  "wallet/overview",
+                  "wallet/user-flows",
+                  "wallet/dapp-integration",
+                  "wallet/cip-0103",
+                  "wallet/cip-0056"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Reference",
+            "pages": [
+              {
+                "group": "Overview",
+                "pages": [
+                  "api-reference/introduction",
+                  "api-reference/conventions",
+                  "api-reference/rate-limits"
+                ]
+              },
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "api-reference/integration/installation",
+                  "api-reference/integration/quick-start"
+                ]
+              },
+              {
+                "group": "Setup",
+                "pages": [
+                  "api-reference/integration/configuration",
+                  "api-reference/integration/initialization",
+                  "api-reference/integration/onboarding-auth"
+                ]
+              },
+              {
+                "group": "Fund Your Account",
+                "pages": [
+                  "api-reference/integration/deposit-and-withdraw"
+                ]
+              },
+              {
+                "group": "Market Data",
+                "pages": [
+                  "api-reference/integration/market-data",
+                  "api-reference/integration/risk-feeds"
+                ]
+              },
+              {
+                "group": "Trade",
+                "pages": [
+                  "api-reference/integration/orders",
+                  "api-reference/integration/closing-position",
+                  "api-reference/integration/adjust-the-leverage",
+                  "api-reference/integration/tpsl"
+                ]
+              },
+              {
+                "group": "Market Make",
+                "pages": [
+                  "api-reference/integration/market-maker-integration"
+                ]
+              },
+              {
+                "group": "Account & Portfolio",
+                "pages": [
+                  "api-reference/integration/account-data",
+                  "api-reference/integration/account-statistics",
+                  "api-reference/integration/referrals-and-rewards",
+                  "api-reference/integration/leaderboards-and-competitions",
+                  "api-reference/integration/pnl-margin-fr"
+                ]
+              },
+              {
+                "group": "Access Controls",
+                "pages": [
+                  "api-reference/integration/root-whitelist"
+                ]
+              },
+              {
+                "group": "Troubleshooting",
+                "pages": [
+                  "api-reference/integration/troubleshooting"
+                ]
+              },
+              {
+                "group": "RESTful API",
+                "openapi": "api-reference/openapi.json"
+              },
+              {
+                "group": "WebSocket Guide",
+                "pages": [
+                  "overview",
+                  "connection",
+                  "authentication",
+                  "topics",
+                  "message-format"
+                ]
+              },
+              {
+                "group": "Websoket Reference (AsyncAPI)",
+                "asyncapi": "api-reference/websocket/asyncapi.json"
+              },
+              "api-reference/errors"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "v2",
+        "tabs": [
+          {
+            "tab": "Guides",
+            "pages": [
+              "v2/getting-started",
+              "v2/trade",
+              {
+                "group": "Platform",
+                "pages": [
+                  "v2/index",
+                  "v2/architecture",
+                  "v2/collateral",
+                  "v2/fees",
+                  "vip-program",
+                  "points-program"
+                ]
+              },
+              "referrals-and-rewards",
+              {
+                "group": "Wallet",
+                "pages": [
+                  "wallet/overview",
+                  "wallet/user-flows",
+                  "wallet/dapp-integration",
+                  "wallet/cip-0103",
+                  "wallet/cip-0056"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Reference",
+            "pages": [
+              {
+                "group": "Overview",
+                "pages": [
+                  "api-reference/introduction",
+                  "v2/api-reference/conventions",
+                  "api-reference/rate-limits"
+                ]
+              },
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "api-reference/integration/installation",
+                  "api-reference/integration/quick-start"
+                ]
+              },
+              {
+                "group": "Setup",
+                "pages": [
+                  "api-reference/integration/configuration",
+                  "api-reference/integration/initialization",
+                  "api-reference/integration/onboarding-auth"
+                ]
+              },
+              {
+                "group": "Fund Your Account",
+                "pages": [
+                  "v2/api-reference/integration/deposit-and-withdraw",
+                  "v2/api-reference/integration/fee-asset"
+                ]
+              },
+              {
+                "group": "Market Data",
+                "pages": [
+                  "v2/api-reference/integration/market-data",
+                  "api-reference/integration/risk-feeds"
+                ]
+              },
+              {
+                "group": "Trade",
+                "pages": [
+                  "api-reference/integration/orders",
+                  "api-reference/integration/closing-position",
+                  "api-reference/integration/adjust-the-leverage",
+                  "api-reference/integration/tpsl"
+                ]
+              },
+              {
+                "group": "Market Make",
+                "pages": [
+                  "api-reference/integration/market-maker-integration"
+                ]
+              },
+              {
+                "group": "Account & Portfolio",
+                "pages": [
+                  "v2/api-reference/integration/account-data",
+                  "api-reference/integration/account-statistics",
+                  "api-reference/integration/referrals-and-rewards",
+                  "api-reference/integration/leaderboards-and-competitions",
+                  "v2/api-reference/integration/pnl-margin-fr"
+                ]
+              },
+              {
+                "group": "Access Controls",
+                "pages": [
+                  "api-reference/integration/root-whitelist"
+                ]
+              },
+              {
+                "group": "Troubleshooting",
+                "pages": [
+                  "api-reference/integration/troubleshooting"
+                ]
+              },
+              {
+                "group": "RESTful API",
+                "openapi": {
+                  "source": "v2/api-reference/openapi.json",
+                  "directory": "v2/api-reference/rest"
+                }
+              },
+              {
+                "group": "WebSocket Guide",
+                "pages": [
+                  "overview",
+                  "connection",
+                  "authentication",
+                  "topics",
+                  "message-format"
+                ]
+              },
+              {
+                "group": "Websoket Reference (AsyncAPI)",
+                "asyncapi": {
+                  "source": "v2/api-reference/websocket/asyncapi.json",
+                  "directory": "v2/api-reference/websocket"
+                }
+              },
+              "api-reference/errors"
+            ]
+          }
+        ]
+      }
+    ]
   },
   "redirects": [
     {

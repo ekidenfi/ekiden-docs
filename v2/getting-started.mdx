@@ -1,0 +1,168 @@
+---
+title: "Getting Started with Ekiden"
+sidebarTitle: "Getting Started"
+description: "Create your account, activate access, bridge funds to Canton, and fund your Trading Account."
+icon: "rocket"
+---
+
+This guide takes you from your first sign-in to a funded Trading Account, ready to use on the [Ekiden exchange](https://app.ekiden.fi).
+
+<Note>
+  Ekiden operates on mainnet. Depending on your access status, an access code may be required before trading becomes available.
+</Note>
+
+## Before you begin
+
+- Use the [Ekiden app](https://app.ekiden.fi) to create or sign in to your account.
+- Have your access code ready if access has not yet been activated.
+- Use a source wallet and an asset or network shown as supported in the in-app deposit flow.
+- Review the destination account before you submit a bridge transaction.
+
+<Warning>
+  Always confirm that the Canton recipient displayed by Ekiden belongs to the account you intend to fund. Transactions sent to a different recipient cannot be reassigned automatically.
+</Warning>
+
+## 1. Create an account or log in
+
+Open the [Ekiden app](https://app.ekiden.fi) and select **Connect**.
+
+Choose one of the available sign-in methods:
+
+- **Google** is the fastest option for a new account. Your Party ID is provisioned during the sign-in flow; no browser extension is required.
+- **Console Wallet** is available if you already use a Canton wallet.
+
+<Frame caption="Sign in with Google or connect Console Wallet">
+  ![Sign In](/images/sign_in-1.png "Sign In")
+</Frame>
+
+## 2. Find and share your Party ID
+
+If your account is not yet enabled, you may see a **Not on the access list** screen. Your Party ID is shown at the bottom.
+
+1. Find **Your party ID** — it begins with ekiden-.
+2. Select the copy icon.
+3. Send the Party ID to your Ekiden contact or the team handling your access.
+
+<Frame caption="Your Party ID is displayed on the access screen">
+  ![Party Id](/images/party_id.png "Party Id")
+</Frame>
+
+## 3. Activate access
+
+When your account has been approved, enter the access code you receive.
+
+1. Enter the code on the access screen.
+2. Select **Activate**.
+3. After activation, continue to the funding flow.
+
+<Frame caption="Enter an access code and activate your account">
+  ![Activate Access](/images/activate_-access.png "Activate Access")
+</Frame>
+
+## 4. Open Deposit/Withdraw
+
+In the app, open **Deposit/Withdraw** and select **EVM to Canton Bridge**.
+
+1. Connect the source wallet you want to fund from.
+2. Choose the source network and the asset shown in the flow.
+3. Enter the amount you want to bridge.
+4. Check the Canton recipient shown for your Ekiden account before continuing.
+
+<Frame caption="Choose the source wallet, network, asset, amount, and Canton recipient">
+  <img
+    src="/images/deposit.png"
+    alt="EVM to Canton Bridge form"
+    lightAlt="EVM to Canton Bridge form"
+    darkAlt="EVM to Canton Bridge form"
+    className="dark:hidden"
+  />
+  <img
+    src="/images/deposit-1.png"
+    alt="EVM to Canton Bridge form"
+    lightAlt="EVM to Canton Bridge form"
+    darkAlt="EVM to Canton Bridge form"
+    className="hidden dark:block"
+  />
+</Frame>
+
+## 5. Approve and submit the bridge transaction
+
+Your wallet may ask you to approve the asset before the bridge can transfer it.
+
+1. Confirm the recipient and amount again.
+2. Approve the token in your wallet when prompted.
+3. Submit the bridge transaction.
+
+<Frame caption="Approve the asset in your connected wallet">
+  <img
+    src="/images/bridge.png"
+    alt="Wallet approval for bridge"
+    lightAlt="Wallet approval for bridge"
+    darkAlt="Wallet approval for bridge"
+    className="dark:hidden"
+  />
+  <img
+    src="/images/bridge-1.png"
+    alt="Wallet approval for bridge"
+    lightAlt="Wallet approval for bridge"
+    darkAlt="Wallet approval for bridge"
+    className="hidden dark:block"
+  />
+</Frame>
+
+## 6. Wait for the deposit and fund your Trading Account
+
+After the bridge transaction is submitted, wait for the balance to arrive in Ekiden. Once it is credited:
+
+1. Open your account balances.
+2. Move the amount you intend to use for margin from your **Funding Account** to your **Trading Account**.
+3. Confirm the transfer before placing an order.
+
+<Frame caption="A submitted bridge transaction is waiting to be credited">
+  <img
+    src="/images/submitted-4.png"
+    alt="Bridge submitted status"
+    lightAlt="Bridge submitted status"
+    darkAlt="Bridge submitted status"
+    className="dark:hidden"
+  />
+  <img
+    src="/images/submitted-5.png"
+    alt="Bridge submitted status"
+    lightAlt="Bridge submitted status"
+    darkAlt="Bridge submitted status"
+    className="hidden dark:block"
+  />
+</Frame>
+
+<Info>
+  The EVM to Canton Bridge is one available funding route. Use the deposit method and assets currently offered in the app for your account.
+</Info>
+
+### Funding with other assets
+
+Besides USDCx you can fund your account with other supported [collateral](/v2/collateral), such as stablecoins or tokenized gold, sent from your Canton wallet.
+
+- Each asset has its own Funding and Trading balance. The first deposit of an asset sets those up.
+- Each deposit and withdrawal carries a flat [fee](/v2/fees#deposit-and-withdrawal-fees) in that asset.
+- An asset can have a deposit cap. A transfer into your Trading Account that would exceed it is rejected, and the funds stay in your Funding Account.
+- To withdraw an asset other than USDCx, your wallet must accept direct transfers of that asset (a transfer preapproval).
+
+## Funding Account and Trading Account
+
+| Account | What it is used for |
+| --- | --- |
+| **Funding Account** | Holds assets after they arrive on Ekiden. |
+| **Trading Account** | Holds the margin available for your positions and orders. Each asset counts at its own weight; see [Collateral & Margin](/v2/collateral). |
+
+## 7. Start trading
+
+Once the Trading Account is funded, open the [Trading Guide](/v2/trade) to choose a market, set leverage, and place an order.
+
+<Tip>
+  Start with an amount you are comfortable using. Perpetual futures can use leverage and involve risk.
+</Tip>
+
+## Need help?
+
+For access issues, provide your Party ID and a screenshot of the screen you see to your Ekiden contact. For deposit or bridge issues, include the transaction status or transaction reference. For product issues, use **Share feedback** in the app.

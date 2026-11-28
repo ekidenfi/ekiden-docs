@@ -1,0 +1,79 @@
+---
+title: "PnL, Margin & Funding"
+---
+
+This page describes the margin- and funding-related fields returned by the position endpoints.
+
+## Position Information
+
+Position information is available through:
+
+```http
+GET /api/v1/position/list
+```
+
+The response includes commonly used margin and risk fields such as:
+
+- `entry_price`
+- `mark_price`
+- `unrealised_pnl`
+- `realised_pnl`
+- `margin_mode`
+- `initial_margin`
+- `maintenance_margin`
+- `leverage`
+- `liq_price`
+- `funding`
+
+---
+
+## Margin Mode
+
+Ekiden currently supports **Cross Margin** only.
+
+In Cross Margin mode:
+
+- Margin is shared across all positions within the trading account.
+- Available account equity may be used to prevent liquidation.
+- Liquidation risk is evaluated using the account's available margin.
+
+The current margin mode is returned in the `margin_mode` field.
+
+### Multi-asset collateral
+
+When a trading account holds collateral other than USDCx, each asset counts at a weight of its value:
+
+- **Buying power** uses the initial weight (`initial_total_collateral`). An asset gives buying power only while it is active and freshly priced.
+- **Liquidation** uses the maintenance weight (`maintenance_total_collateral`, and `equity`). Collateral on hold for a withdrawal is excluded.
+- **Losses and funding** are taken from USDCx, then stablecoins in `liquidation_priority` order. Volatile collateral is never spent: the rest becomes `debt`, which liquidation clears by selling volatile collateral at its `liquidation_discount`.
+- **Closed markets**: while an asset's `market_session` is `closed`, it gives no buying power and counts at its frozen price less `closed_market_haircut`.
+
+See [Account Data](/v2/api-reference/integration/account-data#balance-fields) for the balance fields and [Collateral & Margin](/v2/collateral) for the full rules.
+
+---
+
+## Risk Fields
+
+Position responses include the following risk-related fields:
+
+- `initial_margin`
+- `maintenance_margin`
+- `leverage`
+- `liq_price`
+
+These values are calculated by the trading engine and returned for informational purposes.
+
+---
+
+## Funding
+
+Funding-related information is available through:
+
+- Position responses (`funding`)
+- Funding Rate History:
+
+```http
+GET /api/v1/market/funding/history
+```
+
+Refer to the Market Data documentation for funding rate history endpoints.

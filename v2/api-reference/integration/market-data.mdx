@@ -1,0 +1,38 @@
+---
+title: "Market Data"
+---
+
+## Sources
+
+- REST: See the API Reference for `/api/v1/market/*` endpoints, including market data, order books, tickers, klines, funding, open interest, and risk limits.
+- WebSocket (real-time):
+  - Public: `wss://api.ekiden.fi/ws/public`
+  - Private: `wss://api.ekiden.fi/ws/private` (requires JWT authentication)
+
+## Common Subscriptions
+
+- `orderbook.<depth>.<symbol>` (e.g. `orderbook.1.BTC-USDCx`) — order book snapshots and deltas
+- `trade.<symbol>` — public trade feed
+- `ticker.<symbol>` — 24-hour ticker updates
+- `kline.<interval>.<symbol>` — candlestick updates
+- `all_liquidations.<symbol>` — liquidation events
+- `insurance_pool.<symbol>` — insurance pool snapshots
+- `adl_alert.<symbol>` — ADL alert updates
+- `order`, `position`, `execution`, `account_balance` — private user streams (available on `/ws/private` after authentication)
+
+## Exchange stats
+
+`GET /api/v1/market/stats?period=…` includes `fees[]`: the trading fees traders paid in the period, per collateral asset. There is one entry per asset in the [collateral registry](/v2/api-reference/integration/deposit-and-withdraw#supported-collateral), in `asset_id` order, with zeros when nothing was paid. Maker rebates are excluded.
+
+| Field | Description |
+| --- | --- |
+| `asset_id`, `symbol` | The asset. |
+| `amount` | Fees paid in the asset, in whole tokens. |
+| `value` | Their USDC value at fill time. |
+| `value_change` | Change against the previous period, like `turnover_change`. |
+
+## Timestamps
+
+- `ts` (ticker snapshots) is a Unix timestamp in milliseconds.
+- `client_ts` and `server_ts` (WebSocket ping/pong) are Unix timestamps in milliseconds.
+- `server_ts_ms` (WebSocket event envelope) is a Unix timestamp in milliseconds.

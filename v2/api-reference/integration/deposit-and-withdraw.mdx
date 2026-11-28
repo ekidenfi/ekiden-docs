@@ -1,0 +1,272 @@
+---
+title: "Deposit & Withdraw Funds"
+---
+
+## Overview
+
+Ekiden uses Canton to manage collateral for trading.
+
+Users can deposit supported assets into their funding account and withdraw available collateral.
+
+## Supported collateral
+
+The collateral registry lists every accepted asset, USDCx (the quote, `asset_id` 1) included:
+
+```http
+GET /api/v1/collateral/assets
+```
+
+| Field | Description |
+| --- | --- |
+| `asset_id` | Stable id; `1` is the quote (USDCx). |
+| `instrument_id` | Canton instrument, `{admin_party}::{id}`. |
+| `symbol`, `decimals` | Display symbol and token decimals. |
+| `kind` | `stable` or `volatile`. |
+| `status` | `active` takes deposits; `reduce_only` takes no new deposits; `disabled` counts as no collateral. Any status can be withdrawn. |
+| `initial_weight`, `maintenance_weight` | Share of the asset's value that counts as buying power and as maintenance margin, e.g. `"0.70"`, `"0.85"`. |
+| `max_total_deposit`, `max_user_deposit` | Total and per-user caps on trading balances, in whole tokens; `null` when uncapped. |
+| `total_deposited`, `cap_utilization` | Current trading balances against the total cap; `null` when uncapped or unknown. |
+| `liquidation_discount` | Share of the price credited when liquidation sells the asset, e.g. `"0.95"`; `"0"` for a stablecoin. |
+| `closed_market_haircut` | Haircut on the frozen price while the asset's market is closed, e.g. `"0.03"`. |
+| `market_session` | `open` or `closed`; a stablecoin is always open. |
+| `liquidation_priority` | Order in which stablecoins cover a shortfall after the quote. |
+
+See [Collateral & Margin](/v2/collateral) for how these apply.
+
+## Deposits
+
+A deposit is a CIP-56 transfer from your wallet into the asset's Funding vault, submitted from the user's wallet (see [CIP-0056](/wallet/cip-0056)).
+
+<Steps>
+  <Step title="Create the asset's vaults (first deposit of an asset only)">
+    ```http
+    POST /api/v1/collateral/assets/{asset_id}/vaults
+    ```
+
+    Returns `202` while the vaults are created on the ledger; repeating the request is harmless. The quote's vaults exist from registration, so this is for other assets only. Returns `400` when the asset is unknown or not accepting deposits.
+  </Step>
+  <Step title="Fetch the contracts to disclose">
+    ```http
+    GET /api/v1/collateral/assets/{asset_id}/disclosures
+    ```
+
+    Returns the live `collateral_registry` and the asset's `funding_fee_config` (each as a disclosed contract: `templateId`, `contractId`, `createdEventBlob`, `synchronizerId`) and the asset's `fees`. The registry contract is replaced whenever the registry changes, so fetch it right before submitting.
+  </Step>
+  <Step title="Submit the deposit">
+    Exercise `DepositIntoFundingAsset` on your user contract with `collateralRegistryCid` and `fundingFeeConfigCid` from the previous step, disclosing both contracts. The transfer is `amount + fees.deposit`; your Funding balance is credited `amount`.
+  </Step>
+</Steps>
+
+To trade with the asset, transfer it from your Funding to your Trading account. A transfer that would exceed the asset's `max_total_deposit` or `max_user_deposit` is rejected and the funds stay in Funding.
+
+## Withdrawals
+
+Exercise `WithdrawFromFunding` with the asset's `fundingFeeConfigCid`. Your unlocked Funding balance must cover `amount + fees.withdraw`; you receive `amount`.
+
+<Note>
+  Withdrawals of assets other than USDCx settle as a direct CIP-56 transfer, so your party needs a transfer preapproval for that asset.
+</Note>
+
+## Fees
+
+`fees.deposit` and `fees.withdraw` in the disclosures response are flat amounts in whole tokens of the asset, exactly what the ledger charges (e.g. `"0.0005"`, or `"0.00"` when there is no fee). Size a submission from the `fees` and the `funding_fee_config` of the same response.
+
+{/*
+  - Call Deposit Endpoint or SDK Method
+
+  ### REST
+
+  **Get Deposits**
+
+  ```ts
+  GET /api/v1/deposits
+  ```
+
+  **Get Withdrawals**
+
+  ```typescript
+  GET /api/v1/withdraws
+  ```
+
+  ### SDK Examples
+
+  **Deposit**
+
+  ```typescript
+  import {
+  Aptos,
+  AptosConfig,
+  Ed25519Account,
+  Ed25519PrivateKey,
+  Network,
+  } from "@aptos-labs/ts-sdk";
+
+  import "dotenv/config";
+
+  import { EkidenClient, TESTNET } from "../dist/index.js";
+
+  const TESTNET_USDC =
+  "0x9967e130f7419f791c240acc17dde966ec84ad41652e2e87083ee613f460d019";
+
+  const TESTNET_VAULT_ADDRESS =
+  "0x9e53ba9771421bddb0ba8722cde10b8c6a933dba8557075610698a95b8a82ec6";
+
+  const config = {
+  privateKey: process.env["PK"], // Replace with your private key
+  vaultAddress: TESTNET_VAULT_ADDRESS,
+  assetMetadata: TESTNET_USDC,
+  amount: BigInt(1000000), // 1 USDC (1e6)
+  };
+
+  async function depositExample() {
+  const ekiden = new EkidenClient({
+  baseURL: TESTNET.baseURL,
+  });
+  const aptosConfig = new AptosConfig({ network: Network.TESTNET });
+  const aptos = new Aptos(aptosConfig);
+
+  const privateKey = new Ed25519PrivateKey(config.privateKey);
+  const account = new Ed25519Account({ privateKey });
+
+  console.log(1, account.accountAddress.toString());
+
+  const bal = await aptos.getAccountAPTAmount({
+  accountAddress: account.accountAddress.toString(),
+  });
+  console.log("APT (octas):", bal, "≈ APT:", Number(bal) / 1e8);
+
+  const transactionPayload = ekiden.vault.depositIntoUser({
+  vaultAddress: config.vaultAddress,
+  assetMetadata: config.assetMetadata,
+  amount: config.amount,
+  });
+
+  const { gas_estimate } = await aptos.getGasPriceEstimation();
+
+  const draft = await aptos.transaction.build.simple({
+  sender: account.accountAddress,
+  data: transactionPayload,
+  options: { gasUnitPrice: gas_estimate },
+  });
+
+  const [sim] = await aptos.transaction.simulate.simple({
+  signerPublicKey: account.publicKey,
+  transaction: draft,
+  });
+
+  const gasUsed = BigInt(sim.gas_used ?? 20000);
+  const maxGasAmount = gasUsed + 5000n;
+
+  const tx = await aptos.transaction.build.simple({
+  sender: account.accountAddress,
+  data: transactionPayload,
+  options: {
+  gasUnitPrice: gas_estimate,
+  maxGasAmount, // bigint!
+  },
+  });
+
+  const auth = aptos.transaction.sign({ signer: account, transaction: tx });
+  const submitted = await aptos.transaction.submit.simple({
+  transaction: tx,
+  senderAuthenticator: auth,
+  });
+  await aptos.waitForTransaction({ transactionHash: submitted.hash });
+
+  console.log(`Deposit transaction submitted: ${submitted.hash}`);
+  }
+
+  depositExample();
+  ```
+
+  **Withdraw**
+
+  ```typescript
+  import {
+  Aptos,
+  AptosConfig,
+  Ed25519Account,
+  Ed25519PrivateKey,
+  Network,
+  } from "@aptos-labs/ts-sdk";
+
+  import "dotenv/config";
+
+  import { EkidenClient, TESTNET } from "../dist/index.js";
+
+  const TESTNET_USDC =
+  "0x9967e130f7419f791c240acc17dde966ec84ad41652e2e87083ee613f460d019";
+
+  const TESTNET_VAULT_ADDRESS =
+  "0x9e53ba9771421bddb0ba8722cde10b8c6a933dba8557075610698a95b8a82ec6";
+
+  const config = {
+  privateKey: process.env["PK"], // Replace with your private key
+  vaultAddress: TESTNET_VAULT_ADDRESS,
+  assetMetadata: TESTNET_USDC,
+  amount: BigInt(1000000), // 1 USDC (1e6)
+  };
+
+  async function depositExample() {
+  const ekiden = new EkidenClient({
+  baseURL: TESTNET.baseURL,
+  });
+  const aptosConfig = new AptosConfig({ network: Network.TESTNET });
+  const aptos = new Aptos(aptosConfig);
+
+  const privateKey = new Ed25519PrivateKey(config.privateKey);
+  const account = new Ed25519Account({ privateKey });
+
+  console.log(1, account.accountAddress.toString());
+
+  const bal = await aptos.getAccountAPTAmount({
+  accountAddress: account.accountAddress.toString(),
+  });
+  console.log("APT (octas):", bal, "≈ APT:", Number(bal) / 1e8);
+
+  const transactionPayload = ekiden.vault.depositIntoUser({
+  vaultAddress: config.vaultAddress,
+  assetMetadata: config.assetMetadata,
+  amount: config.amount,
+  });
+
+  const { gas_estimate } = await aptos.getGasPriceEstimation();
+
+  const draft = await aptos.transaction.build.simple({
+  sender: account.accountAddress,
+  data: transactionPayload,
+  options: { gasUnitPrice: gas_estimate },
+  });
+
+  const [sim] = await aptos.transaction.simulate.simple({
+  signerPublicKey: account.publicKey,
+  transaction: draft,
+  });
+
+  const gasUsed = BigInt(sim.gas_used ?? 20000);
+  const maxGasAmount = gasUsed + 5000n;
+
+  const tx = await aptos.transaction.build.simple({
+  sender: account.accountAddress,
+  data: transactionPayload,
+  options: {
+  gasUnitPrice: gas_estimate,
+  maxGasAmount, // bigint!
+  },
+  });
+
+  const auth = aptos.transaction.sign({ signer: account, transaction: tx });
+  const submitted = await aptos.transaction.submit.simple({
+  transaction: tx,
+  senderAuthenticator: auth,
+  });
+  await aptos.waitForTransaction({ transactionHash: submitted.hash });
+
+  console.log(`Deposit transaction submitted: ${submitted.hash}`);
+  }
+
+  depositExample();
+  ```
+  */}
+
+{/* TODO(SDK): Replace the legacy Aptos deposit and withdrawal flows with the current Canton integration once the SDK implementation is available. */}
